@@ -1,4 +1,4 @@
-# cesium-cli
+# cesium-nexus
 
 > **Cesium AI Expert** — A knowledge-base CLI and MCP server that turns Cesium's source code, API docs, issues, and community data into structured context for AI agents.
 
