@@ -8,7 +8,7 @@
 
 Cesium is a large, fast-moving codebase. Understanding why `Primitive.update` creates hundreds of `DrawCommand`s every frame, or why z-fighting appears after upgrading from 1.118 to 1.130, requires cross-referencing source code, call graphs, GitHub issues, community forum threads, and release notes simultaneously.
 
-`cesium-cli` does that cross-referencing automatically. It builds a local knowledge base from Cesium's source and community data, exposes it via a CLI for humans and an MCP server for AI agents, and assembles **Context Packs** — structured JSON payloads that give an LLM exactly the information it needs to answer a Cesium question well.
+`cesium-nexus` does that cross-referencing automatically. It builds a local knowledge base from Cesium's source and community data, exposes it via a CLI for humans and an MCP server for AI agents, and assembles **Context Packs** — structured JSON payloads that give an LLM exactly the information it needs to answer a Cesium question well.
 
 ---
 
@@ -74,14 +74,14 @@ Agent (Claude / Codex / Hermes)
 ### Install
 
 ```bash
-npm install -g cesium-cli
+npm install -g cesium-nexus
 ```
 
 Or run from source:
 
 ```bash
-git clone https://github.com/your-org/cesium-cli
-cd cesium-cli
+git clone https://github.com/your-org/cesium-nexus
+cd cesium-nexus
 npm install
 npm run build
 ```
@@ -134,7 +134,7 @@ Add to your MCP config (`~/.config/claude/claude_desktop_config.json` or equival
 {
   "mcpServers": {
     "cesium": {
-      "command": "cesium-cli",
+      "command": "cesium-nexus",
       "args": ["mcp"],
       "env": {}
     }
@@ -355,7 +355,7 @@ Problem model schema (`my-problem.json`):
 ## Project Structure
 
 ```
-cesium-cli/
+cesium-nexus/
 ├── src/
 │   ├── cli/                    # CLI entry point and command definitions
 │   │   ├── index.ts            # Main CLI entry (commander.js)
@@ -467,7 +467,7 @@ cesium-cli/
 
 ## Configuration
 
-`cesium-cli` reads from `~/.cesium-cli/config.json` (created on first run):
+`cesium-nexus` reads from `~/.cesium-nexus/config.json` (created on first run):
 
 ```json
 {
