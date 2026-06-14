@@ -53,5 +53,32 @@ export function initSchema(db: Database): void {
       INSERT INTO symbols_fts(rowid, name, doc_comment)
       VALUES (new.rowid, new.name, new.doc_comment);
     END;
+
+    -- Source code backing table
+    CREATE TABLE IF NOT EXISTS source_code (
+      symbol_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      start_line INTEGER,
+      end_line INTEGER,
+      code TEXT NOT NULL
+    );
+
+    -- FTS5 index on source code for full-text search
+    CREATE VIRTUAL TABLE IF NOT EXISTS source_fts
+      USING fts5(code, content=source_code, content_rowid=rowid, tokenize='unicode61');
+
+    CREATE TRIGGER IF NOT EXISTS source_fts_ai AFTER INSERT ON source_code BEGIN
+      INSERT INTO source_fts(rowid, code) VALUES (new.rowid, new.code);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS source_fts_ad AFTER DELETE ON source_code BEGIN
+      INSERT INTO source_fts(source_fts, rowid, code) VALUES ('delete', old.rowid, old.code);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS source_fts_au AFTER UPDATE ON source_code BEGIN
+      INSERT INTO source_fts(source_fts, rowid, code) VALUES ('delete', old.rowid, old.code);
+      INSERT INTO source_fts(rowid, code) VALUES (new.rowid, new.code);
+    END;
   `);
 }

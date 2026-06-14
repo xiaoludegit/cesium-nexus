@@ -1,7 +1,9 @@
 import { SymbolExtractor } from "@cesium-nexus/parser";
 import { openDatabase, initSchema, SymbolRepo } from "@cesium-nexus/storage";
+import type { SourceFtsEntry } from "@cesium-nexus/storage";
 import type { SymbolRecord, SymbolKind, IndexSummary } from "@cesium-nexus/shared";
 import { glob } from "tinyglobby";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 
 const SCAN_PATTERNS = [
@@ -31,9 +33,7 @@ export class CesiumIndexer {
 
     // 1. Discover files
     const files = await this.discoverFiles(cesiumRoot);
-    if (this.verbose) {
-      console.log(`[indexer] Found ${files.length} source files`);
-    }
+    console.log(`[indexer] Found ${files.length} source files`);
 
     // 2. Open database and init schema
     const db = openDatabase(dbPath);
@@ -60,15 +60,25 @@ export class CesiumIndexer {
         byKind[s.kind] = (byKind[s.kind] || 0) + 1;
       }
 
-      if (this.verbose && parsedFiles % 100 === 0) {
-        console.log(`[indexer] Parsed ${parsedFiles}/${files.length} files (${allSymbols.length} symbols)`);
+      // Progress output every 100 files or at the end
+      if (parsedFiles % 100 === 0 || parsedFiles === files.length) {
+        const pct = Math.round((parsedFiles / files.length) * 100);
+        process.stdout.write(`\r[indexer] Parsing: ${parsedFiles}/${files.length} (${pct}%) — ${allSymbols.length} symbols`);
       }
     }
+    console.log(""); // newline after progress
 
-    // 4. Batch insert into SQLite
+    // 4. Batch insert symbols into SQLite
     const inserted = repo.insertMany(allSymbols);
 
-    // 5. Summary
+    // 5. Build source FTS index — read source code snippets for each symbol
+    console.log("[indexer] Building source code FTS index...");
+    repo.clearSourceFts();
+    const sourceEntries = this.buildSourceFtsEntries(allSymbols, cesiumRoot);
+    const sourceInserted = repo.insertSourceFts(sourceEntries);
+    console.log(`[indexer] Indexed ${sourceInserted} source code snippets`);
+
+    // 6. Summary
     const duration = Date.now() - startTime;
     const summary: IndexSummary = {
       totalFiles: parsedFiles,
@@ -77,12 +87,50 @@ export class CesiumIndexer {
       duration,
     };
 
-    if (this.verbose) {
-      this.printSummary(summary);
-    }
+    this.printSummary(summary);
 
     db.close();
     return summary;
+  }
+
+  private buildSourceFtsEntries(symbols: SymbolRecord[], cesiumRoot: string): SourceFtsEntry[] {
+    const fileCache = new Map<string, string[]>();
+    const entries: SourceFtsEntry[] = [];
+
+    for (const sym of symbols) {
+      const absPath = path.join(cesiumRoot, sym.filePath);
+      let lines: string[];
+
+      if (fileCache.has(sym.filePath)) {
+        lines = fileCache.get(sym.filePath)!;
+      } else {
+        try {
+          const content = readFileSync(absPath, "utf-8");
+          lines = content.split("\n");
+          fileCache.set(sym.filePath, lines);
+        } catch {
+          continue; // Skip symbols whose files can't be read
+        }
+      }
+
+      // Extract code lines for this symbol (0-indexed)
+      const start = Math.max(0, sym.startLine - 1);
+      const end = Math.min(lines.length, sym.endLine);
+      const code = lines.slice(start, end).join("\n");
+
+      if (code.trim()) {
+        entries.push({
+          symbolId: sym.id,
+          name: sym.name,
+          filePath: sym.filePath,
+          startLine: sym.startLine,
+          endLine: sym.endLine,
+          code,
+        });
+      }
+    }
+
+    return entries;
   }
 
   private async discoverFiles(cesiumRoot: string): Promise<string[]> {

@@ -165,7 +165,7 @@ Scene
 Camera
 
 可正确索引
-Milestone 2 ⬜ 待开始
+Milestone 2 ✅ 完成
 Source Retrieval
 
 目标：
@@ -174,19 +174,23 @@ Source Retrieval
 
 实现：
 
-getSymbol(name)
+> 📝 执行更新：`getSymbol`/`getSource`/`searchSource` 三个函数直接实现为 CLI 子命令，底层通过 `SymbolRepo` 的 `findByName`/`findById`/`searchSource` 方法查询。`source` 命令参数改为 `symbolId`（而非 name），因为同名符号可能有多个，用 ID 精确匹配更可靠。`search` 命令默认搜索源码正文（`source_code` + `source_fts` 表），加 `--name-only` 可退化为符号名搜索。
 
-getSource(symbolId)
-
-searchSource(keyword)
+getSymbol(name) → `cesium symbol <name>`
+getSource(symbolId) → `cesium source <symbolId>`
+searchSource(keyword) → `cesium search <keyword>`
 
 CLI
 
 cesium symbol Viewer
 
-cesium source Viewer
+cesium source 45a23cf59985
 
 cesium search DrawCommand
+
+cesium search DrawCommand --name-only
+
+> 📝 审核整改：新增 E2E 集成测试 `e2e-source-retrieval.test.ts`（7 个用例），对真实 Cesium 索引库做端到端验证，覆盖 `executeCommand` 等仅存在于源码正文的关键词。修复 `searchSource`/`searchFts` 的 FTS5 查询词转义——将输入拆分为 alphanumeric token 并用双引号包裹，防止 `Object.freeze` 等含 `.` 的查询触发 FTS5 列引用语法错误。
 
 验收标准
 

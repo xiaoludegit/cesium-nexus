@@ -93,11 +93,14 @@ First-time indexing takes 10–20 minutes. Subsequent `cesium sync:issues` runs 
 # Look up a symbol
 cesium symbol Viewer
 
-# Get source code for a symbol
-cesium source Viewer
+# Get source code for a symbol (use ID from 'symbol' command output)
+cesium source 45a23cf59985
 
-# Full-text search across source code
+# Full-text search across source code (searches actual code, not just names)
 cesium search DrawCommand
+
+# Search only symbol names and doc comments
+cesium search DrawCommand --name-only
 
 # Search issues
 cesium issue DrawCommand
@@ -142,8 +145,8 @@ The server starts on stdio and exposes all MCP tools automatically.
 | Command | Description |
 |---|---|
 | `cesium symbol <name>` | Get symbol detail: kind, file path, line range, doc comment, imports/exports |
-| `cesium source <name>` | Get source code for a symbol |
-| `cesium search <keyword>` | Full-text search across indexed source code (SQLite FTS5) |
+| `cesium source <symbolId>` | Get source code for a symbol (use ID from `symbol` output) |
+| `cesium search <keyword>` | Full-text search across source code text (FTS5). Add `--name-only` for symbol name search |
 
 ### Call Graph
 
@@ -469,8 +472,8 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 
 | Milestone | Goal | Key Deliverables | Status |
 |---|---|---|---|
-| **M1: Symbol Index** | Build Cesium symbol database | Scan `packages/engine/Source`, extract symbols, store in SQLite | 🚧 In Progress |
-| **M2: Source Retrieval** | Retrieve source code by symbol | `getSymbol`, `getSource`, `searchSource` + CLI | ⬜ Planned |
+| **M1: Symbol Index** | Build Cesium symbol database | Scan `packages/engine/Source`, extract symbols, store in SQLite | ✅ Done |
+| **M2: Source Retrieval** | Retrieve source code by symbol | `symbol`, `source`, `search` (source FTS) + CLI | ✅ Done |
 | **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ⬜ Planned |
 | **M4: CallGraph** | Build lightweight call relationships | Max depth 2, simple Edge schema + CLI | ⬜ Planned |
 | **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` | ⬜ Planned |
