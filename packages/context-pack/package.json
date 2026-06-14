@@ -1,0 +1,17 @@
+{
+  "name": "@cesium-nexus/context-pack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/shared": "workspace:*",
+    "@cesium-nexus/storage": "workspace:*"
+  }
+}

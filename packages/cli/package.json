@@ -1,0 +1,21 @@
+{
+  "name": "@cesium-nexus/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "cesium": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/shared": "workspace:*",
+    "@cesium-nexus/indexer": "workspace:*",
+    "@cesium-nexus/storage": "workspace:*",
+    "commander": "^13.1.0"
+  }
+}

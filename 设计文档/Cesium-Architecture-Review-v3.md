@@ -1,5 +1,7 @@
 # Cesium Engineering CLI — 架构审计报告
 
+> **注意**：本文档为架构审计的历史快照（v3.0 审计）。实际 MVP 实施范围已根据 [`开发计划/plan.md`](../开发计划/plan.md) 和 [`future-roadmap.md`](../future-roadmap.md) 进一步收窄。本文档中标记为 P0 的部分功能（Problem KB、Skill Router、Experience Graph 节点层、Release Note 同步、compare_version 等）已推迟到 Phase 2 或 Phase 3。请以 plan.md 为准。
+
 **文档版本**：Architecture Review v1.0  
 **审计对象**：Cesium Engineering CLI v3.0  
 **审计视角**：工程负责人 / 系统落地可行性  

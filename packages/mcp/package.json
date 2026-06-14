@@ -1,0 +1,18 @@
+{
+  "name": "@cesium-nexus/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/shared": "workspace:*",
+    "@cesium-nexus/storage": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  }
+}

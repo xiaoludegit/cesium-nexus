@@ -92,7 +92,7 @@ data/
 database/
 
 docs/
-Milestone 1
+Milestone 1 ✅ 完成
 Symbol Index
 
 目标：
@@ -101,9 +101,14 @@ Symbol Index
 
 实现：
 
+> 📝 执行更新：Cesium 源码改为 git submodule 放在 `data/cesium/`，CLI 默认 `--cesium-root ./data/cesium`。切换版本通过 `cd data/cesium && git checkout <tag>` 实现，更新版本通过 `git submodule update --remote`。
+
 扫描：
 
 packages/engine/Source
+packages/widgets/Source
+
+> 📝 执行更新：新增 widgets/Source。理由：Viewer.js 位于 packages/widgets/Source/Viewer/Viewer.js，不在 engine 下，而验收标准要求 Viewer 可被索引。不扩展扫描范围则验收无法通过。
 
 提取：
 
@@ -125,6 +130,7 @@ interface SymbolRecord {
     | "function"
     | "method"
     | "enum"
+    | "constant"
 
   filePath: string
 
@@ -137,11 +143,16 @@ interface SymbolRecord {
   exports: string[]
 
   imports: string[]
+
+  parentClass?: string  // 📝 执行更新：新增字段，标注 method 所属 class，为 M4 CallGraph 预留
 }
 
 SQLite
 
 symbols
+symbols_fts（FTS5 全文索引）
+
+> 📝 执行更新：M1 提前建立 FTS5 虚拟表及同步触发器。理由：M2 searchSource 需要全文检索能力，提前建表避免 M2 做数据迁移，成本极低（多 3 行 SQL）。
 
 CLI
 
@@ -154,7 +165,7 @@ Scene
 Camera
 
 可正确索引
-Milestone 2
+Milestone 2 ⬜ 待开始
 Source Retrieval
 
 目标：
@@ -184,7 +195,7 @@ cesium search DrawCommand
 源码片段
 文件路径
 行号
-Milestone 3
+Milestone 3 ⬜ 待开始
 Issue Index
 
 目标：
@@ -231,7 +242,7 @@ Camera
 
 相关 Issue。
 
-Milestone 4
+Milestone 4 ⬜ 待开始
 CallGraph
 
 目标：
@@ -266,7 +277,7 @@ downstream
 
 关系。
 
-Milestone 5
+Milestone 5 ⬜ 待开始
 MCP Server
 
 目标：
@@ -298,7 +309,7 @@ Codex CLI
 
 均可正常调用。
 
-Milestone 6
+Milestone 6 ⬜ 待开始
 Context Pack
 
 目标：
@@ -320,6 +331,10 @@ Context Pack
 Tool
 
 build_context_pack
+
+CLI
+
+cesium context <symbol>
 
 验收标准
 
