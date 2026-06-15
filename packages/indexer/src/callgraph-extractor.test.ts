@@ -222,4 +222,22 @@ describe("buildSymbolMap", () => {
     const map = buildSymbolMap(symbols);
     expect(map.has("Camera")).toBe(true);
   });
+
+  it("should prefer class over other kinds for same name", () => {
+    const symbols: SymbolRecord[] = [
+      { id: "k1", name: "Scene", kind: "constant", filePath: "a.js", startLine: 1, endLine: 2, exports: [], imports: [] },
+      { id: "c1", name: "Scene", kind: "class", filePath: "b.js", startLine: 1, endLine: 10, exports: [], imports: [] },
+    ];
+    const map = buildSymbolMap(symbols);
+    expect(map.get("Scene")?.id).toBe("c1");
+  });
+
+  it("should skip ambiguous same-name classes", () => {
+    const symbols: SymbolRecord[] = [
+      { id: "c1", name: "Foo", kind: "class", filePath: "a.js", startLine: 1, endLine: 10, exports: [], imports: [] },
+      { id: "c2", name: "Foo", kind: "class", filePath: "b.js", startLine: 1, endLine: 10, exports: [], imports: [] },
+    ];
+    const map = buildSymbolMap(symbols);
+    expect(map.has("Foo")).toBe(false);
+  });
 });

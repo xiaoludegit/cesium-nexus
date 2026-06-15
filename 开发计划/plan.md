@@ -302,6 +302,11 @@ downstream
 
 关系。树状格式（├─ └─），支持循环依赖检测。
 
+📝 已知限制：
+- `trace Camera.update --direction up` 可能无结果，因为 Cesium 使用原型方法 + 变量调用模式，TypeChecker 在 checkJs=false 下无法解析变量类型。高精度优先策略允许此类漏报。
+- `trace Scene`（类级别）比 `trace Camera.update`（方法级别）更稳定
+- 唯一方法名解析 fallback 已实现，可提升部分覆盖率
+
 Milestone 5 ⬜ 待开始
 MCP Server
 

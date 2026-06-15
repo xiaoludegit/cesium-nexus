@@ -811,4 +811,13 @@ Context Pack
 | 9 | 统计输出 | ✅ 完成 |
 | 10 | Indexer 集成 | ✅ 完成 |
 | 11-12 | CLI trace 命令 + 树状输出 | ✅ 完成 |
-| 13 | 测试 (Extractor + Repo + E2E + CLI) | ✅ 完成 (11 repo + 8 extractor + 5 e2e = 24 passed) |
+| 13 | 测试 (Extractor + Repo + E2E + CLI) | ✅ 完成 (11 repo + 10 extractor + 5 e2e = 26 passed) |
+| 14 | 审核整改 (2P1 + 3P2) | ✅ 完成 |
+
+### 审核整改记录 (2026-06-15)
+
+**P1**: trace 符号解析移除 FTS fallback — 带点号输入 (Class.method) 精确匹配失败即退出，不再自动 FTS 回退
+**P1**: Camera.update upstream 空结果 — 添加唯一方法名解析 fallback (methodOwners)，TypeChecker 无法解析时，若仅一个类拥有该方法则安全解析
+**P2**: trace 命令检测 call_edges 为空时提示 "Run 'cesium index:symbols' first"
+**P2**: buildSymbolMap 同名符号策略 — 优先 class kind，多个同名 class 则跳过（避免歧义）
+**P2**: 验收样例标注已知限制 — Camera.update upstream 可能无结果（TypeChecker 在 JS 模式下覆盖率有限）

@@ -26,19 +26,37 @@ export interface CallGraphStats {
  * Key format:
  *   - "ClassName.methodName" for methods (parentClass set)
  *   - "name" for classes, functions, enums, constants
+ *
+ * Strategy for top-level same-name symbols:
+ *   - Prefer class kind over other kinds
+ *   - If multiple classes share the same name, skip (ambiguous)
  */
 export function buildSymbolMap(symbols: SymbolRecord[]): Map<string, SymbolRecord> {
   const map = new Map<string, SymbolRecord>();
+  const seenTopLevel = new Map<string, SymbolRecord[]>();
+
   for (const sym of symbols) {
     if (sym.parentClass) {
       map.set(`${sym.parentClass}.${sym.name}`, sym);
     } else {
-      // Only store top-level if not already present (classes take priority)
-      if (!map.has(sym.name)) {
-        map.set(sym.name, sym);
-      }
+      const existing = seenTopLevel.get(sym.name) ?? [];
+      existing.push(sym);
+      seenTopLevel.set(sym.name, existing);
     }
   }
+
+  // Process top-level: prefer class, skip if ambiguous (multiple classes)
+  for (const [name, entries] of seenTopLevel) {
+    const classes = entries.filter((s) => s.kind === "class");
+    if (classes.length === 1) {
+      map.set(name, classes[0]);
+    } else if (classes.length === 0) {
+      // No class — use first entry
+      map.set(name, entries[0]);
+    }
+    // If multiple classes with same name → skip (ambiguous)
+  }
+
   return map;
 }
 
@@ -93,6 +111,19 @@ export class CallGraphExtractor {
     const allEdges: CallEdge[] = [];
     const checker = this.project.getTypeChecker();
 
+    // Build methodOwners: methodName → [className1, className2, ...]
+    // Used for unique method name resolution fallback
+    const methodOwners = new Map<string, string[]>();
+    for (const [key, sym] of symbolMap) {
+      if (sym.parentClass && sym.kind === "method") {
+        const owners = methodOwners.get(sym.name) ?? [];
+        if (!owners.includes(sym.parentClass)) {
+          owners.push(sym.parentClass);
+        }
+        methodOwners.set(sym.name, owners);
+      }
+    }
+
     for (const sourceFile of sourceFiles) {
       stats.filesScanned++;
 
@@ -100,7 +131,7 @@ export class CallGraphExtractor {
         onProgress(stats.filesScanned, sourceFiles.length);
       }
 
-      const edges = this.extractFromFile(sourceFile, checker, symbolMap, stats);
+      const edges = this.extractFromFile(sourceFile, checker, symbolMap, methodOwners, stats);
       allEdges.push(...edges);
     }
 
@@ -111,6 +142,7 @@ export class CallGraphExtractor {
     sourceFile: SourceFile,
     checker: TypeChecker,
     symbolMap: Map<string, SymbolRecord>,
+    methodOwners: Map<string, string[]>,
     stats: CallGraphStats,
   ): CallEdge[] {
     const edges: CallEdge[] = [];
@@ -137,7 +169,7 @@ export class CallGraphExtractor {
           stats.unresolvedCalls++;
         }
       } else if (Node.isCallExpression(node)) {
-        const result = this.resolveCallExpression(node, checker, symbolMap);
+        const result = this.resolveCallExpression(node, checker, symbolMap, methodOwners);
         if (result === "skip") {
           stats.skippedDynamicCalls++;
         } else if (result === "unresolved") {
@@ -206,12 +238,13 @@ export class CallGraphExtractor {
     node: CallExpression,
     checker: TypeChecker,
     symbolMap: Map<string, SymbolRecord>,
+    methodOwners: Map<string, string[]>,
   ): CallEdge | "skip" | "unresolved" | null {
     const expr = node.getExpression();
 
     // Case 1: Property access — obj.method() or Class.method() or this.method()
     if (Node.isPropertyAccessExpression(expr)) {
-      return this.resolvePropertyAccessCall(expr, node, checker, symbolMap);
+      return this.resolvePropertyAccessCall(expr, node, checker, symbolMap, methodOwners);
     }
 
     // Case 2: Bare function call — update() → skip (not supported)
@@ -228,6 +261,7 @@ export class CallGraphExtractor {
     callNode: CallExpression,
     checker: TypeChecker,
     symbolMap: Map<string, SymbolRecord>,
+    methodOwners: Map<string, string[]>,
   ): CallEdge | "skip" | "unresolved" | null {
     const methodName = propAccess.getName();
     const objectExpr = propAccess.getExpression();
@@ -240,7 +274,7 @@ export class CallGraphExtractor {
 
     // Case: Class.staticMethod() or obj.method()
     // Use TypeChecker to resolve the type of the object expression
-    return this.resolveTypedMethodCall(objectExpr, methodName, checker, symbolMap);
+    return this.resolveTypedMethodCall(objectExpr, methodName, checker, symbolMap, methodOwners);
   }
 
   /**
@@ -277,6 +311,7 @@ export class CallGraphExtractor {
     methodName: string,
     checker: TypeChecker,
     symbolMap: Map<string, SymbolRecord>,
+    methodOwners: Map<string, string[]>,
   ): CallEdge | "unresolved" | null {
     try {
       const type = checker.getTypeAtLocation(objectExpr);
@@ -335,6 +370,23 @@ export class CallGraphExtractor {
               }
             }
           }
+        }
+      }
+
+      // Fallback: unique method name resolution
+      // If only ONE class in the symbol map has this method name, resolve safely
+      const owners = methodOwners.get(methodName);
+      if (owners && owners.length === 1) {
+        const key = `${owners[0]}.${methodName}`;
+        const targetSym = symbolMap.get(key);
+        if (targetSym) {
+          return {
+            sourceId: "",
+            targetId: targetSym.id,
+            sourceName: "",
+            targetName: key,
+            edgeType: "call",
+          };
         }
       }
 

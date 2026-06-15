@@ -32,6 +32,13 @@ export function registerTraceCommand(program: Command): void {
         const callGraphRepo = new CallGraphRepo(db);
         const symbolRepo = new SymbolRepo(db);
 
+        // Check if call_edges table has any data
+        if (callGraphRepo.totalCount() === 0) {
+          console.log("Call graph is empty. Run 'cesium index:symbols' first to build the call graph.");
+          db.close();
+          return;
+        }
+
         // Resolve symbol name to symbol ID
         const resolvedId = resolveSymbolId(symbol, symbolRepo);
         if (!resolvedId) {
@@ -70,25 +77,26 @@ function resolveSymbolId(
   input: string,
   symbolRepo: SymbolRepo,
 ): ResolvedSymbol | null {
+  const hasDot = input.includes(".");
+
   // Try as "ClassName.methodName" first
-  const dotIndex = input.indexOf(".");
-  if (dotIndex > 0) {
+  if (hasDot) {
+    const dotIndex = input.indexOf(".");
     const className = input.substring(0, dotIndex);
     const methodName = input.substring(dotIndex + 1);
 
-    const classSymbols = symbolRepo.findByName(className);
-    for (const cls of classSymbols) {
-      // Find method inside this class
-      const methodSymbols = symbolRepo.findByName(methodName);
-      for (const m of methodSymbols) {
-        if (m.parentClass === className) {
-          return {
-            id: m.id,
-            displayName: `${className}.${methodName}`,
-          };
-        }
+    const methodSymbols = symbolRepo.findByName(methodName);
+    for (const m of methodSymbols) {
+      if (m.parentClass === className) {
+        return {
+          id: m.id,
+          displayName: `${className}.${methodName}`,
+        };
       }
     }
+
+    // Dotted name with no exact match — do NOT fallback to FTS
+    return null;
   }
 
   // Try as a simple name (class, function, etc.)
@@ -105,7 +113,7 @@ function resolveSymbolId(
     };
   }
 
-  // Try FTS search as fallback
+  // Simple name with no exact match — try FTS as last resort
   const ftsResults = symbolRepo.searchFts(input, 5);
   if (ftsResults.length > 0) {
     const best = ftsResults[0];
