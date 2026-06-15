@@ -129,5 +129,19 @@ export function initSchema(db: Database): void {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    -- Call graph edges
+    CREATE TABLE IF NOT EXISTS call_edges (
+      source_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      source_name TEXT NOT NULL,
+      target_name TEXT NOT NULL,
+      edge_type TEXT NOT NULL,
+      weight REAL DEFAULT 1,
+      PRIMARY KEY (source_id, target_id, edge_type)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_call_source ON call_edges(source_id);
+    CREATE INDEX IF NOT EXISTS idx_call_target ON call_edges(target_id);
   `);
 }

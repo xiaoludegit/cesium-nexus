@@ -62,6 +62,9 @@ importers:
       tinyglobby:
         specifier: ^0.2.14
         version: 0.2.17
+      ts-morph:
+        specifier: ^25.0.0
+        version: 25.0.1
 
   packages/mcp:
     dependencies:

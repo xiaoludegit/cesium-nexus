@@ -18,6 +18,17 @@ export interface Edge {
   target: string;
 }
 
+export type CallEdgeType = "call" | "construct" | "static_call";
+
+export interface CallEdge {
+  sourceId: string;
+  targetId: string;
+  sourceName: string;
+  targetName: string;
+  edgeType: CallEdgeType;
+  weight?: number;
+}
+
 export interface IssueRecord {
   id: number;
   repo: string;

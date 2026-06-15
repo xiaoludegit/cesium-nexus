@@ -251,12 +251,22 @@ Camera
 
 相关 Issue。
 
-Milestone 4 ⬜ 待开始
+Milestone 4 ✅ 完成
 CallGraph
 
 目标：
 
 建立轻量调用关系。
+
+📝 实际实现：
+- call_edges 表（source_id/target_id/source_name/target_name/edge_type/weight），复合主键
+- edge_type 支持 call / construct / static_call 三种类型
+- CallGraphExtractor 使用 ts-morph TypeChecker 解析调用目标
+- 支持 this.method()、Class.method()、obj.method()（TypeChecker 解析）、new Class()、静态方法
+- 裸函数调用（如 update()）明确跳过，不猜测
+- 所有边必须关联 symbols 表，无法关联则 skip
+- CLI: cesium trace <symbol> --depth N --direction up|down，树状输出
+- 24 个测试全部通过（11 repo + 8 extractor + 5 e2e）
 
 限制：
 
@@ -265,16 +275,22 @@ CallGraph
 
 Schema
 
-interface Edge {
-  source: string
-  target: string
+interface CallEdge {
+  sourceId: string
+  targetId: string
+  sourceName: string
+  targetName: string
+  edgeType: "call" | "construct" | "static_call"
+  weight?: number
 }
 
 CLI
 
-cesium trace Viewer
+cesium trace Camera.update
 
-cesium trace Primitive.update
+cesium trace Camera.update --depth 3
+
+cesium trace Camera.update --direction up
 
 验收标准
 
@@ -284,7 +300,7 @@ upstream
 
 downstream
 
-关系。
+关系。树状格式（├─ └─），支持循环依赖检测。
 
 Milestone 5 ⬜ 待开始
 MCP Server

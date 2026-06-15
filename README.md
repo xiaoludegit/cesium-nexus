@@ -105,9 +105,14 @@ cesium search DrawCommand --name-only
 # Search issues (FTS5 + BM25 ranking)
 cesium issue DrawCommand
 cesium issue terrain --state open --limit 10
+
+# Trace call graph (tree output)
+cesium trace Camera.update
+cesium trace Camera.update --depth 3
+cesium trace Camera.update --direction up
 ```
 
-> **Upcoming CLI commands** (M4–M6): `cesium trace`, `cesium context`, `cesium status` — see [Milestones](#milestones-mvp--phase-1-can-query).
+> **Upcoming CLI commands** (M5–M6): `cesium context`, `cesium status` — see [Milestones](#milestones-mvp--phase-1-can-query).
 
 ### Use as an MCP server (for AI agents)
 
@@ -152,11 +157,16 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium issue <keywords>` | Full-text search across indexed GitHub Issues (BM25 ranking, `--state`, `--limit`) |
 
-### Upcoming (M4–M6)
+### Call Graph
+
+| Command | Description |
+|---|---|
+| `cesium trace <symbol>` | Trace call graph (tree output). `--depth N` (default 2), `--direction up\|down` (default down) |
+
+### Upcoming (M5–M6)
 
 | Command | Milestone | Description |
 |---|---|---|
-| `cesium trace <symbol>` | M4 | Trace upstream/downstream call relationships |
 | `cesium context <symbol>` | M6 | Build a Context Pack (structured JSON) for a symbol |
 
 ---
@@ -400,6 +410,7 @@ interface SymbolRecord {
   docComment?: string
   exports: string[]
   imports: string[]
+  parentClass?: string
 }
 ```
 
@@ -424,12 +435,18 @@ interface IssueRecord {
 }
 ```
 
-### Edge (CallGraph)
+### CallEdge (CallGraph)
 
 ```typescript
-interface Edge {
-  source: string
-  target: string
+type CallEdgeType = "call" | "construct" | "static_call";
+
+interface CallEdge {
+  sourceId: string
+  targetId: string
+  sourceName: string
+  targetName: string
+  edgeType: CallEdgeType
+  weight?: number
 }
 ```
 
@@ -439,19 +456,24 @@ interface Edge {
 CREATE TABLE symbols (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  kind TEXT NOT NULL,          -- class | function | method | enum
+  kind TEXT NOT NULL,          -- class | function | method | enum | constant
   file_path TEXT NOT NULL,
   start_line INTEGER,
   end_line INTEGER,
   doc_comment TEXT,
   exports TEXT,                -- JSON array
-  imports TEXT                 -- JSON array
+  imports TEXT,                -- JSON array
+  parent_class TEXT            -- enclosing class name (for methods)
 );
 
 CREATE TABLE call_edges (
-  source TEXT NOT NULL,
-  target TEXT NOT NULL,
-  PRIMARY KEY (source, target)
+  source_id TEXT NOT NULL,
+  target_id TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  target_name TEXT NOT NULL,
+  edge_type TEXT NOT NULL,     -- call | construct | static_call
+  weight REAL DEFAULT 1,
+  PRIMARY KEY (source_id, target_id, edge_type)
 );
 
 CREATE TABLE issues (
@@ -492,7 +514,7 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 | **M1: Symbol Index** | Build Cesium symbol database | Scan `packages/engine/Source`, extract symbols, store in SQLite | ✅ Done |
 | **M2: Source Retrieval** | Retrieve source code by symbol | `symbol`, `source`, `search` (source FTS) + CLI | ✅ Done |
 | **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ✅ Done |
-| **M4: CallGraph** | Build lightweight call relationships | Max depth 2, simple Edge schema + CLI | ⬜ Planned |
+| **M4: CallGraph** | Build lightweight call relationships | CallEdge schema, TypeChecker resolution, BFS traversal + `trace` CLI | ✅ Done |
 | **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` | ⬜ Planned |
 | **M6: Context Pack** | Build standard context packages | Output: `{symbol, source, callgraph, issues}` | ⬜ Planned |
 

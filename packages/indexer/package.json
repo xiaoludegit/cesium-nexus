@@ -17,6 +17,7 @@
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/parser": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",
-    "tinyglobby": "^0.2.14"
+    "tinyglobby": "^0.2.14",
+    "ts-morph": "^25.0.0"
   }
 }

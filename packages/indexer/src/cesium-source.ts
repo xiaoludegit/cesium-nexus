@@ -1,10 +1,12 @@
 import { SymbolExtractor } from "@cesium-nexus/parser";
-import { openDatabase, initSchema, SymbolRepo } from "@cesium-nexus/storage";
+import { openDatabase, initSchema, SymbolRepo, CallGraphRepo } from "@cesium-nexus/storage";
 import type { SourceFtsEntry } from "@cesium-nexus/storage";
 import type { SymbolRecord, SymbolKind, IndexSummary } from "@cesium-nexus/shared";
 import { glob } from "tinyglobby";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
+import { CallGraphExtractor, buildSymbolMap } from "./callgraph-extractor.js";
+import type { CallGraphStats } from "./callgraph-extractor.js";
 
 const SCAN_PATTERNS = [
   "packages/engine/Source/**/*.js",
@@ -78,7 +80,14 @@ export class CesiumIndexer {
     const sourceInserted = repo.insertSourceFts(sourceEntries);
     console.log(`[indexer] Indexed ${sourceInserted} source code snippets`);
 
-    // 6. Summary
+    // 6. Build call graph
+    console.log("[indexer] Building call graph...");
+    const callGraphRepo = new CallGraphRepo(db);
+    callGraphRepo.clear();
+    const callGraphStats = this.buildCallGraph(cesiumRoot, files, allSymbols, callGraphRepo);
+    this.printCallGraphSummary(callGraphStats);
+
+    // 7. Summary
     const duration = Date.now() - startTime;
     const summary: IndexSummary = {
       totalFiles: parsedFiles,
@@ -131,6 +140,42 @@ export class CesiumIndexer {
     }
 
     return entries;
+  }
+
+  private buildCallGraph(
+    cesiumRoot: string,
+    files: string[],
+    allSymbols: SymbolRecord[],
+    callGraphRepo: CallGraphRepo,
+  ): CallGraphStats {
+    const extractor = new CallGraphExtractor(cesiumRoot);
+    extractor.loadFiles(files);
+
+    const symbolMap = buildSymbolMap(allSymbols);
+    const { edges, stats } = extractor.extract(symbolMap, (current, total) => {
+      const pct = Math.round((current / total) * 100);
+      process.stdout.write(`\r[indexer] Call graph: ${current}/${total} files (${pct}%)`);
+    });
+    console.log(""); // newline after progress
+
+    if (edges.length > 0) {
+      callGraphRepo.insertEdges(edges);
+    }
+
+    return stats;
+  }
+
+  private printCallGraphSummary(stats: CallGraphStats): void {
+    console.log("\n╔══════════════════════════════════════╗");
+    console.log("║        Call Graph Summary            ║");
+    console.log("╠══════════════════════════════════════╣");
+    console.log(`║  Files scanned:   ${String(stats.filesScanned).padStart(7)}         ║`);
+    console.log(`║  Resolved calls:  ${String(stats.resolvedCalls).padStart(7)}         ║`);
+    console.log(`║  Construct calls: ${String(stats.constructCalls).padStart(7)}         ║`);
+    console.log(`║  Static calls:    ${String(stats.staticCalls).padStart(7)}         ║`);
+    console.log(`║  Unresolved:      ${String(stats.unresolvedCalls).padStart(7)}         ║`);
+    console.log(`║  Skipped dynamic: ${String(stats.skippedDynamicCalls).padStart(7)}         ║`);
+    console.log("╚══════════════════════════════════════╝\n");
   }
 
   private async discoverFiles(cesiumRoot: string): Promise<string[]> {

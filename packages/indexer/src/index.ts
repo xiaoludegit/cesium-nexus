@@ -11,3 +11,5 @@ export type {
   SyncResult,
   GitHubFetchOptions,
 } from "./github/github-issues.js";
+export { CallGraphExtractor, buildSymbolMap } from "./callgraph-extractor.js";
+export type { CallGraphStats } from "./callgraph-extractor.js";
