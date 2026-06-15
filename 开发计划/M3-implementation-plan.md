@@ -618,4 +618,28 @@ issue shadow --state open
 | 6 | CLI sync:issues | ✅ 完成 |
 | 7 | CLI issue 搜索 | ✅ 完成 |
 | 8 | Shared Types 扩展 | ✅ 完成 |
-| 9 | 测试 (11 unit + 6 mapper = 17 passed) | ✅ 完成 |
+| 9 | 测试 (13 unit + 6 mapper = 19 passed) | ✅ 完成 |
+| 10 | 审核整改 (5 P1/P2) | ✅ 完成 |
+
+## 审核整改 (2026-06-15)
+
+> 📝 审核整改：审核文档 `计划审核/M3-review-2026-06-15.md` 提出 2 个 P1 + 3 个 P2 问题，已全部修复。
+
+### P1: 增量同步游标漏数
+- 原实现：同步成功后写入 `new Date().toISOString()` 作为游标
+- 修复：改为本轮返回结果中的 `max(updatedAt)`，无结果则保留旧游标
+
+### P1: 多仓库游标未隔离
+- 原实现：`github_issues_last_sync` 固定 key，所有仓库共用
+- 修复：改为 `github_issues_last_sync:owner/repo`，按仓库隔离
+- 新增测试：`should isolate sync cursors between different repos`
+
+### P2: clear() 清理语义不完整
+- 原实现：只删 `issues` 表
+- 修复：`clear(repo?)` 支持按仓库清理 issues + 该仓库游标；`clear()` 清空所有 issues + 所有 issue 相关游标
+
+### P2: --limit 缺少输入校验
+- 修复：`Number.isInteger(limit) && limit > 0 && limit <= 1000`
+
+### P2: 文档状态未同步
+- 修复：README 中未实现能力（trace/context/status/MCP）标注为 Planned (M4–M6)
