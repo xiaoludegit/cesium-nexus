@@ -151,27 +151,67 @@ describe("IssueRepo", () => {
 
   // ---- Sync Cursor ----
 
-  it("should get/set sync cursor from meta table", () => {
-    expect(repo.getSyncCursor()).toBeNull();
+  it("should get/set sync cursor per repo", () => {
+    const repo1 = "CesiumGS/cesium";
+    expect(repo.getSyncCursor(repo1)).toBeNull();
 
-    repo.setSyncCursor("2024-06-01T12:00:00Z");
-    expect(repo.getSyncCursor()).toBe("2024-06-01T12:00:00Z");
+    repo.setSyncCursor(repo1, "2024-06-01T12:00:00Z");
+    expect(repo.getSyncCursor(repo1)).toBe("2024-06-01T12:00:00Z");
 
-    repo.setSyncCursor("2024-06-02T08:00:00Z");
-    expect(repo.getSyncCursor()).toBe("2024-06-02T08:00:00Z");
+    repo.setSyncCursor(repo1, "2024-06-02T08:00:00Z");
+    expect(repo.getSyncCursor(repo1)).toBe("2024-06-02T08:00:00Z");
+  });
+
+  it("should isolate sync cursors between different repos", () => {
+    const repo1 = "CesiumGS/cesium";
+    const repo2 = "OtherOrg/other-repo";
+
+    repo.setSyncCursor(repo1, "2024-01-01T00:00:00Z");
+    repo.setSyncCursor(repo2, "2024-06-01T00:00:00Z");
+
+    expect(repo.getSyncCursor(repo1)).toBe("2024-01-01T00:00:00Z");
+    expect(repo.getSyncCursor(repo2)).toBe("2024-06-01T00:00:00Z");
+
+    // Updating one repo's cursor must not affect the other
+    repo.setSyncCursor(repo1, "2024-12-01T00:00:00Z");
+    expect(repo.getSyncCursor(repo1)).toBe("2024-12-01T00:00:00Z");
+    expect(repo.getSyncCursor(repo2)).toBe("2024-06-01T00:00:00Z");
   });
 
   // ---- Clear ----
 
-  it("should clear all issues", () => {
+  it("should clear all issues and all sync cursors", () => {
     repo.upsertMany([
-      makeIssue({ id: 1, number: 1 }),
-      makeIssue({ id: 2, number: 2 }),
+      makeIssue({ id: 1, number: 1, repo: "A/b" }),
+      makeIssue({ id: 2, number: 2, repo: "C/d" }),
     ]);
+    repo.setSyncCursor("A/b", "2024-01-01T00:00:00Z");
+    repo.setSyncCursor("C/d", "2024-02-01T00:00:00Z");
     expect(repo.totalCount()).toBe(2);
 
     repo.clear();
     expect(repo.totalCount()).toBe(0);
     expect(repo.searchFts("DrawCommand")).toEqual([]);
+    expect(repo.getSyncCursor("A/b")).toBeNull();
+    expect(repo.getSyncCursor("C/d")).toBeNull();
+  });
+
+  it("should clear only the specified repo's issues and cursor", () => {
+    repo.upsertMany([
+      makeIssue({ id: 1, number: 1, repo: "A/b", title: "Repo A issue" }),
+      makeIssue({ id: 2, number: 2, repo: "C/d", title: "Repo C issue" }),
+    ]);
+    repo.setSyncCursor("A/b", "2024-01-01T00:00:00Z");
+    repo.setSyncCursor("C/d", "2024-02-01T00:00:00Z");
+
+    repo.clear("A/b");
+    expect(repo.totalCount()).toBe(1);
+    expect(repo.getSyncCursor("A/b")).toBeNull();
+    expect(repo.getSyncCursor("C/d")).toBe("2024-02-01T00:00:00Z");
+
+    // The remaining issue should be from repo C/d
+    const results = repo.searchFts("Repo");
+    expect(results.length).toBe(1);
+    expect(results[0].issue.repo).toBe("C/d");
   });
 });

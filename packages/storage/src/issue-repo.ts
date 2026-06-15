@@ -115,25 +115,37 @@ export class IssueRepo {
     return row.count;
   }
 
-  getSyncCursor(): string | null {
+  getSyncCursor(repo: string): string | null {
     const stmt = this.db.prepare(
       `SELECT value FROM meta WHERE key = ?`,
     );
-    const row = stmt.get("github_issues_last_sync") as
+    const row = stmt.get(`github_issues_last_sync:${repo}`) as
       | { value: string }
       | undefined;
     return row?.value ?? null;
   }
 
-  setSyncCursor(timestamp: string): void {
+  setSyncCursor(repo: string, timestamp: string): void {
     const stmt = this.db.prepare(
       `INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)`,
     );
-    stmt.run("github_issues_last_sync", timestamp);
+    stmt.run(`github_issues_last_sync:${repo}`, timestamp);
   }
 
-  clear(): void {
-    this.db.exec(`DELETE FROM issues`);
+  clear(repo?: string): void {
+    if (repo) {
+      // Clear only this repo's issues and its sync cursor
+      this.db.prepare(`DELETE FROM issues WHERE repo = ?`).run(repo);
+      this.db
+        .prepare(`DELETE FROM meta WHERE key = ?`)
+        .run(`github_issues_last_sync:${repo}`);
+    } else {
+      // Clear all issues and all issue sync cursors
+      this.db.exec(`DELETE FROM issues`);
+      this.db.exec(
+        `DELETE FROM meta WHERE key LIKE 'github_issues_last_sync:%'`,
+      );
+    }
   }
 
   private rowToRecord(row: IssueRow): IssueRecord {

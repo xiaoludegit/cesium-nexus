@@ -29,9 +29,10 @@ export function registerIssueCommands(program: Command): void {
     }) => {
       const resolvedDb = path.resolve(opts.db);
       const token = opts.token ?? process.env.GITHUB_TOKEN;
+      const repoSlug = `${opts.owner}/${opts.repo}`;
 
       console.log(`Database: ${resolvedDb}`);
-      console.log(`Repo:     ${opts.owner}/${opts.repo}`);
+      console.log(`Repo:     ${repoSlug}`);
       console.log(`Mode:     ${opts.full ? "full sync" : "incremental"}`);
       if (!token) {
         console.log(`Auth:     none (rate limit: 60 req/h)\n`);
@@ -45,10 +46,10 @@ export function registerIssueCommands(program: Command): void {
         let since: string | null = null;
 
         if (opts.full) {
-          console.log("Clearing existing issues...");
-          repo.clear();
+          console.log(`Clearing existing issues for ${repoSlug}...`);
+          repo.clear(repoSlug);
         } else {
-          since = repo.getSyncCursor();
+          since = repo.getSyncCursor(repoSlug);
           if (since) {
             console.log(`Incremental sync since: ${since}`);
           } else {
@@ -71,10 +72,14 @@ export function registerIssueCommands(program: Command): void {
           console.log(`Upserted ${inserted} issues into database`);
         }
 
-        // Update sync cursor
-        const cursor = new Date().toISOString();
-        repo.setSyncCursor(cursor);
-        console.log(`Sync cursor updated: ${cursor}`);
+        // Update sync cursor: use max updatedAt from results to avoid
+        // missing issues updated between sync start and now
+        if (result.maxUpdatedAt) {
+          repo.setSyncCursor(repoSlug, result.maxUpdatedAt);
+          console.log(`Sync cursor updated: ${result.maxUpdatedAt}`);
+        } else {
+          console.log("No issues fetched, cursor unchanged.");
+        }
 
         db.close();
       } catch (err) {
@@ -99,15 +104,21 @@ export function registerIssueCommands(program: Command): void {
     .option("--limit <n>", "Max results", "20")
     .option("--state <state>", "Filter by state (open/closed)")
     .action((keyword: string[], opts: { db: string; limit: string; state?: string }) => {
-      const { repo, db } = getIssueRepo(path.resolve(opts.db));
+      // Validate --limit
       const limit = parseInt(opts.limit, 10);
-      const state = opts.state as "open" | "closed" | undefined;
+      if (!Number.isInteger(limit) || limit <= 0 || limit > 1000) {
+        console.error("--limit must be an integer between 1 and 1000");
+        process.exit(1);
+      }
 
+      // Validate --state
+      const state = opts.state as "open" | "closed" | undefined;
       if (state && state !== "open" && state !== "closed") {
         console.error("--state must be 'open' or 'closed'");
         process.exit(1);
       }
 
+      const { repo, db } = getIssueRepo(path.resolve(opts.db));
       const query = keyword.join(" ");
       const results = repo.searchFts(query, { limit, state });
 
@@ -119,7 +130,7 @@ export function registerIssueCommands(program: Command): void {
 
       console.log(`\nFound ${results.length} result(s) for "${query}":\n`);
 
-      for (const { issue, score } of results) {
+      for (const { issue } of results) {
         console.log(`  #${issue.number}  ${issue.title}`);
         console.log(`  state: ${issue.state}  updated: ${issue.updatedAt.slice(0, 10)}`);
         if (issue.labels.length > 0) {

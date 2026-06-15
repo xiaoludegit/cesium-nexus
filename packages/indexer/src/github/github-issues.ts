@@ -138,6 +138,7 @@ export interface SyncResult {
   issues: IssueRecord[];
   totalPages: number;
   prsFiltered: number;
+  maxUpdatedAt: string | null;
 }
 
 export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
@@ -159,6 +160,7 @@ export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
   const issues: IssueRecord[] = [];
   let prsFiltered = 0;
   let totalPages = 0;
+  let maxUpdatedAt: string | null = null;
   let nextUrl: string | null = baseUrl;
 
   while (nextUrl) {
@@ -174,7 +176,13 @@ export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
         prsFiltered++;
         continue;
       }
-      issues.push(mapGitHubIssue(item, repoSlug));
+      const record = mapGitHubIssue(item, repoSlug);
+      issues.push(record);
+
+      // Track the maximum updatedAt for sync cursor
+      if (!maxUpdatedAt || record.updatedAt > maxUpdatedAt) {
+        maxUpdatedAt = record.updatedAt;
+      }
     }
 
     console.log(`Indexed ${issues.length} issues...`);
@@ -185,5 +193,5 @@ export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
 
   console.log("Issue sync complete.");
 
-  return { issues, totalPages, prsFiltered };
+  return { issues, totalPages, prsFiltered, maxUpdatedAt };
 }

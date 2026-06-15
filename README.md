@@ -75,17 +75,17 @@ pnpm run build
 ### Build the knowledge base
 
 ```bash
-# Index Cesium symbols (packages/engine/Source)
+# Index Cesium symbols (packages/engine/Source + packages/widgets/Source)
 cesium index:symbols
 
-# Sync GitHub Issues
-cesium sync:issues
+# Sync GitHub Issues (first sync needs a token: 5000 req/h)
+cesium sync:issues --token ghp_xxx
 
-# Check index status
-cesium status
+# Subsequent syncs are incremental
+cesium sync:issues
 ```
 
-First-time indexing takes 10–20 minutes. Subsequent `cesium sync:issues` runs are incremental.
+First-time indexing takes 5–10 minutes. Subsequent `cesium sync:issues` runs are incremental.
 
 ### Use the CLI
 
@@ -102,13 +102,12 @@ cesium search DrawCommand
 # Search only symbol names and doc comments
 cesium search DrawCommand --name-only
 
-# Search issues
+# Search issues (FTS5 + BM25 ranking)
 cesium issue DrawCommand
-
-# Trace the call graph
-cesium trace Viewer
-cesium trace Primitive.update
+cesium issue terrain --state open --limit 10
 ```
+
+> **Upcoming CLI commands** (M4–M6): `cesium trace`, `cesium context`, `cesium status` — see [Milestones](#milestones-mvp--phase-1-can-query).
 
 ### Use as an MCP server (for AI agents)
 
@@ -136,9 +135,8 @@ The server starts on stdio and exposes all MCP tools automatically.
 
 | Command | Description |
 |---|---|
-| `cesium index:symbols` | Scan `packages/engine/Source`, extract symbols into SQLite |
-| `cesium sync:issues` | Sync CesiumGS/cesium GitHub Issues (incremental) |
-| `cesium status` | Show index health: record counts, last sync |
+| `cesium index:symbols` | Scan Cesium source, extract symbols into SQLite |
+| `cesium sync:issues` | Sync CesiumGS/cesium GitHub Issues (incremental, `--full` for rebuild) |
 
 ### Symbol & Source
 
@@ -148,29 +146,26 @@ The server starts on stdio and exposes all MCP tools automatically.
 | `cesium source <symbolId>` | Get source code for a symbol (use ID from `symbol` output) |
 | `cesium search <keyword>` | Full-text search across source code text (FTS5). Add `--name-only` for symbol name search |
 
-### Call Graph
-
-| Command | Description |
-|---|---|
-| `cesium trace <symbol>` | Trace upstream/downstream call relationships (max depth 2) |
-
 ### Issue Search
 
 | Command | Description |
 |---|---|
-| `cesium issue <keywords>` | Full-text search across indexed GitHub Issues |
+| `cesium issue <keywords>` | Full-text search across indexed GitHub Issues (BM25 ranking, `--state`, `--limit`) |
 
-### Context Pack
+### Upcoming (M4–M6)
 
-| Command | Description |
-|---|---|
-| `cesium context <symbol>` | Build a Context Pack (structured JSON) for a symbol |
+| Command | Milestone | Description |
+|---|---|---|
+| `cesium trace <symbol>` | M4 | Trace upstream/downstream call relationships |
+| `cesium context <symbol>` | M6 | Build a Context Pack (structured JSON) for a symbol |
 
 ---
 
-## MCP Tools Reference (MVP)
+## MCP Tools Reference (M5 — Planned)
 
-When running as an MCP server (`cesium mcp`), the following tools are available to agents:
+> MCP server is planned for M5. The following tools will be available once M5 is complete.
+
+When running as an MCP server (`cesium mcp`), the following tools will be available to agents:
 
 | Tool | Input | Output |
 |---|---|---|
@@ -193,9 +188,11 @@ All tools return JSON with a standard envelope:
 
 ---
 
-## Context Pack Format (MVP)
+## Context Pack Format (M6 — Planned)
 
-`build_context_pack` tool and `cesium context` command return a structured JSON object consumed by an LLM:
+> Context Pack builder is planned for M6. The following format will be used once M6 is complete.
+
+`build_context_pack` tool and `cesium context` command will return a structured JSON object consumed by an LLM:
 
 ```json
 {
