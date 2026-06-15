@@ -20,12 +20,24 @@ export interface Edge {
 
 export interface IssueRecord {
   id: number;
+  repo: string;
+  number: number;
   title: string;
+  body: string;
   state: string;
   labels: string[];
-  body: string;
+  assignees: string[];
+  author: string;
+  comments: number;
   createdAt: string;
   updatedAt: string;
+  closedAt: string | null;
+  htmlUrl: string;
+}
+
+export interface IssueSearchResult {
+  issue: IssueRecord;
+  score: number;
 }
 
 export interface ContextPack {

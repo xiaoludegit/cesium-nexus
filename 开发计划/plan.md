@@ -199,12 +199,16 @@ cesium search DrawCommand --name-only
 源码片段
 文件路径
 行号
-Milestone 3 ⬜ 待开始
+Milestone 3 ✅ 完成
 Issue Index
 
 目标：
 
 建立 GitHub Issue 本地索引。
+
+实现：
+
+> 📝 执行更新：`IssueRecord` 扩展为包含 `repo`/`number`/`assignees`/`author`/`comments`/`closedAt`/`htmlUrl` 等字段，支持多仓库。新增 `meta` 表存储同步游标（`github_issues_last_sync`），不依赖 `MAX(updated_at)`。FTS5 使用 `bm25()` 排序，`searchFts` 支持 `state` 过滤。GitHub API 使用 Node 22 原生 `fetch()`，不引入 octokit。`githubFetch()` 统一处理 Authorization、User-Agent、Rate Limit。
 
 同步：
 
@@ -214,18 +218,19 @@ Schema
 
 interface IssueRecord {
   id: number
-
+  repo: string
+  number: number
   title: string
-
   state: string
-
   labels: string[]
-
+  assignees: string[]
+  author: string
+  comments: number
   body: string
-
   createdAt: string
-
   updatedAt: string
+  closedAt: string | null
+  htmlUrl: string
 }
 
 CLI

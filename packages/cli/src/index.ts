@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { registerIndexCommand } from "./commands/index-cmd.js";
 import { registerQueryCommands } from "./commands/query-cmd.js";
+import { registerIssueCommands } from "./commands/issue-cmd.js";
 
 const program = new Command();
 
@@ -11,5 +12,6 @@ program
 
 registerIndexCommand(program);
 registerQueryCommands(program);
+registerIssueCommands(program);
 
 program.parse();

@@ -411,12 +411,19 @@ interface SymbolRecord {
 ```typescript
 interface IssueRecord {
   id: number
+  repo: string
+  number: number
   title: string
   state: string
   labels: string[]
+  assignees: string[]
+  author: string
+  comments: number
   body: string
   createdAt: string
   updatedAt: string
+  closedAt: string | null
+  htmlUrl: string
 }
 ```
 
@@ -452,18 +459,31 @@ CREATE TABLE call_edges (
 
 CREATE TABLE issues (
   id INTEGER PRIMARY KEY,
+  repo TEXT NOT NULL,
+  number INTEGER NOT NULL,
   title TEXT NOT NULL,
-  state TEXT NOT NULL,
-  labels TEXT,                 -- JSON array
   body TEXT,
+  state TEXT,
+  labels TEXT,                 -- JSON array
+  assignees TEXT,              -- JSON array
+  author TEXT,
+  comments INTEGER,
   created_at TEXT,
-  updated_at TEXT
+  updated_at TEXT,
+  closed_at TEXT,
+  html_url TEXT,
+  UNIQUE(repo, number)
+);
+
+CREATE TABLE meta (
+  key TEXT PRIMARY KEY,
+  value TEXT
 );
 
 -- Full-text search indexes
 CREATE VIRTUAL TABLE symbols_fts USING fts5(name, doc_comment, content=symbols, content_rowid=rowid);
-CREATE VIRTUAL TABLE source_fts USING fts5(name, code, content='external');
-CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_rowid=rowid);
+CREATE VIRTUAL TABLE source_fts USING fts5(code, content=source_code, content_rowid=rowid);
+CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_rowid=id);
 ```
 
 ---
@@ -474,7 +494,7 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 |---|---|---|---|
 | **M1: Symbol Index** | Build Cesium symbol database | Scan `packages/engine/Source`, extract symbols, store in SQLite | ✅ Done |
 | **M2: Source Retrieval** | Retrieve source code by symbol | `symbol`, `source`, `search` (source FTS) + CLI | ✅ Done |
-| **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ⬜ Planned |
+| **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ✅ Done |
 | **M4: CallGraph** | Build lightweight call relationships | Max depth 2, simple Edge schema + CLI | ⬜ Planned |
 | **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` | ⬜ Planned |
 | **M6: Context Pack** | Build standard context packages | Output: `{symbol, source, callgraph, issues}` | ⬜ Planned |
