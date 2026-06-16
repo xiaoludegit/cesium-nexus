@@ -55,6 +55,9 @@ export interface ContextPackMetadata {
   totalTokens: number;
   truncated: boolean;
   symbolResolved: string;
+  tokenBudget: number;
+  unavoidableOverflow?: boolean;
+  minimumPossibleTokens?: number;
 }
 
 export interface ContextPack {

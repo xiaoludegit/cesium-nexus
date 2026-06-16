@@ -176,12 +176,13 @@ export async function handleBuildContextPack(
   symbolRepo: SymbolRepo,
   callGraphRepo: CallGraphRepo,
   issueRepo: IssueRepo,
-  input: { symbol: string; depth?: number },
+  input: { symbol: string; depth?: number; budget?: number },
 ): Promise<ToolResponse> {
   try {
     const result = buildContextPack(symbolRepo, callGraphRepo, issueRepo, {
       symbol: input.symbol,
       depth: input.depth,
+      tokenBudget: input.budget,
     });
 
     if ("error" in result) {

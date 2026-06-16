@@ -231,6 +231,22 @@ describe("MCP Protocol Integration", () => {
     expect(parsed.error).toContain("Symbol not found");
   });
 
+  it("tools/call build_context_pack respects budget parameter", async () => {
+    const result = await client.callTool({
+      name: "build_context_pack",
+      arguments: { symbol: "Viewer", depth: 2, budget: 500 },
+    });
+
+    expect(result.content).toHaveLength(1);
+    const text = (result.content[0] as { type: string; text: string }).text;
+    const parsed = JSON.parse(text);
+    expect(parsed.success).toBe(true);
+    const pack = parsed.data;
+    expect(pack.metadata).toBeDefined();
+    expect(pack.metadata.tokenBudget).toBe(500);
+    expect(pack.metadata.totalTokens).toBeLessThanOrEqual(500);
+  });
+
   it("tools/call with invalid input returns error", async () => {
     const result = await client.callTool({
       name: "search_symbol",

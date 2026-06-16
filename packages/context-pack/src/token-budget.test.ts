@@ -354,7 +354,9 @@ describe("truncateContextPack", () => {
       issues: [makeIssue()],
     };
 
-    const budget = 50;
+    // budget=60 is achievable; minimum possible pack ≈ 53 tokens
+    // (symbol JSON ≈ 38 + empty source snippet overhead ≈ 15)
+    const budget = 60;
     const result = truncateContextPack(pack, budget);
 
     expect(result.metadata!.truncated).toBe(true);
@@ -362,5 +364,35 @@ describe("truncateContextPack", () => {
     // Issues and callgraph should be dropped
     expect(result.issues).toEqual([]);
     expect(result.callgraph).toEqual([]);
+  });
+
+  it("marks unavoidableOverflow when budget is smaller than minimum symbol", () => {
+    const pack: ContextPack = {
+      symbol: makeSymbol({ docComment: "Some documentation text" }),
+      source: [
+        { symbol: "Main", file: "main.js", lineStart: 1, lineEnd: 50, code: "code here" },
+      ],
+      callgraph: [{ source: "Main", target: "Other" }],
+      issues: [makeIssue()],
+    };
+
+    const budget = 10;
+    const result = truncateContextPack(pack, budget);
+
+    expect(result.metadata!.truncated).toBe(true);
+    expect(result.metadata!.tokenBudget).toBe(10);
+    expect(result.metadata!.unavoidableOverflow).toBe(true);
+    expect(result.metadata!.minimumPossibleTokens).toBeGreaterThan(10);
+    // All trimmable sections should be emptied
+    expect(result.issues).toEqual([]);
+    expect(result.callgraph).toEqual([]);
+  });
+
+  it("includes tokenBudget in metadata for normal budget", () => {
+    const pack = makeSmallPack();
+    const result = truncateContextPack(pack, 5000);
+
+    expect(result.metadata!.tokenBudget).toBe(5000);
+    expect(result.metadata!.unavoidableOverflow).toBeUndefined();
   });
 });

@@ -181,7 +181,6 @@ export function truncateContextPack(
   //   5. Shrink symbol docComment
 
   let totalTokens = estimatePackTokens(pack);
-  console.log("[DEBUG] Phase 2 start: totalTokens=", totalTokens, "budget=", budget);
 
   if (totalTokens > budget) {
     truncated = true;
@@ -193,21 +192,16 @@ export function truncateContextPack(
       pack = { ...pack, source: sources };
     }
     totalTokens = estimatePackTokens(pack);
-    console.log("[DEBUG] After step 1 (drop downstream): totalTokens=", totalTokens, "sources.length=", pack.source.length);
 
     // 2. Truncate main source code
     if (totalTokens > budget && pack.source.length > 0) {
       const main = pack.source[0];
       const overheadTokens = totalTokens - (estimateTokens(main.code) + 20);
       const maxMainTokens = Math.max(0, budget - overheadTokens);
-      console.log("[DEBUG] Step 2: overheadTokens=", overheadTokens, "maxMainTokens=", maxMainTokens, "mainCodeTokens=", estimateTokens(main.code) + 20);
       if (maxMainTokens < estimateTokens(main.code) + 20) {
         const result = truncateText(main.code, Math.max(0, maxMainTokens));
         pack = { ...pack, source: [{ ...main, code: result.text }] };
         totalTokens = estimatePackTokens(pack);
-        console.log("[DEBUG] After step 2 (truncate main): totalTokens=", totalTokens);
-      } else {
-        console.log("[DEBUG] Step 2: skipped (maxMainTokens >= mainCodeTokens)");
       }
     }
 
@@ -218,7 +212,6 @@ export function truncateContextPack(
       pack = { ...pack, issues };
     }
     totalTokens = estimatePackTokens(pack);
-    console.log("[DEBUG] After step 3 (drop issues): totalTokens=", totalTokens, "issues.length=", pack.issues.length);
 
     // 4. Drop callgraph edges (from last to first)
     let edges = [...pack.callgraph];
@@ -227,38 +220,41 @@ export function truncateContextPack(
       pack = { ...pack, callgraph: edges };
     }
     totalTokens = estimatePackTokens(pack);
-    console.log("[DEBUG] After step 4 (drop callgraph): totalTokens=", totalTokens, "callgraph.length=", pack.callgraph.length);
 
     // 5. Shrink symbol docComment
     if (totalTokens > budget && pack.symbol.docComment) {
       const symOverhead = totalTokens - estimateTokens(pack.symbol.docComment);
       const maxDocTokens = Math.max(0, budget - symOverhead);
-      console.log("[DEBUG] Step 5: symOverhead=", symOverhead, "maxDocTokens=", maxDocTokens, "docTokens=", estimateTokens(pack.symbol.docComment));
       const result = truncateText(pack.symbol.docComment, maxDocTokens);
       pack = { ...pack, symbol: { ...pack.symbol, docComment: result.text } };
       totalTokens = estimatePackTokens(pack);
-      console.log("[DEBUG] After step 5 (shrink doc): totalTokens=", totalTokens);
     }
 
     // 6. Strip optional symbol fields (exports, imports, parentClass)
     if (totalTokens > budget) {
-      console.log("[DEBUG] Step 6: stripping optional fields. symbol JSON before:", JSON.stringify(pack.symbol).length, "chars");
       const sym = { ...pack.symbol, exports: [], imports: [], parentClass: undefined, docComment: undefined };
       pack = { ...pack, symbol: sym };
       totalTokens = estimatePackTokens(pack);
-      console.log("[DEBUG] After step 6 (strip fields): totalTokens=", totalTokens, "symbol JSON:", JSON.stringify(pack.symbol));
     }
   }
 
   // Attach metadata
+  const finalTokens = estimatePackTokens(pack);
+  const unavoidableOverflow = finalTokens > budget;
+
   return {
     ...pack,
     metadata: {
-      totalTokens,
+      totalTokens: finalTokens,
       truncated,
       symbolResolved: pack.symbol.parentClass
         ? `${pack.symbol.parentClass}.${pack.symbol.name}`
         : pack.symbol.name,
+      tokenBudget: budget,
+      ...(unavoidableOverflow && {
+        unavoidableOverflow: true,
+        minimumPossibleTokens: finalTokens,
+      }),
     },
   };
 }

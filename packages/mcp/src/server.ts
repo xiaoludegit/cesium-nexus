@@ -106,10 +106,11 @@ export function registerTools(
   // ── build_context_pack ─────────────────────────────────────
   server.tool(
     "build_context_pack",
-    "Build a structured Context Pack for a Cesium symbol (symbol + source + callgraph + issues)",
+    "Build a structured Context Pack for a Cesium symbol (symbol + source + callgraph + issues). Accepts an optional token budget to control output size.",
     {
       symbol: z.string().min(1),
       depth: z.number().int().min(1).max(5).default(2),
+      budget: z.number().int().min(100).default(5000),
     },
     async (input) => {
       const result = await handleBuildContextPack(

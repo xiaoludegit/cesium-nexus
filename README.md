@@ -189,7 +189,7 @@ When running as an MCP server (`cesium mcp`), the following tools are available 
 | `get_source` | `{ symbol_id }` | Source code snippet + file path + line range |
 | `search_issue` | `{ query, limit?, state? }` | Issue results with title, state, labels, body |
 | `trace_callgraph` | `{ symbol, direction?, depth? }` | Upstream/downstream call relationships |
-| `build_context_pack` | `{ symbol, depth? }` | Full Context Pack: `{symbol, source, callgraph, issues}` with token budget truncation |
+| `build_context_pack` | `{ symbol, depth?, budget? }` | Full Context Pack: `{symbol, source, callgraph, issues}` with token budget truncation |
 
 All tools return JSON with a standard envelope:
 
@@ -249,12 +249,13 @@ The `build_context_pack` MCP tool and `cesium context` CLI command return a stru
   "metadata": {
     "totalTokens": 3420,
     "truncated": false,
-    "symbolResolved": "Primitive.update"
+    "symbolResolved": "Primitive.update",
+    "tokenBudget": 5000
   }
 }
 ```
 
-Token budget: 4000–6000 tokens. Hardcoded section limits with truncation on overflow.
+Token budget: configurable via `--budget N` (CLI) or `budget` parameter (MCP), default 5000 tokens. Phase 1 applies per-section limits; Phase 2 progressively trims content (downstream sources → main source → issues → callgraph → docComment → optional symbol fields) until `totalTokens ≤ budget`. When the budget is smaller than the minimum possible pack, `metadata.unavoidableOverflow` is set to `true` with `metadata.minimumPossibleTokens` indicating the floor.
 
 ---
 
