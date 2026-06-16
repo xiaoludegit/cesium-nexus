@@ -130,6 +130,7 @@ dist
 
 # cesium-nexus
 # database/
+.worktrees/
 
 # yarn v3
 .pnp.*
