@@ -13,8 +13,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@cesium-nexus/context-pack": "workspace:*",
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/indexer": "workspace:*",
+    "@cesium-nexus/mcp": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",
     "commander": "^13.1.0"
   }

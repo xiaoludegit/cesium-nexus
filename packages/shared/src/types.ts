@@ -51,11 +51,18 @@ export interface IssueSearchResult {
   score: number;
 }
 
+export interface ContextPackMetadata {
+  totalTokens: number;
+  truncated: boolean;
+  symbolResolved: string;
+}
+
 export interface ContextPack {
   symbol: SymbolRecord;
   source: SourceSnippet[];
   callgraph: Edge[];
   issues: IssueRecord[];
+  metadata?: ContextPackMetadata;
 }
 
 export interface SourceSnippet {

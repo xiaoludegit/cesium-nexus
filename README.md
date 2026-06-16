@@ -110,9 +110,11 @@ cesium issue terrain --state open --limit 10
 cesium trace Camera.update
 cesium trace Camera.update --depth 3
 cesium trace Camera.update --direction up
-```
 
-> **Upcoming CLI commands** (M5–M6): `cesium context`, `cesium status` — see [Milestones](#milestones-mvp--phase-1-can-query).
+# Build a Context Pack (structured JSON for LLM consumption)
+cesium context Primitive.update
+cesium context Viewer --depth 3
+```
 
 ### Use as an MCP server (for AI agents)
 
@@ -122,8 +124,8 @@ Add to your MCP config (`~/.config/claude/claude_desktop_config.json` or equival
 {
   "mcpServers": {
     "cesium": {
-      "command": "cesium-nexus",
-      "args": ["mcp"],
+      "command": "node",
+      "args": ["path/to/cesium-nexus/packages/cli/dist/index.js", "mcp"],
       "env": {}
     }
   }
@@ -163,27 +165,31 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium trace <symbol>` | Trace call graph (tree output). `--depth N` (default 2), `--direction up\|down` (default down) |
 
-### Upcoming (M5–M6)
+### Context Pack
 
-| Command | Milestone | Description |
-|---|---|---|
-| `cesium context <symbol>` | M6 | Build a Context Pack (structured JSON) for a symbol |
+| Command | Description |
+|---|---|
+| `cesium context <symbol>` | Build a Context Pack (structured JSON) for a symbol. `--depth N`, `--issue-limit N`, `--budget N` |
+
+### MCP Server
+
+| Command | Description |
+|---|---|
+| `cesium mcp` | Start MCP server on stdio transport (for AI agents). `--db <path>` for custom DB |
 
 ---
 
-## MCP Tools Reference (M5 — Planned)
+## MCP Tools Reference
 
-> MCP server is planned for M5. The following tools will be available once M5 is complete.
-
-When running as an MCP server (`cesium mcp`), the following tools will be available to agents:
+When running as an MCP server (`cesium mcp`), the following tools are available to agents:
 
 | Tool | Input | Output |
 |---|---|---|
 | `search_symbol` | `{ query, limit? }` | Symbol candidate list with name, kind, file path |
 | `get_source` | `{ symbol_id }` | Source code snippet + file path + line range |
-| `search_issue` | `{ query, limit? }` | Issue results with title, state, labels, body |
+| `search_issue` | `{ query, limit?, state? }` | Issue results with title, state, labels, body |
 | `trace_callgraph` | `{ symbol, direction?, depth? }` | Upstream/downstream call relationships |
-| `build_context_pack` | `{ symbol }` | Full Context Pack JSON: `{symbol, source, callgraph, issues}` |
+| `build_context_pack` | `{ symbol, depth? }` | Full Context Pack: `{symbol, source, callgraph, issues}` with token budget truncation |
 
 All tools return JSON with a standard envelope:
 
@@ -198,11 +204,9 @@ All tools return JSON with a standard envelope:
 
 ---
 
-## Context Pack Format (M6 — Planned)
+## Context Pack Format (M6)
 
-> Context Pack builder is planned for M6. The following format will be used once M6 is complete.
-
-`build_context_pack` tool and `cesium context` command will return a structured JSON object consumed by an LLM:
+The `build_context_pack` MCP tool and `cesium context` CLI command return a structured JSON object consumed by an LLM:
 
 ```json
 {
@@ -240,7 +244,13 @@ All tools return JSON with a standard envelope:
       "labels": ["bug", "performance"],
       "body": "..."
     }
-  ]
+  ],
+
+  "metadata": {
+    "totalTokens": 3420,
+    "truncated": false,
+    "symbolResolved": "Primitive.update"
+  }
 }
 ```
 
@@ -267,6 +277,7 @@ cesium-nexus/
 │   │   └── src/
 │   │       ├── schema.ts            # Table definitions + FTS5 virtual tables
 │   │       ├── symbol-repo.ts       # Symbol CRUD + queries
+│   │       ├── symbol-resolver.ts   # Shared symbol name→ID resolution
 │   │       ├── callgraph-repo.ts    # CallGraph traversal (BFS, depth-limited)
 │   │       └── issue-repo.ts        # Issue queries + full-text search
 │   │
@@ -278,17 +289,14 @@ cesium-nexus/
 │   │           ├── sync-cmd.ts      # cesium sync:issues
 │   │           ├── symbol-cmd.ts    # cesium symbol / source / search
 │   │           ├── trace-cmd.ts     # cesium trace
-│   │           └── issue-cmd.ts     # cesium issue
+│   │           ├── issue-cmd.ts     # cesium issue
+│   │           ├── mcp-cmd.ts       # cesium mcp (start MCP server)
+│   │           └── context-cmd.ts   # cesium context (build Context Pack)
 │   │
 │   ├── mcp/                 # MCP server (stdio transport)
 │   │   └── src/
-│   │       ├── server.ts            # MCP server setup
-│   │       └── tools/
-│   │           ├── search-symbol.ts
-│   │           ├── get-source.ts
-│   │           ├── search-issue.ts
-│   │           ├── trace-callgraph.ts
-│   │           └── build-context-pack.ts
+│   │       ├── handlers.ts          # Pure handler functions (5 tools)
+│   │       └── server.ts            # MCP server setup + tool registration
 │   │
 │   ├── context-pack/        # Context Pack builder
 │   │   └── src/
@@ -383,9 +391,9 @@ pnpm test               # vitest
 
 ### Testing strategy
 
-Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly.
+Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (5 tools with :memory: DB).
 
-Integration tests cover: End-to-end `cesium symbol Viewer` against a real indexed version, MCP tool round-trip for each of the 5 tools, Context Pack output validates against JSON schema.
+Integration tests cover: End-to-end `cesium symbol Viewer` against a real indexed version, MCP protocol integration (SDK Client + InMemoryTransport for tools/list and tools/call), Context Pack output with metadata validation.
 
 ```bash
 pnpm run test:unit
@@ -515,8 +523,8 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 | **M2: Source Retrieval** | Retrieve source code by symbol | `symbol`, `source`, `search` (source FTS) + CLI | ✅ Done |
 | **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ✅ Done |
 | **M4: CallGraph** | Build lightweight call relationships | CallEdge schema, TypeChecker resolution, BFS traversal + `trace` CLI | ✅ Done |
-| **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` | ⬜ Planned |
-| **M6: Context Pack** | Build standard context packages | Output: `{symbol, source, callgraph, issues}` | ⬜ Planned |
+| **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` + `cesium mcp` | ✅ Done |
+| **M6: Context Pack** | Build standard context packages | `build_context_pack` MCP tool, `cesium context` CLI, `{symbol, source, callgraph, issues}` + metadata | ✅ Done |
 
 See [future-roadmap.md](./future-roadmap.md) for Phase 2 (Can Explain) and Phase 3 (Can Diagnose) milestones.
 

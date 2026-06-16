@@ -1,6 +1,8 @@
 export { openDatabase, initSchema } from "./schema.js";
 export type { Database } from "./schema.js";
 export { SymbolRepo } from "./symbol-repo.js";
-export type { SourceFtsEntry, SourceSearchResult } from "./symbol-repo.js";
+export type { SourceFtsEntry, SourceSearchResult, SourceCodeEntry } from "./symbol-repo.js";
 export { IssueRepo } from "./issue-repo.js";
 export { CallGraphRepo } from "./callgraph-repo.js";
+export { resolveSymbolId } from "./symbol-resolver.js";
+export type { ResolvedSymbol } from "./symbol-resolver.js";

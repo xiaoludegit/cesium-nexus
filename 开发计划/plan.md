@@ -307,7 +307,7 @@ downstream
 - `trace Scene`（类级别）比 `trace Camera.update`（方法级别）更稳定
 - 唯一方法名解析 fallback 已实现，可提升部分覆盖率
 
-Milestone 5 ⬜ 待开始
+Milestone 5 ✅ 完成
 MCP Server
 
 目标：
@@ -331,6 +331,16 @@ trace_callgraph
   "data": {}
 }
 
+📝 M5 实际实现：
+- 4 个工具通过 MCP SDK `server.tool()` 注册，Zod schema 定义输入（含边界约束 int/min/max）
+- Handler 层 (`packages/mcp/src/handlers.ts`) 为纯函数，CLI/MCP 共用 Repo 层
+- `resolveSymbolId()` 从 trace-cmd.ts 抽到 `packages/storage/src/symbol-resolver.ts`，CLI 和 MCP 共用
+- `SymbolRepo.getSourceBySymbolId()` 新增方法，get_source 工具使用
+- `cesium mcp` CLI 命令启动 stdio transport server，dynamic import 延迟加载 MCP SDK
+- 运行期间严禁 console.log（stdout 是 JSON-RPC 通道）
+- 13 handler 单测 + 8 协议集成测试（SDK Client + InMemoryTransport），98 测试全通过
+- `build_context_pack` 工具在 M6 中实现（第 5 个工具）
+
 验收标准
 
 Claude Desktop
@@ -339,7 +349,7 @@ Codex CLI
 
 均可正常调用。
 
-Milestone 6 ⬜ 待开始
+Milestone 6 ✅ 完成
 Context Pack
 
 目标：
@@ -355,7 +365,13 @@ Context Pack
 
   "callgraph": [],
 
-  "issues": []
+  "issues": [],
+
+  "metadata": {
+    "totalTokens": 3420,
+    "truncated": false,
+    "symbolResolved": "Primitive.update"
+  }
 }
 
 Tool
@@ -365,6 +381,18 @@ build_context_pack
 CLI
 
 cesium context <symbol>
+
+📝 M6 实际实现：
+- `ContextPackMetadata` 新增字段（totalTokens/truncated/symbolResolved），shared types 中 ContextPack 扩展为可选 metadata
+- `buildContextPack()` 核心函数（packages/context-pack/src/builder.ts）：resolveSymbolId → 收集 4 section → truncateContextPack → 附加 metadata
+- `truncateContextPack()` 按 section 级截断（symbol: 500, source: 3000, callgraph: 500, issues: 1000 tokens），总预算 5000
+- Token 估算：`Math.ceil(text.length / 4)`（英文 4 chars ≈ 1 token）
+- Issue 搜索策略：method 符号用 parentClass 搜索，class 符号用 name 搜索
+- 下游源码：主符号始终包含 + 最多 3 个 downstream target source
+- MCP `build_context_pack` 工具（第 5 个），Zod schema: `{ symbol: z.string().min(1), depth: z.number().int().min(1).max(5).default(2) }`
+- CLI `cesium context <symbol> --depth N --issue-limit N --budget N`，输出 JSON
+- 23 token-budget 测试 + 12 builder 测试 + 3 handler 测试 + 2 协议集成测试
+- 138 测试全通过，7 包构建成功
 
 验收标准
 

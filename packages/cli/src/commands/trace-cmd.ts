@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { openDatabase, initSchema, CallGraphRepo, SymbolRepo } from "@cesium-nexus/storage";
+import { openDatabase, initSchema, CallGraphRepo, SymbolRepo, resolveSymbolId } from "@cesium-nexus/storage";
 import type { CallEdge } from "@cesium-nexus/shared";
 import * as path from "node:path";
 
@@ -66,66 +66,6 @@ export function registerTraceCommand(program: Command): void {
         db.close();
       },
     );
-}
-
-interface ResolvedSymbol {
-  id: string;
-  displayName: string;
-}
-
-function resolveSymbolId(
-  input: string,
-  symbolRepo: SymbolRepo,
-): ResolvedSymbol | null {
-  const hasDot = input.includes(".");
-
-  // Try as "ClassName.methodName" first
-  if (hasDot) {
-    const dotIndex = input.indexOf(".");
-    const className = input.substring(0, dotIndex);
-    const methodName = input.substring(dotIndex + 1);
-
-    const methodSymbols = symbolRepo.findByName(methodName);
-    for (const m of methodSymbols) {
-      if (m.parentClass === className) {
-        return {
-          id: m.id,
-          displayName: `${className}.${methodName}`,
-        };
-      }
-    }
-
-    // Dotted name with no exact match — do NOT fallback to FTS
-    return null;
-  }
-
-  // Try as a simple name (class, function, etc.)
-  const symbols = symbolRepo.findByName(input);
-  if (symbols.length > 0) {
-    // Prefer class kind
-    const cls = symbols.find((s) => s.kind === "class");
-    const best = cls ?? symbols[0];
-    return {
-      id: best.id,
-      displayName: best.parentClass
-        ? `${best.parentClass}.${best.name}`
-        : best.name,
-    };
-  }
-
-  // Simple name with no exact match — try FTS as last resort
-  const ftsResults = symbolRepo.searchFts(input, 5);
-  if (ftsResults.length > 0) {
-    const best = ftsResults[0];
-    return {
-      id: best.id,
-      displayName: best.parentClass
-        ? `${best.parentClass}.${best.name}`
-        : best.name,
-    };
-  }
-
-  return null;
 }
 
 function printTree(

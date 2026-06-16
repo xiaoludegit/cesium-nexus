@@ -26,9 +26,15 @@ importers:
 
   packages/cli:
     dependencies:
+      '@cesium-nexus/context-pack':
+        specifier: workspace:*
+        version: link:../context-pack
       '@cesium-nexus/indexer':
         specifier: workspace:*
         version: link:../indexer
+      '@cesium-nexus/mcp':
+        specifier: workspace:*
+        version: link:../mcp
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
@@ -68,6 +74,9 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@cesium-nexus/context-pack':
+        specifier: workspace:*
+        version: link:../context-pack
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
@@ -77,6 +86,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.29.0(zod@4.4.3)
+      zod:
+        specifier: ^4.4.0
+        version: 4.4.3
 
   packages/parser:
     dependencies:

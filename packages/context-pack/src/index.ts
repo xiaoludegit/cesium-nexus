@@ -1,2 +1,3 @@
-// Context Pack builder — placeholder for M1, implemented in M6
-export {};
+export { buildContextPack } from "./builder.js";
+export type { BuildOptions, BuildError } from "./builder.js";
+export { estimateTokens, truncateText } from "./token-budget.js";

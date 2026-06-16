@@ -129,7 +129,7 @@ dist
 .pnpm-store
 
 # cesium-nexus
-database/
+# database/
 
 # yarn v3
 .pnp.*

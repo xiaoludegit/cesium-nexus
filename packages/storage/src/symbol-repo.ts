@@ -33,6 +33,15 @@ export interface SourceSearchResult {
   snippet: string;
 }
 
+export interface SourceCodeEntry {
+  symbolId: string;
+  name: string;
+  filePath: string;
+  startLine: number;
+  endLine: number;
+  code: string;
+}
+
 export class SymbolRepo {
   private insertStmt: BetterSqlite3.Statement;
   private findByNameStmt: BetterSqlite3.Statement;
@@ -84,6 +93,29 @@ export class SymbolRepo {
   findById(id: string): SymbolRecord | undefined {
     const row = this.findByIdStmt.get(id) as SymbolRow | undefined;
     return row ? this.rowToRecord(row) : undefined;
+  }
+
+  getSourceBySymbolId(symbolId: string): SourceCodeEntry | undefined {
+    const stmt = this.db.prepare(
+      `SELECT symbol_id, name, file_path, start_line, end_line, code FROM source_code WHERE symbol_id = ?`,
+    );
+    const row = stmt.get(symbolId) as {
+      symbol_id: string;
+      name: string;
+      file_path: string;
+      start_line: number;
+      end_line: number;
+      code: string;
+    } | undefined;
+    if (!row) return undefined;
+    return {
+      symbolId: row.symbol_id,
+      name: row.name,
+      filePath: row.file_path,
+      startLine: row.start_line,
+      endLine: row.end_line,
+      code: row.code,
+    };
   }
 
   searchFts(query: string, limit = 20): SymbolRecord[] {
