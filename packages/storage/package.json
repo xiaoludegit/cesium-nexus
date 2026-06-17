@@ -1,6 +1,8 @@
 {
   "name": "@cesium-nexus/storage",
   "version": "0.1.0",
+  "description": "SQLite data layer with FTS5 for symbols, issues, source code, and call graph",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

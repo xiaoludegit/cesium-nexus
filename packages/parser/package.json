@@ -1,6 +1,8 @@
 {
   "name": "@cesium-nexus/parser",
   "version": "0.1.0",
+  "description": "Cesium source AST parser — extracts symbols and call edges via ts-morph",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

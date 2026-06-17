@@ -4,18 +4,24 @@
   "private": true,
   "type": "module",
   "description": "Cesium AI Expert — knowledge-base CLI and MCP server",
+  "license": "MIT",
   "scripts": {
     "build": "pnpm -r run build",
     "dev": "pnpm -r --parallel run dev",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "clean": "pnpm -r run clean"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.0",
+    "eslint": "^10.5.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",
+    "typescript-eslint": "^8.61.1",
     "vitest": "^3.2.0"
   },
   "engines": {
@@ -23,6 +29,9 @@
   },
   "packageManager": "pnpm@10.15.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
   }
 }

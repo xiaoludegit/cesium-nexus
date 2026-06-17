@@ -1,6 +1,8 @@
 {
   "name": "@cesium-nexus/cli",
   "version": "0.1.0",
+  "description": "Cesium AI Expert CLI — knowledge-base management, queries, and MCP server",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "bin": {

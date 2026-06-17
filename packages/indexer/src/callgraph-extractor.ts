@@ -5,11 +5,9 @@ import {
   CallExpression,
   NewExpression,
   TypeChecker,
-  Symbol as TsSymbol,
   PropertyAccessExpression,
 } from "ts-morph";
-import type { CallEdge, CallEdgeType, SymbolRecord } from "@cesium-nexus/shared";
-import { createHash } from "node:crypto";
+import type { CallEdge, SymbolRecord } from "@cesium-nexus/shared";
 import * as path from "node:path";
 
 export interface CallGraphStats {
@@ -114,7 +112,7 @@ export class CallGraphExtractor {
     // Build methodOwners: methodName → [className1, className2, ...]
     // Used for unique method name resolution fallback
     const methodOwners = new Map<string, string[]>();
-    for (const [key, sym] of symbolMap) {
+    for (const [_key, sym] of symbolMap) {
       if (sym.parentClass && sym.kind === "method") {
         const owners = methodOwners.get(sym.name) ?? [];
         if (!owners.includes(sym.parentClass)) {
@@ -315,7 +313,7 @@ export class CallGraphExtractor {
   ): CallEdge | "unresolved" | null {
     try {
       const type = checker.getTypeAtLocation(objectExpr);
-      const objectText = objectExpr.getText();
+      const _objectText = objectExpr.getText();
 
       // Check if the object is a class constructor (static method call)
       const symbol = type.getSymbol() ?? type.getAliasSymbol();
@@ -347,7 +345,7 @@ export class CallGraphExtractor {
           if (declarations && declarations.length > 0) {
             const decl = declarations[0];
             const declFile = decl.getSourceFile().getFilePath();
-            const relativePath = path.relative(this.cesiumRoot, declFile).replace(/\\/g, "/");
+            const _relativePath = path.relative(this.cesiumRoot, declFile).replace(/\\/g, "/");
 
             // Try to find the enclosing class of the declaration
             let declClassName: string | undefined;
@@ -414,7 +412,7 @@ export class CallGraphExtractor {
    */
   private findEnclosingSymbolName(node: Node): string | null {
     let current: Node | undefined = node.getParent();
-    let methodName: string | undefined;
+    let _methodName: string | undefined;
 
     while (current) {
       // Method inside a class

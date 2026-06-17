@@ -132,7 +132,7 @@ export function truncateContextPack(
   const callgraphJson = JSON.stringify(pack.callgraph);
   if (estimateTokens(callgraphJson) > SECTION_BUDGETS.callgraph) {
     // Reduce edges
-    let edges = [...pack.callgraph];
+    const edges = [...pack.callgraph];
     while (
       edges.length > 0 &&
       estimateTokens(JSON.stringify(edges)) > SECTION_BUDGETS.callgraph
@@ -186,7 +186,7 @@ export function truncateContextPack(
     truncated = true;
 
     // 1. Drop downstream sources (index > 0), last first
-    let sources = [...pack.source];
+    const sources = [...pack.source];
     while (sources.length > 1 && estimatePackTokens({ ...pack, source: sources }) > budget) {
       sources.pop();
       pack = { ...pack, source: sources };
@@ -206,7 +206,7 @@ export function truncateContextPack(
     }
 
     // 3. Drop issues (from last to first)
-    let issues = [...pack.issues];
+    const issues = [...pack.issues];
     while (issues.length > 0 && estimatePackTokens({ ...pack, issues }) > budget) {
       issues.pop();
       pack = { ...pack, issues };
@@ -214,7 +214,7 @@ export function truncateContextPack(
     totalTokens = estimatePackTokens(pack);
 
     // 4. Drop callgraph edges (from last to first)
-    let edges = [...pack.callgraph];
+    const edges = [...pack.callgraph];
     while (edges.length > 0 && estimatePackTokens({ ...pack, callgraph: edges }) > budget) {
       edges.pop();
       pack = { ...pack, callgraph: edges };

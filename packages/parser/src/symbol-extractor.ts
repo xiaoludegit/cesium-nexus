@@ -1,16 +1,4 @@
-import {
-  Project,
-  SourceFile,
-  ClassDeclaration,
-  FunctionDeclaration,
-  VariableDeclaration,
-  MethodDeclaration,
-  Node,
-  SyntaxKind,
-  ExpressionStatement,
-  JSDoc,
-  JSDocTag,
-} from "ts-morph";
+import { Project, SourceFile, Node } from "ts-morph";
 import type { SymbolRecord, SymbolKind } from "@cesium-nexus/shared";
 import { createHash } from "node:crypto";
 import * as path from "node:path";
@@ -105,7 +93,7 @@ export class SymbolExtractor {
       const isExported = stmt.isExported();
       // JSDoc is on the VariableStatement, not the individual declaration
       const stmtTags = this.getJsDocTags(stmt);
-      const stmtDoc = this.getJsDocText(stmt);
+      const _stmtDoc = this.getJsDocText(stmt);
 
       for (const decl of stmt.getDeclarations()) {
         const name = decl.getName();
@@ -210,7 +198,7 @@ export class SymbolExtractor {
     }
 
     // export function/class/const (isExported check on declarations)
-    for (const [name, declarations] of sourceFile.getExportedDeclarations()) {
+    for (const [name, _declarations] of sourceFile.getExportedDeclarations()) {
       if (!exportedNames.includes(name)) {
         exportedNames.push(name);
       }

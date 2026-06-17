@@ -1,6 +1,8 @@
 {
   "name": "@cesium-nexus/shared",
   "version": "0.1.0",
+  "description": "Shared types and utilities for cesium-nexus",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

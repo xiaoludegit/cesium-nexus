@@ -79,7 +79,7 @@ export function registerQueryCommands(program: Command): void {
         const ctx = parseInt(opts.context, 10);
         const start = Math.max(0, symbol.startLine - 1 - ctx);
         const end = Math.min(lines.length, symbol.endLine + ctx);
-        const snippet = lines.slice(start, end);
+        const _snippet = lines.slice(start, end);
 
         console.log(`\n── ${symbol.name} (${symbol.kind}) ──`);
         console.log(`  ${symbol.filePath}:${symbol.startLine}–${symbol.endLine}\n`);

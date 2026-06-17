@@ -1,6 +1,8 @@
 {
   "name": "@cesium-nexus/indexer",
   "version": "0.1.0",
+  "description": "Knowledge base construction — Cesium source scanning and GitHub Issues sync",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
