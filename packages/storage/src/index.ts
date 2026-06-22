@@ -7,5 +7,6 @@ export { CallGraphRepo } from "./callgraph-repo.js";
 export { PullRequestRepo } from "./pr-repo.js";
 export { ForumRepo } from "./forum-repo.js";
 export { ExperienceRepo, buildExperienceNode } from "./experience-repo.js";
+export { ExperienceEdgeRepo } from "./experience-edge-repo.js";
 export { resolveSymbolId } from "./symbol-resolver.js";
 export type { ResolvedSymbol } from "./symbol-resolver.js";

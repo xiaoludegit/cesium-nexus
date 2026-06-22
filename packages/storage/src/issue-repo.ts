@@ -115,6 +115,14 @@ export class IssueRepo {
     return row.count;
   }
 
+  findByNumber(repo: string, number: number): IssueRecord | null {
+    const stmt = this.db.prepare(
+      `SELECT * FROM issues WHERE repo = ? AND number = ?`,
+    );
+    const row = stmt.get(repo, number) as IssueRow | undefined;
+    return row ? this.rowToRecord(row) : null;
+  }
+
   getSyncCursor(repo: string): string | null {
     const stmt = this.db.prepare(
       `SELECT value FROM meta WHERE key = ?`,

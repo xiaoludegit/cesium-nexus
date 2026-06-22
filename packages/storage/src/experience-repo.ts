@@ -22,6 +22,7 @@ interface ExperienceRow {
 export class ExperienceRepo {
   private upsertStmt: BetterSqlite3.Statement;
   private totalCountStmt: BetterSqlite3.Statement;
+  private getByIdStmt: BetterSqlite3.Statement;
 
   constructor(private db: Database) {
     this.upsertStmt = db.prepare(`
@@ -31,6 +32,9 @@ export class ExperienceRepo {
     `);
     this.totalCountStmt = db.prepare(
       `SELECT COUNT(*) as count FROM experience_node`,
+    );
+    this.getByIdStmt = db.prepare(
+      `SELECT * FROM experience_node WHERE id = ?`,
     );
   }
 
@@ -118,6 +122,27 @@ export class ExperienceRepo {
   totalCount(): number {
     const row = this.totalCountStmt.get() as { count: number };
     return row.count;
+  }
+
+  findByIds(ids: string[]): ExperienceNode[] {
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => "?").join(",");
+    const stmt = this.db.prepare(
+      `SELECT * FROM experience_node WHERE id IN (${placeholders})`,
+    );
+    const rows = stmt.all(...ids) as ExperienceRow[];
+    return rows.map((r) => this.rowToRecord(r));
+  }
+
+  getAll(): ExperienceNode[] {
+    const stmt = this.db.prepare(`SELECT * FROM experience_node`);
+    const rows = stmt.all() as ExperienceRow[];
+    return rows.map((r) => this.rowToRecord(r));
+  }
+
+  getById(id: string): ExperienceNode | null {
+    const row = this.getByIdStmt.get(id) as ExperienceRow | undefined;
+    return row ? this.rowToRecord(row) : null;
   }
 
   countByType(): Record<ExperienceNodeType, number> {

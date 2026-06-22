@@ -97,6 +97,19 @@ export class PullRequestRepo {
     return row.count;
   }
 
+  getAllWithClosingRefs(): PullRequestRecord[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM pull_requests
+      WHERE merged_at IS NOT NULL
+        AND closing_issue_refs IS NOT NULL
+        AND closing_issue_refs != '[]'
+    `);
+    const rows = stmt.all() as PRRow[];
+    return rows
+      .map((r) => this.rowToRecord(r))
+      .filter((pr) => pr.closingIssueReferences.length > 0);
+  }
+
   getSyncCursor(repo: string): string | null {
     const stmt = this.db.prepare(
       `SELECT value FROM meta WHERE key = ?`,

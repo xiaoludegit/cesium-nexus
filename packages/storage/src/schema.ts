@@ -262,5 +262,22 @@ export function initSchema(db: Database): void {
       INSERT INTO experience_fts(rowid, title, summary)
       VALUES (new.rowid, new.title, new.summary);
     END;
+
+    -- Experience edge table (graph edges between experience nodes)
+    CREATE TABLE IF NOT EXISTS experience_edge (
+      id TEXT PRIMARY KEY,
+      source_node_id TEXT NOT NULL,
+      target_node_id TEXT NOT NULL,
+      edge_type TEXT NOT NULL,
+      confidence REAL NOT NULL DEFAULT 1.0,
+      created_at TEXT NOT NULL,
+      metadata TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_edge_source ON experience_edge(source_node_id);
+    CREATE INDEX IF NOT EXISTS idx_edge_target ON experience_edge(target_node_id);
+    CREATE INDEX IF NOT EXISTS idx_edge_type ON experience_edge(edge_type);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_edge_unique
+      ON experience_edge(source_node_id, target_node_id, edge_type);
   `);
 }

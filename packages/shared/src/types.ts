@@ -309,3 +309,35 @@ export interface SkillContextPack {
   fixSuggestions?: string[];
   metadata: SkillContextPackMetadata;
 }
+
+/* ────────────────────────────────────────────
+ *  Phase 2C — Experience Graph Types
+ * ──────────────────────────────────────────── */
+
+export type ExperienceEdgeType = "fixes";
+
+export interface ExperienceEdge {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  edgeType: ExperienceEdgeType;
+  confidence: number;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ExperienceChain {
+  rootId: string;
+  nodes: ExperienceNode[];
+  edges: ExperienceEdge[];
+  depth: number;
+  truncated: boolean;
+}
+
+export interface ExperienceEdgeStats {
+  totalEdges: number;
+  byType: Record<ExperienceEdgeType, number>;
+  connectedNodes: number;
+  orphanNodes: number;
+  totalNodes: number;
+}
