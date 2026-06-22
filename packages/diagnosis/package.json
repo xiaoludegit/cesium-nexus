@@ -1,7 +1,7 @@
 {
-  "name": "@cesium-nexus/mcp",
+  "name": "@cesium-nexus/diagnosis",
   "version": "0.1.0",
-  "description": "MCP server — 7 Cesium knowledge-base tools via stdio transport",
+  "description": "Problem diagnosis engine — matches symptoms to Cesium problem patterns and assembles diagnostic context packs",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -16,11 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cesium-nexus/context-pack": "workspace:*",
-    "@cesium-nexus/diagnosis": "workspace:*",
     "@cesium-nexus/shared": "workspace:*",
-    "@cesium-nexus/storage": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.12.0",
-    "zod": "^4.4.0"
+    "@cesium-nexus/storage": "workspace:*"
   }
 }

@@ -114,6 +114,16 @@ cesium trace Camera.update --direction up
 # Build a Context Pack (structured JSON for LLM consumption)
 cesium context Primitive.update
 cesium context Viewer --depth 3
+
+# Diagnose a Cesium problem (Phase 2A)
+cesium diagnose "why does my polygon flicker?"
+
+# List all problem patterns in the knowledge base
+cesium pkb list
+
+# Query render stages by stage ID or problem pattern ID
+cesium stage z_fighting
+cesium stage depth_pass
 ```
 
 ### Use as an MCP server (for AI agents)
@@ -171,6 +181,14 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium context <symbol>` | Build a Context Pack (structured JSON) for a symbol. `--depth N`, `--issue-limit N`, `--budget N` |
 
+### Diagnosis (Phase 2A)
+
+| Command | Description |
+|---|---|
+| `cesium diagnose <problem>` | Diagnose a Cesium problem: matched patterns, related source, issues, investigation steps, fix suggestions |
+| `cesium pkb list` | List all problem patterns in the Problem Knowledge Base |
+| `cesium stage <id>` | Query render stages by stage ID or problem pattern ID |
+
 ### MCP Server
 
 | Command | Description |
@@ -190,6 +208,8 @@ When running as an MCP server (`cesium mcp`), the following tools are available 
 | `search_issue` | `{ query, limit?, state? }` | Issue results with title, state, labels, body |
 | `trace_callgraph` | `{ symbol, direction?, depth? }` | Upstream/downstream call relationships |
 | `build_context_pack` | `{ symbol, depth?, budget? }` | Full Context Pack: `{symbol, source, callgraph, issues}` with token budget truncation |
+| `diagnose_problem` | `{ problem, limit?, budget? }` | Diagnostic Context Pack: matched patterns, related source, issues, investigation steps, fix suggestions |
+| `query_render_stage` | `{ stageId?, problemId? }` | Render stages by stage ID or problem pattern ID |
 
 All tools return JSON with a standard envelope:
 
@@ -200,7 +220,7 @@ All tools return JSON with a standard envelope:
 }
 ```
 
-**延后到后续 Phase 的 MCP tools：** `compare_version`, `diagnose_problem`, `query_render_stage`, `search_forum`, `search_experience`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
+**延后到后续 Phase 的 MCP tools：** `compare_version`, `search_forum`, `search_experience`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
 
 ---
 
@@ -292,11 +312,12 @@ cesium-nexus/
 │   │           ├── trace-cmd.ts     # cesium trace
 │   │           ├── issue-cmd.ts     # cesium issue
 │   │           ├── mcp-cmd.ts       # cesium mcp (start MCP server)
-│   │           └── context-cmd.ts   # cesium context (build Context Pack)
+│   │           ├── context-cmd.ts   # cesium context (build Context Pack)
+│   │           └── diagnose-cmd.ts  # cesium diagnose / pkb list / stage
 │   │
 │   ├── mcp/                 # MCP server (stdio transport)
 │   │   └── src/
-│   │       ├── handlers.ts          # Pure handler functions (5 tools)
+│   │       ├── handlers.ts          # Pure handler functions (7 tools)
 │   │       └── server.ts            # MCP server setup + tool registration
 │   │
 │   ├── context-pack/        # Context Pack builder
@@ -304,16 +325,25 @@ cesium-nexus/
 │   │       ├── builder.ts           # Assemble context pack from retrieval results
 │   │       └── token-budget.ts      # Section-level token limits + truncation
 │   │
+│   ├── diagnosis/           # Problem Diagnosis Engine
+│   │   └── src/
+│   │       ├── knowledge-loader.ts  # Load and validate Problem KB + Render Stage JSON
+│   │       ├── matcher.ts           # Symptom-to-pattern keyword matching
+│   │       ├── diagnoser.ts         # Assemble DiagnosticContextPack
+│   │       └── token-budget.ts      # Diagnosis-specific token truncation
+│   │
 │   └── shared/              # Shared types and utilities
 │       └── src/
 │           ├── types.ts             # SymbolRecord, IssueRecord, Edge, ContextPack
 │           └── utils.ts
 │
 ├── data/
-│   └── cesium/              # Cesium source cache (gitignored)
-│       ├── 1.120/
-│       ├── 1.125/
-│       └── 1.130/
+│   ├── cesium/              # Cesium source cache (gitignored)
+│   ├── problem-kb/          # Problem Knowledge Base (static JSON)
+│   │   ├── problem-patterns.json
+│   │   └── render-stages.json
+│   └── evaluation/          # Evaluation datasets
+│       └── phase2a-diagnosis-cases.json
 │
 ├── database/                # SQLite databases (gitignored)
 │   └── cesium.db            # symbols, call_graph, issues + FTS5 indexes
@@ -392,7 +422,7 @@ pnpm test               # vitest
 
 ### Testing strategy
 
-Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (5 tools with :memory: DB).
+Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (7 tools with :memory: DB), Problem Diagnosis matching and assembly.
 
 Integration tests cover: End-to-end `cesium symbol Viewer` against a real indexed version, MCP protocol integration (SDK Client + InMemoryTransport for tools/list and tools/call), Context Pack output with metadata validation.
 

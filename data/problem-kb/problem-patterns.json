@@ -1,0 +1,454 @@
+[
+  {
+    "id": "z_fighting",
+    "name": "Z-Fighting / Polygon Flickering",
+    "category": "rendering",
+    "severity": "high",
+    "aliases": ["z-fighting", "polygon flickering", "depth fighting", "z fighting", "flickering polygon", "depth buffer fighting"],
+    "triggerKeywords": ["flickering", "z-fighting", "depth fighting", "polygon flicker", "z fighting", "flicker"],
+    "symptoms": [
+      "Polygons flicker or shimmer when viewed from certain angles",
+      "Overlapping surfaces alternate visibility rapidly",
+      "Flickering worsens as camera moves further away",
+      "Co-planar geometry exhibits unstable rendering"
+    ],
+    "possibleCauses": [
+      "Two or more primitives share the same geometric plane with no depth offset",
+      "Depth buffer precision insufficient for the scene scale (logarithmic depth disabled)",
+      "Near/far clipping plane ratio too extreme (e.g. near=0.1, far=1e12)",
+      "logarithmicDepthBuffer not enabled on Scene",
+      "Depth plane (DepthPlane) misconfigured for the globe ellipsoid"
+    ],
+    "relatedSymbols": [
+      "PolygonGeometry",
+      "Primitive",
+      "GroundPrimitive",
+      "ClassificationPrimitive",
+      "Scene",
+      "DepthPlane",
+      "RenderState"
+    ],
+    "relatedStages": ["depth_pass", "opaque_pass", "command_build_stage"],
+    "issueQueries": ["z-fighting", "flickering polygon", "depth fighting", "polygon flicker", "depth offset"],
+    "investigationSteps": [
+      "Check if scene.logarithmicDepthBuffer is enabled",
+      "Inspect the near/far clipping plane ratio on Camera.frustum",
+      "Verify whether the affected primitives are co-planar",
+      "Check if DepthPlane is configured correctly for the scene ellipsoid",
+      "Enable wireframe mode to visualize overlapping geometry",
+      "Check RenderState.depthMask and depthTest settings on affected primitives"
+    ],
+    "fixSuggestions": [
+      "Enable scene.logarithmicDepthBuffer = true for large-scale scenes",
+      "Add a small vertical offset (height) to one of the co-planar primitives",
+      "Adjust Camera.frustum near plane to a larger value to improve depth precision",
+      "Use Primitive.allowPicking = false on background geometry to reduce picking conflicts",
+      "Ensure GroundPrimitive uses classificationType correctly to avoid terrain overlap"
+    ]
+  },
+  {
+    "id": "depth_precision",
+    "name": "Depth Precision Loss",
+    "category": "rendering",
+    "severity": "high",
+    "aliases": ["depth precision", "depth buffer precision", "depth accuracy", "far plane clipping", "near plane issue"],
+    "triggerKeywords": ["depth precision", "depth buffer", "clipping", "near plane", "far plane", "depth accuracy"],
+    "symptoms": [
+      "Distant objects clip or disappear unexpectedly",
+      "Nearby objects render behind farther objects",
+      "Depth sorting artifacts at extreme camera distances",
+      "Scene looks correct at close range but breaks when zooming out"
+    ],
+    "possibleCauses": [
+      "Camera frustum near plane set too small (e.g. 0.01) combined with very large far plane",
+      "logarithmicDepthBuffer disabled on Scene",
+      "Custom frustum overrides the default PerspectiveFrustum settings",
+      "Depth buffer bit depth insufficient (16-bit vs 24-bit or 32-bit)"
+    ],
+    "relatedSymbols": [
+      "Scene",
+      "Camera",
+      "PerspectiveFrustum",
+      "PerspectiveOffCenterFrustum",
+      "OrthographicFrustum",
+      "DepthPlane"
+    ],
+    "relatedStages": ["depth_pass", "update_stage"],
+    "issueQueries": ["depth precision", "far plane clipping", "near plane", "logarithmic depth", "frustum"],
+    "investigationSteps": [
+      "Log camera.frustum.near and camera.frustum.far values",
+      "Calculate the near/far ratio — values exceeding 1:1e6 indicate precision risk",
+      "Check scene.logarithmicDepthBuffer status",
+      "Inspect WebGL context parameters for depth buffer bit depth",
+      "Verify no custom frustum override is active"
+    ],
+    "fixSuggestions": [
+      "Enable scene.logarithmicDepthBuffer = true",
+      "Increase camera.frustum.near to at least 1.0 for globe-scale scenes",
+      "Reduce camera.frustum.far to the minimum required distance",
+      "Use scene.completeMinimumPixelWidth to manage distant object rendering",
+      "Request a 32-bit depth buffer via context creation attributes if possible"
+    ]
+  },
+  {
+    "id": "terrain_conflict",
+    "name": "Terrain and GroundPrimitive Conflict",
+    "category": "terrain",
+    "severity": "medium",
+    "aliases": ["terrain conflict", "ground primitive terrain", "terrain overlap", "terrain z-fighting", "classification on terrain"],
+    "triggerKeywords": ["terrain", "groundprimitive", "classification", "terrain overlap", "terrain conflict", "depth on terrain"],
+    "symptoms": [
+      "GroundPrimitive flickers over terrain surface",
+      "ClassificationPrimitive does not align with terrain elevation",
+      "Polygons appear to float above or sink below terrain",
+      "Terrain tiles show visual artifacts near classification boundaries"
+    ],
+    "possibleCauses": [
+      "GroundPrimitive depthFailAppearance not configured for terrain-relative rendering",
+      "ClassificationPrimitive classificationType mismatch with terrain provider",
+      "Terrain provider not fully loaded when GroundPrimitive is added",
+      "Terrain depth test disabled (scene.globe.depthTestAgainstTerrain = false)"
+    ],
+    "relatedSymbols": [
+      "GroundPrimitive",
+      "ClassificationPrimitive",
+      "Globe",
+      "TerrainProvider",
+      "CesiumTerrainProvider",
+      "EllipsoidTerrainProvider",
+      "Scene",
+      "Primitive"
+    ],
+    "relatedStages": ["depth_pass", "opaque_pass", "classification_stage"],
+    "issueQueries": ["terrain conflict", "groundprimitive flicker", "classification terrain", "depthTestAgainstTerrain"],
+    "investigationSteps": [
+      "Check scene.globe.depthTestAgainstTerrain setting",
+      "Verify TerrainProvider readiness state before adding GroundPrimitive",
+      "Inspect GroundPrimitive appearance and depthFailAppearance",
+      "Check ClassificationPrimitive.classificationType value",
+      "Enable wireframe on globe to visualize terrain mesh alignment"
+    ],
+    "fixSuggestions": [
+      "Set scene.globe.depthTestAgainstTerrain = true for accurate depth testing",
+      "Wait for TerrainProvider.readyPromise before adding GroundPrimitive",
+      "Use depthFailAppearance on GroundPrimitive to visualize depth failures",
+      "Ensure ClassificationPrimitive uses ClassificationType.BOTH for terrain + 3D Tiles",
+      "Add a small height offset to the GroundPrimitive geometry instances"
+    ]
+  },
+  {
+    "id": "primitive_performance",
+    "name": "Primitive Performance Degradation",
+    "category": "performance",
+    "severity": "high",
+    "aliases": ["primitive performance", "slow primitive", "rendering slow", "fps drop", "frame rate drop", "primitive lag"],
+    "triggerKeywords": ["performance", "slow", "fps", "frame rate", "lag", "primitive slow", "rendering performance"],
+    "symptoms": [
+      "Frame rate drops significantly after adding primitives",
+      "Scene becomes unresponsive during primitive updates",
+      "GPU memory usage spikes when many primitives are active",
+      "Draw call count exceeds expected values"
+    ],
+    "possibleCauses": [
+      "Too many individual Primitive instances instead of batched PrimitiveCollection",
+      "Geometry not merged — each Primitive triggers a separate draw call",
+      "Frequent appearance updates causing shader recompilation",
+      "asynchronous geometry computation blocking the render loop",
+      "Excessive vertex count per primitive without LOD or simplification"
+    ],
+    "relatedSymbols": [
+      "Primitive",
+      "PrimitiveCollection",
+      "Scene",
+      "DrawCommand",
+      "RenderState",
+      "Context"
+    ],
+    "relatedStages": ["command_build_stage", "opaque_pass", "update_stage"],
+    "issueQueries": ["primitive performance", "slow rendering", "fps drop", "draw call", "batch primitive"],
+    "investigationSteps": [
+      "Count the number of active Primitive instances in scene.primitives",
+      "Check if primitives use merged geometry (GeometryInstances array)",
+      "Monitor draw call count via scene.debugShowFramesPerSecond",
+      "Profile GPU time per frame using browser devtools",
+      "Check if appearance.material is shared across primitives"
+    ],
+    "fixSuggestions": [
+      "Batch multiple geometry instances into a single Primitive",
+      "Use PrimitiveCollection for logical grouping but minimize total count",
+      "Share Material instances across primitives with the same appearance",
+      "Enable scene.requestRenderMode = true to avoid unnecessary renders",
+      "Use asynchronous=false for geometry that does not need background computation"
+    ]
+  },
+  {
+    "id": "label_visibility",
+    "name": "Label Disappears or Not Visible",
+    "category": "debug",
+    "severity": "medium",
+    "aliases": ["label disappear", "label not visible", "label hidden", "label clipping", "label vanish", "label occluded"],
+    "triggerKeywords": ["label", "disappear", "not visible", "hidden", "vanish", "label clipping", "billboard"],
+    "symptoms": [
+      "Labels disappear at certain camera angles or distances",
+      "Labels render behind terrain or 3D Tiles",
+      "Labels are clipped at the viewport edge",
+      "Labels flicker when camera moves slightly"
+    ],
+    "possibleCauses": [
+      "Label disableDepthTestDistance not set — labels occluded by terrain",
+      "Label pixelOffset places the label outside the visible viewport",
+      "Label translucencyByDistance hides label beyond a threshold",
+      "Label scaleByDistance reduces scale to zero at far distances",
+      "Label eyeOffset pushes label behind geometry"
+    ],
+    "relatedSymbols": [
+      "Label",
+      "Billboard",
+      "Scene",
+      "Camera",
+      "Picking"
+    ],
+    "relatedStages": ["translucent_pass", "update_stage", "picking_stage"],
+    "issueQueries": ["label disappear", "label not visible", "label depth", "label occlusion", "disableDepthTestDistance"],
+    "investigationSteps": [
+      "Check label.disableDepthTestDistance — set to Number.POSITIVE_INFINITY for always-visible",
+      "Inspect label.translucencyByDistance near/far values",
+      "Inspect label.scaleByDistance near/far values",
+      "Verify label.pixelOffset and label.eyeOffset",
+      "Check if the label position is inside a 3D Tile or terrain surface"
+    ],
+    "fixSuggestions": [
+      "Set label.disableDepthTestDistance = Number.POSITIVE_INFINITY",
+      "Adjust label.translucencyByDistance to keep labels opaque at working distances",
+      "Use label.eyeOffset to push labels slightly toward the camera",
+      "Set label.verticalOrigin = VerticalOrigin.BOTTOM to anchor labels above geometry",
+      "Verify label.show = true and label.text is non-empty"
+    ]
+  },
+  {
+    "id": "tiles_jitter",
+    "name": "3D Tiles Jitter / Oscillation",
+    "category": "tiles",
+    "severity": "high",
+    "aliases": ["tiles jitter", "3dtiles jitter", "tileset shaking", "tiles oscillation", "tiles vibration", "tileset jitter"],
+    "triggerKeywords": ["jitter", "tiles", "3dtiles", "tileset", "shaking", "oscillation", "vibration"],
+    "symptoms": [
+      "3D Tiles tileset oscillates or jitters when camera is near",
+      "Tiles shift position slightly during camera movement",
+      "Tile boundaries show visible seams that change with view angle",
+      "Tileset appears to float or sink relative to terrain"
+    ],
+    "possibleCauses": [
+      "Tileset modelMatrix includes floating-point precision loss at large coordinates",
+      "Tileset root transform conflicts with globe ellipsoid position",
+      "Camera near plane too close causing precision issues on tile transforms",
+      "Tile bounding volumes (BoundingSphere / OBB) inaccurate causing culling artifacts",
+      "Multiple tilesets overlap with conflicting coordinate systems"
+    ],
+    "relatedSymbols": [
+      "Cesium3DTileset",
+      "Cesium3DTile",
+      "Cesium3DTileContent",
+      "TileBoundingSphere",
+      "TileOrientedBoundingBox",
+      "Camera",
+      "Scene"
+    ],
+    "relatedStages": ["tileset_traversal_stage", "update_stage", "command_build_stage"],
+    "issueQueries": ["tiles jitter", "3dtiles shaking", "tileset oscillation", "modelMatrix precision", "tile bounding volume"],
+    "investigationSteps": [
+      "Log tileset.modelMatrix translation values — check for large coordinate magnitudes",
+      "Inspect tileset.root.boundingVolume for accuracy",
+      "Check camera position relative to tileset center",
+      "Enable scene.debugShowBoundingVolume to visualize tile bounds",
+      "Verify tileset is not positioned at origin (0,0,0) far from the globe surface"
+    ],
+    "fixSuggestions": [
+      "Use Cesium3DTileset.fromUrl() with skipLevelOfDetail optimization flags",
+      "Apply tileset.modelMatrix relative to a local ENU frame near the tileset center",
+      "Increase camera.frustum.near to improve depth precision near tiles",
+      "Enable tileset.skipLevelOfDetail = true for smoother transitions",
+      "Ensure tileset.maximumMemoryUsage is not too low causing aggressive unloading"
+    ]
+  },
+  {
+    "id": "tiles_loading",
+    "name": "3D Tiles Loading Failure",
+    "category": "tiles",
+    "severity": "high",
+    "aliases": ["tiles loading", "3dtiles loading", "tileset load error", "tiles not loading", "tile fetch error"],
+    "triggerKeywords": ["tiles loading", "load error", "not loading", "tileset error", "fetch failed", "tiles stuck"],
+    "symptoms": [
+      "Tileset fails to load or shows blank area",
+      "Tiles load partially but some regions remain empty",
+      "Network requests for tile content fail with 404 or CORS errors",
+      "Tileset.allTilesLoaded() never resolves"
+    ],
+    "possibleCauses": [
+      "tileset.json URL is incorrect or unreachable",
+      "CORS headers missing on tile server",
+      "RequestScheduler throttling blocks tile requests",
+      "Tile content references external resources that fail to load",
+      "Network timeout on large b3dm/i3dm/pnts payloads"
+    ],
+    "relatedSymbols": [
+      "Cesium3DTileset",
+      "Cesium3DTile",
+      "Cesium3DTileContent",
+      "Resource",
+      "Request",
+      "RequestScheduler"
+    ],
+    "relatedStages": ["tileset_traversal_stage", "update_stage"],
+    "issueQueries": ["tiles loading", "tileset load", "3dtiles error", "request scheduler", "tile fetch"],
+    "investigationSteps": [
+      "Check browser network tab for failed tile requests (404, CORS, timeout)",
+      "Verify tileset.json URL is accessible directly",
+      "Inspect RequestScheduler statistics for throttled requests",
+      "Check Cesium3DTileset.tileLoadProgressEvent for progress updates",
+      "Verify server CORS headers include Access-Control-Allow-Origin"
+    ],
+    "fixSuggestions": [
+      "Use Resource with custom headers for authenticated tile servers",
+      "Increase RequestScheduler.maximumRequestsPerServer if throttled",
+      "Verify tileset.json path is correct and uses HTTPS if required",
+      "Configure tile server CORS headers or use a proxy",
+      "Use tileset.initialTilesLoaded promise to confirm first batch completion"
+    ]
+  },
+  {
+    "id": "picking_failure",
+    "name": "Picking Failure",
+    "category": "debug",
+    "severity": "medium",
+    "aliases": ["picking failure", "pick not working", "cannot pick", "pick returns undefined", "pick miss", "click not detected"],
+    "triggerKeywords": ["pick", "picking", "click", "selection", "pick result", "pick undefined"],
+    "symptoms": [
+      "scene.pick() returns undefined even when clicking on visible objects",
+      "Picking selects the wrong object behind the target",
+      "Drill-pick returns incomplete results",
+      "Picking works intermittently depending on camera angle"
+    ],
+    "possibleCauses": [
+      "Primitive.allowPicking = false on the target primitive",
+      "Picking stage skipped due to custom render pipeline modification",
+      "Object rendered in translucent pass with pickTranslucentDepth disabled",
+      "Picking framebuffer not updated before pick call",
+      "Picking color collision due to excessive object count"
+    ],
+    "relatedSymbols": [
+      "Picking",
+      "Scene",
+      "Primitive",
+      "Cesium3DTileset",
+      "Label",
+      "Billboard"
+    ],
+    "relatedStages": ["picking_stage", "translucent_pass", "command_build_stage"],
+    "issueQueries": ["pick failure", "pick undefined", "picking not working", "scene.pick", "allowPicking"],
+    "investigationSteps": [
+      "Check primitive.allowPicking on the target object",
+      "Verify scene.pickTranslucentDepth if picking translucent objects",
+      "Ensure scene.pick() is called after the render frame completes",
+      "Check if the pick position is within the canvas bounds",
+      "Enable scene.debugShowPicking to visualize the pick framebuffer"
+    ],
+    "fixSuggestions": [
+      "Set primitive.allowPicking = true on the target object",
+      "Enable scene.pickTranslucentDepth = true for translucent geometry",
+      "Call scene.pick() inside a postRender event handler",
+      "Use scene.drillPick() for overlapping objects",
+      "Reduce total pickable object count if exceeding pick color space"
+    ]
+  },
+  {
+    "id": "shader_compile_error",
+    "name": "Shader Compile Error",
+    "category": "shader",
+    "severity": "high",
+    "aliases": ["shader error", "shader compile", "glsl error", "shader link", "fragment shader", "vertex shader"],
+    "triggerKeywords": ["shader", "compile", "glsl", "link error", "fragment", "vertex", "shader error"],
+    "symptoms": [
+      "WebGL shader compilation fails with error log in console",
+      "Primitives render as black or invisible after shader error",
+      "Shader link error reported in browser console",
+      "Custom material or appearance fails to apply"
+    ],
+    "possibleCauses": [
+      "GLSL syntax error in custom shader source",
+      "Uniform name mismatch between JavaScript and GLSL",
+      "Unsupported GLSL extension or precision qualifier",
+      "Shader source contains preprocessor directives that fail on target platform",
+      "AutomaticUniforms referenced incorrectly in custom material"
+    ],
+    "relatedSymbols": [
+      "ShaderSource",
+      "ShaderProgram",
+      "Primitive",
+      "Context",
+      "AutomaticUniforms",
+      "Material"
+    ],
+    "relatedStages": ["shader_compile_stage", "command_build_stage"],
+    "issueQueries": ["shader compile", "glsl error", "shader link", "shader source", "webgl shader"],
+    "investigationSteps": [
+      "Copy the shader error log from browser console",
+      "Identify the failing shader line number from the error message",
+      "Check GLSL version compatibility (WebGL 1.0 vs 2.0)",
+      "Verify uniform names match between appearance and GLSL source",
+      "Test the shader in isolation using a minimal primitive"
+    ],
+    "fixSuggestions": [
+      "Fix the GLSL syntax error at the reported line number",
+      "Use ShaderSource.defines to conditionally enable features per platform",
+      "Verify AutomaticUniforms names match Cesium's built-in uniform list",
+      "Add precision highp float; at the top of fragment shaders",
+      "Use ShaderProgram.fromCache to avoid redundant compilation"
+    ]
+  },
+  {
+    "id": "lod_popping",
+    "name": "LOD Popping / Level of Detail Artifacts",
+    "category": "performance",
+    "severity": "medium",
+    "aliases": ["lod popping", "level of detail", "lod artifact", "tile popping", "geometry popping", "lod transition"],
+    "triggerKeywords": ["lod", "level of detail", "popping", "tile transition", "geometry pop", "lod artifact"],
+    "symptoms": [
+      "Tiles or geometry suddenly pop in/out as camera moves",
+      "Visible seams appear between different LOD levels",
+      "Geometry appears to jump in scale during transitions",
+      "Distant objects suddenly snap to higher detail"
+    ],
+    "possibleCauses": [
+      "skipLevelOfDetail disabled causing abrupt tile transitions",
+      "maximumScreenSpaceError too aggressive causing premature LOD switches",
+      "Tile geometric complexity varies too much between adjacent levels",
+      "Fog or distance display conditions not smoothing LOD transitions",
+      "Cesium3DTileset preloadWhenHidden causing deferred loading spikes"
+    ],
+    "relatedSymbols": [
+      "Cesium3DTileset",
+      "Cesium3DTile",
+      "Cesium3DTilePass",
+      "Cesium3DTilePassState",
+      "Scene",
+      "Camera"
+    ],
+    "relatedStages": ["tileset_traversal_stage", "update_stage", "command_build_stage"],
+    "issueQueries": ["lod popping", "level of detail", "tile popping", "skipLevelOfDetail", "maximumScreenSpaceError"],
+    "investigationSteps": [
+      "Check tileset.skipLevelOfDetail and related skip flags",
+      "Inspect tileset.maximumScreenSpaceError value",
+      "Enable scene.debugShowBoundingVolume to visualize tile selection",
+      "Monitor tileset.tileLoadProgressEvent during camera movement",
+      "Check if fog (scene.fog) is enabled to mask distant LOD transitions"
+    ],
+    "fixSuggestions": [
+      "Enable tileset.skipLevelOfDetail = true for smoother transitions",
+      "Increase tileset.maximumScreenSpaceError to reduce premature detail loading",
+      "Enable scene.fog to naturally mask distant LOD transitions",
+      "Set tileset.preloadWhenHidden = false to avoid deferred loading spikes",
+      "Use tileset.foveatedScreenSpaceError to prioritize center-of-view tiles"
+    ]
+  }
+]

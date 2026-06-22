@@ -4,19 +4,71 @@
 
 ---
 
-## Phase 2: Can Explain
+## Phase 2A: Problem Diagnosis ✅ 完成
 
-**目标：** 在"能查"基础上，Agent 能理解 Symbol 的用途、在渲染管线中的位置、以及历史上出过什么问题，回答"explain / why"类问题。
+**目标：** Debug First / Problem Diagnosis First — 让系统能围绕真实 Cesium 问题回答"为什么会发生、在哪里发生、如何排查、如何修复"。
+
+### 已实现功能
+
+| 功能 | 状态 |
+|---|---|
+| Problem KB（静态 JSON） | ✅ 10 个问题模式 |
+| Render Stage KB（静态 JSON） | ✅ 9 个诊断阶段 |
+| Diagnosis Matcher（关键词匹配） | ✅ |
+| DiagnosticContextPack | ✅ Token budget 6000 |
+| `cesium diagnose` / `cesium pkb list` / `cesium stage` | ✅ |
+| `diagnose_problem` / `query_render_stage` MCP tools | ✅ |
+
+---
+
+## Phase 2B: Render Pipeline Intelligence
+
+**目标：** 在 Problem Diagnosis 基础上，Agent 能理解完整渲染管线，回答"explain / why"类问题。
 
 ### 新增功能
 
 | 功能 | 说明 |
 |---|---|
-| Problem KB（静态版） | 10–15 个问题模型的 JSON 文件，关键词匹配，不做向量化 |
-| Render Pipeline Graph（简化版） | `render_stage` 静态表（10 行），Stage → Symbol 反向设计（`key_symbols` 字段） |
+| Render Pipeline Graph（完整版） | 扩展 render_stage 到完整管线，增加 stage 间依赖关系 |
 | Skill Dispatch（规则版） | 5 个 Skill 硬编码（api / debug / performance / shader / general），关键词规则 + 实体抽取 |
-| Context Pack v2 | 新增 `diagnosis` + `render_stage` section，Token 预算升至 5000–6000 |
-| Forum 数据接入 | Cesium Community Forum HTML 抓取，按 reply_count + solved 过滤 |
+| Context Pack v2 | 新增 `render_stage` section，Token 预算按 Skill 差异化 |
+
+### 新增 MCP Tools
+
+| Tool | 说明 |
+|---|---|
+| `search_forum` | 全文搜索 Forum 帖子 |
+| `search_experience` | 在 experience_node 中检索，支持 type / symbol / problem 过滤 |
+
+### 新增 CLI 命令
+
+```bash
+cesium forum search <keywords>   # 搜索 Forum
+```
+
+### 新增数据源
+
+- Cesium Community Forum（HTML 抓取）
+- GitHub PRs（merged，description + review comments）
+
+### 验收标准
+
+- Context Pack（debug_skill）包含 render_stage section
+- Forum 数据接入后信噪比 > 70%（人工评估 20 个随机样本）
+
+**预估工时：** 3–4 周（1 人）
+
+---
+
+## Phase 2C: Semantic Retrieval
+
+**目标：** 引入向量检索，让语义相似的问题能被召回。
+
+### 新增功能
+
+| 功能 | 说明 |
+|---|---|
+| Qdrant 向量检索 | Issue / Problem 向量化，语义搜索 |
 | Experience Graph 扩展 | 新增 `forum` / `pr_review` node type |
 | Experience Graph 边层 | 仅建 `certain` 边（`fixes` / `released_in`） |
 
@@ -24,48 +76,26 @@
 
 | Tool | 说明 |
 |---|---|
-| `diagnose_problem` | 输入症状描述，返回 PKB 匹配结果 + diagnostic_steps |
-| `query_render_stage` | 输入 problem_id 或 stage_id，返回阶段 + key_symbols |
-| `search_forum` | 全文搜索 Forum 帖子 |
 | `search_experience` | 在 experience_node 中检索，支持 type / symbol / problem 过滤 |
-
-### 新增 CLI 命令
-
-```bash
-cesium diagnose "<symptom>"      # 问题诊断
-cesium stage <problem_id>        # 查看渲染阶段
-cesium pkb list                  # 列出所有问题模型
-cesium forum search <keywords>   # 搜索 Forum
-```
-
-### 新增数据源
-
-- Problem KB（JSON 文件，手工维护）
-- Cesium Community Forum（HTML 抓取）
-- render_stage 静态数据（10 行，手工录入）
-- GitHub PRs（merged，description + review comments）
-
-### 新增数据结构
-
-```sql
-problem (id, category, name, aliases, trigger_keywords,
-         symptom_desc, root_cause, diagnostic_steps,
-         related_symbols, related_stages, related_settings, severity)
-
-render_stage (id, name, order, description, is_optional,
-              perf_hotspot, key_symbols, symptom_hints)
-
-experience_edge (from_node_id, to_node_id, relation, confidence, created_at)
--- experience_node 表新增 type=forum / pr_review
-```
 
 ### 验收标准
 
-- 输入 "flickering polygon"，`diagnose_problem` 返回 z-fighting 问题模型和 3 个诊断步骤
-- Context Pack（debug_skill）包含 diagnosis + render_stage section
-- Forum 数据接入后信噪比 > 70%（人工评估 20 个随机样本）
+- 向量检索在语义相似问题上召回率比全文检索提升 > 20%
 
-**预估工时：** 4–5 周（1 人）
+**预估工时：** 2–3 周（1 人）
+
+---
+
+## Phase 2D: Agent Context System
+
+**目标：** 完整的 Agent 上下文系统，支持 Skill Dispatch 和 Experience Graph。
+
+### 新增功能
+
+| 功能 | 说明 |
+|---|---|
+| Skill Dispatch（规则版） | 5 个 Skill 硬编码（api / debug / performance / shader / general），关键词规则 + 实体抽取 |
+| Experience Graph 完整 | inferred 边（`mentions` / `references` / `supersedes`） + 图遍历查询 |
 
 ---
 
@@ -136,14 +166,14 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 
 | 功能 | 归入 Phase | 理由 |
 |---|---|---|
-| Problem KB | Phase 2 | 需要 Skill Dispatch 配合，MVP 不需要 |
-| Skill Router / Dispatch | Phase 2 | MVP 仅做检索，不做意图分类 |
-| Experience Graph | Phase 2+ | 先积累节点数据，再建边 |
-| Render Graph | Phase 2 | 需要人工标注 key_symbols，MVP 不做 |
+| ~~Problem KB~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现 | 静态 JSON + 关键词匹配 |
+| Skill Router / Dispatch | Phase 2D | MVP 仅做检索，不做意图分类 |
+| Experience Graph | Phase 2C+ | 先积累节点数据，再建边 |
+| ~~Render Graph~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现（简化版） | 9 个诊断阶段 |
 | Loop Agent | — | 不在规划范围内 |
 | Auto Fix / Auto Patch | — | 不在规划范围内 |
 | Auto Code Generation | — | 不在规划范围内 |
-| Forum Crawler | Phase 2 | HTML 抓取成本高，优先级低于 Issue |
+| Forum Crawler | Phase 2B | HTML 抓取成本高，优先级低于 Issue |
 | Blog Sync | Phase 3 (P2) | 数据量少，Release Note 已覆盖官方信息 |
 | GitHub Discussion | Phase 3 (P2) | 与 Issue/Forum 高度重叠 |
 | Intent 向量 Fallback | — | 已删除：关键词规则 + General Skill 兜底足够 |
@@ -156,14 +186,14 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 
 ## 技术栈演进
 
-| 组件 | MVP (Phase 1) | Phase 2 | Phase 3 |
-|---|---|---|---|
-| 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 |
-| AST 解析 | ts-morph + Babel Parser | 同左 | 同左 |
-| MCP Tools | 5 个 | 9 个 | 12+ 个 |
-| Context Pack | 4 sections | 6 sections | 6+ sections |
-| Token Budget | 4000–6000（硬编码） | 5000–6000（按 Skill 差异化） | 同左 |
-| Problem KB | — | 静态 JSON + 关键词匹配 | 静态 JSON + 向量化 |
+| 组件 | MVP (Phase 1) | Phase 2A | Phase 2B | Phase 3 |
+|---|---|---|---|---|
+| 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 |
+| AST 解析 | ts-morph + Babel Parser | 同左 | 同左 | 同左 |
+| MCP Tools | 5 个 | 7 个 | 9 个 | 12+ 个 |
+| Context Pack | 4 sections | 4 sections | 5 sections | 6+ sections |
+| Token Budget | 4000–6000（硬编码） | 6000（diagnosis） | 5000–6000（按 Skill 差异化） | 同左 |
+| Problem KB | — | 静态 JSON + 关键词匹配 | 同左 | 静态 JSON + 向量化 |
 
 ---
 

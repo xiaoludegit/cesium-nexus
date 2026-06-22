@@ -1,0 +1,74 @@
+[
+  {
+    "id": "update_stage",
+    "name": "Update Stage",
+    "order": 1,
+    "description": "Scene.update() traverses all primitives, tilesets, and data sources. Each object updates its state, computes transforms, and prepares render commands for the current frame.",
+    "keySymbols": ["Scene", "Primitive", "Cesium3DTileset", "PrimitiveCollection", "Camera", "ScreenSpaceCameraController"],
+    "symptomHints": ["objects not updating", "stale transforms", "camera movement lag", "primitive state not refreshing"]
+  },
+  {
+    "id": "command_build_stage",
+    "name": "Command Build Stage",
+    "order": 2,
+    "description": "After update, each primitive produces DrawCommand objects. Commands are sorted into render queues (opaque, translucent, compute) and assigned RenderState, shader programs, and uniform maps.",
+    "keySymbols": ["DrawCommand", "RenderState", "Primitive", "Context", "PassState"],
+    "symptomHints": ["draw call issues", "render state errors", "command sorting problems", "missing draw commands"]
+  },
+  {
+    "id": "depth_pass",
+    "name": "Depth Pass",
+    "order": 3,
+    "description": "The depth pre-pass writes depth values for opaque geometry without color output. This populates the depth buffer used by subsequent passes for occlusion testing and depth comparisons.",
+    "keySymbols": ["Scene", "DepthPlane", "RenderState", "Context", "Framebuffer"],
+    "symptomHints": ["z-fighting", "depth precision", "objects rendering behind others", "depth buffer artifacts"]
+  },
+  {
+    "id": "opaque_pass",
+    "name": "Opaque Pass",
+    "order": 4,
+    "description": "Renders all opaque geometry sorted front-to-back. Uses the depth buffer from the depth pass to skip occluded fragments. This includes most primitives, terrain, and opaque 3D Tiles.",
+    "keySymbols": ["Primitive", "GroundPrimitive", "ClassificationPrimitive", "Globe", "Scene", "DrawCommand"],
+    "symptomHints": ["opaque objects invisible", "terrain rendering issues", "primitive not showing", "front-to-back sorting problems"]
+  },
+  {
+    "id": "translucent_pass",
+    "name": "Translucent Pass",
+    "order": 5,
+    "description": "Renders translucent geometry sorted back-to-front. Depth writes are disabled to allow proper alpha blending. Includes translucent primitives, labels, billboards, and translucent 3D Tiles.",
+    "keySymbols": ["Label", "Billboard", "Primitive", "Scene", "DrawCommand", "PassState"],
+    "symptomHints": ["label not visible", "translucent sorting wrong", "alpha blending artifacts", "billboard disappearing"]
+  },
+  {
+    "id": "classification_stage",
+    "name": "Classification Stage",
+    "order": 6,
+    "description": "Handles rendering of ClassificationPrimitive and GroundPrimitive with classificationType. Modifies the appearance of underlying 3D Tiles or terrain based on stencil buffer operations.",
+    "keySymbols": ["ClassificationPrimitive", "GroundPrimitive", "Globe", "Cesium3DTileset", "Scene"],
+    "symptomHints": ["classification not working", "ground primitive conflict", "terrain overlay issues", "stencil buffer problems"]
+  },
+  {
+    "id": "picking_stage",
+    "name": "Picking Stage",
+    "order": 7,
+    "description": "Renders pickable objects to an offscreen framebuffer using unique pick colors. scene.pick() reads this framebuffer to determine which object is under the cursor.",
+    "keySymbols": ["Picking", "Scene", "Primitive", "Cesium3DTileset", "Label", "Billboard"],
+    "symptomHints": ["pick returns undefined", "wrong object picked", "picking not working", "pick color collision"]
+  },
+  {
+    "id": "tileset_traversal_stage",
+    "name": "3D Tiles Traversal Stage",
+    "order": 8,
+    "description": "Traverses the 3D Tiles spatial tree (quadtree/octree/kd-tree) to determine which tiles to render based on screen-space error, visibility, and frustum culling. Manages tile loading, caching, and unloading.",
+    "keySymbols": ["Cesium3DTileset", "Cesium3DTile", "Cesium3DTileContent", "TileBoundingSphere", "TileOrientedBoundingBox", "Cesium3DTilePass", "Cesium3DTilePassState", "RequestScheduler"],
+    "symptomHints": ["tiles not loading", "tile jitter", "lod popping", "tile culling issues", "tiles stuck"]
+  },
+  {
+    "id": "shader_compile_stage",
+    "name": "Shader Compile Stage",
+    "order": 9,
+    "description": "Compiles and links GLSL shader programs. Includes vertex shaders, fragment shaders, and optional geometry shaders. Shader compilation may happen asynchronously and is cached by ShaderProgram.",
+    "keySymbols": ["ShaderSource", "ShaderProgram", "Context", "AutomaticUniforms", "Material"],
+    "symptomHints": ["shader compile error", "glsl error", "shader link failure", "black primitives", "material not applying"]
+  }
+]

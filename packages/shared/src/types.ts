@@ -82,3 +82,73 @@ export interface IndexSummary {
   byKind: Record<SymbolKind, number>;
   duration: number;
 }
+
+/* ────────────────────────────────────────────
+ *  Phase 2A — Problem Diagnosis Types
+ * ──────────────────────────────────────────── */
+
+export type ProblemCategory =
+  | "debug"
+  | "performance"
+  | "rendering"
+  | "terrain"
+  | "tiles"
+  | "shader";
+
+export type ProblemSeverity = "low" | "medium" | "high";
+
+export interface ProblemPattern {
+  id: string;
+  name: string;
+  category: ProblemCategory;
+  severity: ProblemSeverity;
+  aliases: string[];
+  triggerKeywords: string[];
+  symptoms: string[];
+  possibleCauses: string[];
+  relatedSymbols: string[];
+  relatedStages: string[];
+  issueQueries: string[];
+  investigationSteps: string[];
+  fixSuggestions: string[];
+}
+
+export interface RenderStage {
+  id: string;
+  name: string;
+  order: number;
+  description: string;
+  keySymbols: string[];
+  symptomHints: string[];
+}
+
+export interface DiagnosisMatch {
+  pattern: ProblemPattern;
+  matchedKeywords: string[];
+  score: number;
+}
+
+export interface DiagnosisMetadata {
+  totalTokens: number;
+  truncated: boolean;
+  tokenBudget: number;
+  unavoidableOverflow?: boolean;
+  minimumPossibleTokens?: number;
+}
+
+export interface DiagnosisResult {
+  query: string;
+  matchedPatterns: DiagnosisMatch[];
+  renderStages: RenderStage[];
+  relatedSymbols: SymbolRecord[];
+  relatedSource: SourceSnippet[];
+  callgraph: Edge[];
+  relatedIssues: IssueRecord[];
+  investigationSteps: string[];
+  fixSuggestions: string[];
+  metadata: DiagnosisMetadata;
+}
+
+export interface DiagnosticContextPack extends DiagnosisResult {
+  kind: "diagnosis";
+}

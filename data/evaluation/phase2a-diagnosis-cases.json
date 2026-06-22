@@ -1,0 +1,62 @@
+[
+  {
+    "query": "why does my polygon flicker when I move the camera?",
+    "expectedPatterns": ["z_fighting"],
+    "expectedSymbols": ["PolygonGeometry", "Primitive"]
+  },
+  {
+    "query": "z-fighting on overlapping geometry",
+    "expectedPatterns": ["z_fighting"],
+    "expectedSymbols": ["Scene", "DepthPlane"]
+  },
+  {
+    "query": "depth precision loss at large distances",
+    "expectedPatterns": ["depth_precision"],
+    "expectedSymbols": ["Camera", "PerspectiveFrustum"]
+  },
+  {
+    "query": "GroundPrimitive flickers over terrain",
+    "expectedPatterns": ["terrain_conflict"],
+    "expectedSymbols": ["GroundPrimitive", "Globe"]
+  },
+  {
+    "query": "primitive rendering is very slow, fps drops",
+    "expectedPatterns": ["primitive_performance"],
+    "expectedSymbols": ["Primitive", "Scene"]
+  },
+  {
+    "query": "label disappears at certain camera angles",
+    "expectedPatterns": ["label_visibility"],
+    "expectedSymbols": ["Label", "Billboard"]
+  },
+  {
+    "query": "3D Tiles tileset jitters when zooming in",
+    "expectedPatterns": ["tiles_jitter"],
+    "expectedSymbols": ["Cesium3DTileset", "Cesium3DTile"]
+  },
+  {
+    "query": "3D Tiles fail to load from server",
+    "expectedPatterns": ["tiles_loading"],
+    "expectedSymbols": ["Cesium3DTileset", "Resource"]
+  },
+  {
+    "query": "scene.pick returns undefined when clicking on primitive",
+    "expectedPatterns": ["picking_failure"],
+    "expectedSymbols": ["Picking", "Scene"]
+  },
+  {
+    "query": "custom shader fails to compile with GLSL error",
+    "expectedPatterns": ["shader_compile_error"],
+    "expectedSymbols": ["ShaderSource", "ShaderProgram"]
+  },
+  {
+    "query": "tiles pop in and out as I move the camera",
+    "expectedPatterns": ["lod_popping"],
+    "expectedSymbols": ["Cesium3DTileset", "Camera"]
+  },
+  {
+    "query": "classification on terrain does not show up",
+    "expectedPatterns": ["terrain_conflict"],
+    "expectedSymbols": ["ClassificationPrimitive", "Globe"]
+  }
+]

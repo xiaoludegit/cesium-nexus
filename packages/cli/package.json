@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@cesium-nexus/context-pack": "workspace:*",
+    "@cesium-nexus/diagnosis": "workspace:*",
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/indexer": "workspace:*",
     "@cesium-nexus/mcp": "workspace:*",

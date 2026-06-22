@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.2.0 (Unreleased)
+
+### Added — Phase 2A: Problem Diagnosis
+
+- **Problem Knowledge Base** — 10 static problem patterns (z-fighting, depth precision, terrain conflict, primitive performance, label visibility, tiles jitter, tiles loading, picking failure, shader compile error, LOD popping)
+- **Render Stage KB** — 9 diagnostic render stages with key symbols and symptom hints
+- **`@cesium-nexus/diagnosis` package** — Knowledge loader, symptom matcher, diagnosis assembler, token budget truncation
+- **CLI commands**: `cesium diagnose "<problem>"`, `cesium pkb list`, `cesium stage <id>`
+- **MCP tools**: `diagnose_problem` (symptom → diagnostic context pack), `query_render_stage` (stage/problem ID → render stages)
+- **Evaluation dataset** — 12 test cases validating pattern matching and symbol resolution
+- 7 MCP tools total (was 5), 8 packages (was 7)
+
 ## v0.1.0 (2025-06-16)
 
 ### Added

@@ -38,6 +38,9 @@ importers:
       '@cesium-nexus/context-pack':
         specifier: workspace:*
         version: link:../context-pack
+      '@cesium-nexus/diagnosis':
+        specifier: workspace:*
+        version: link:../diagnosis
       '@cesium-nexus/indexer':
         specifier: workspace:*
         version: link:../indexer
@@ -55,6 +58,15 @@ importers:
         version: 13.1.0
 
   packages/context-pack:
+    dependencies:
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
+
+  packages/diagnosis:
     dependencies:
       '@cesium-nexus/shared':
         specifier: workspace:*
@@ -86,6 +98,9 @@ importers:
       '@cesium-nexus/context-pack':
         specifier: workspace:*
         version: link:../context-pack
+      '@cesium-nexus/diagnosis':
+        specifier: workspace:*
+        version: link:../diagnosis
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared

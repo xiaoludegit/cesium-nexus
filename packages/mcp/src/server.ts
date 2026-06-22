@@ -14,10 +14,12 @@ import {
   handleSearchIssue,
   handleTraceCallgraph,
   handleBuildContextPack,
+  handleDiagnoseProblem,
+  handleQueryRenderStage,
 } from "./handlers.js";
 
 /**
- * Register the 5 Cesium knowledge-base tools on an existing McpServer.
+ * Register the 7 Cesium knowledge-base tools on an existing McpServer.
  * Exported for testing with :memory: databases.
  */
 export function registerTools(
@@ -125,10 +127,50 @@ export function registerTools(
       };
     },
   );
+
+  // ── diagnose_problem ────────────────────────────────────────
+  server.tool(
+    "diagnose_problem",
+    "Diagnose a Cesium problem by matching symptoms to known patterns and assembling a diagnostic context pack with causes, related source, issues, and fix suggestions",
+    {
+      problem: z.string().min(1),
+      limit: z.number().int().min(1).max(20).default(5),
+      budget: z.number().int().min(1000).default(6000),
+    },
+    async (input) => {
+      const result = await handleDiagnoseProblem(
+        symbolRepo,
+        callGraphRepo,
+        issueRepo,
+        input,
+      );
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ── query_render_stage ──────────────────────────────────────
+  server.tool(
+    "query_render_stage",
+    "Query Cesium render stages by stage ID or problem pattern ID for diagnostic context",
+    {
+      stageId: z.string().optional(),
+      problemId: z.string().optional(),
+    },
+    async (input) => {
+      const result = await handleQueryRenderStage(input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
 }
 
 /**
- * Create an MCP server with 5 Cesium knowledge-base tools.
+ * Create an MCP server with 7 Cesium knowledge-base tools.
  *
  * No console.log during server lifetime — stdout is the JSON-RPC channel.
  */

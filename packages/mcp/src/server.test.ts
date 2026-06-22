@@ -130,9 +130,9 @@ describe("MCP Protocol Integration", () => {
     expect(client).toBeDefined();
   });
 
-  it("tools/list returns 5 tools", async () => {
+  it("tools/list returns 7 tools", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(5);
+    expect(tools).toHaveLength(7);
   });
 
   it("tools/list contains correct tool names", async () => {
@@ -140,7 +140,9 @@ describe("MCP Protocol Integration", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "build_context_pack",
+      "diagnose_problem",
       "get_source",
+      "query_render_stage",
       "search_issue",
       "search_symbol",
       "trace_callgraph",
@@ -255,5 +257,34 @@ describe("MCP Protocol Integration", () => {
 
     // Zod validation failure results in isError
     expect(result.isError).toBe(true);
+  });
+
+  it("tools/call diagnose_problem returns diagnosis pack", async () => {
+    const result = await client.callTool({
+      name: "diagnose_problem",
+      arguments: { problem: "polygon flickering" },
+    });
+
+    expect(result.content).toHaveLength(1);
+    const text = (result.content[0] as { type: string; text: string }).text;
+    const parsed = JSON.parse(text);
+    expect(parsed.success).toBe(true);
+    const pack = parsed.data;
+    expect(pack.kind).toBe("diagnosis");
+    expect(pack.matchedPatterns.length).toBeGreaterThan(0);
+    expect(pack.matchedPatterns[0].pattern.id).toBe("z_fighting");
+  });
+
+  it("tools/call query_render_stage by problemId", async () => {
+    const result = await client.callTool({
+      name: "query_render_stage",
+      arguments: { problemId: "z_fighting" },
+    });
+
+    expect(result.content).toHaveLength(1);
+    const text = (result.content[0] as { type: string; text: string }).text;
+    const parsed = JSON.parse(text);
+    expect(parsed.success).toBe(true);
+    expect(parsed.data.count).toBeGreaterThan(0);
   });
 });

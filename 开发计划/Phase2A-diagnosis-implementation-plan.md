@@ -869,14 +869,14 @@ Phase 2A 禁止实现：
 
 | Step | 内容 | 状态 |
 |---|---|---|
-| 1 | 扩展 shared diagnosis types | 待开始 |
-| 2 | 新增静态 Problem KB / Render Stage / Evaluation 数据 | 待开始 |
-| 3 | 新增 `@cesium-nexus/diagnosis` package | 待开始 |
-| 4 | Knowledge Loader + 校验测试 | 待开始 |
-| 5 | Problem Matcher + 规则匹配测试 | 待开始 |
-| 6 | DiagnosticContextPack token budget | 待开始 |
-| 7 | Diagnosis Assembly | 待开始 |
-| 8 | Evaluation Dataset 测试 | 待开始 |
-| 9 | CLI: diagnose / pkb list / stage | 待开始 |
-| 10 | MCP: diagnose_problem / query_render_stage | 待开始 |
-| 11 | README / CHANGELOG / Roadmap 更新 | 待开始 |
+| 1 | 扩展 shared diagnosis types | ✅ 完成 |
+| 2 | 新增静态 Problem KB / Render Stage / Evaluation 数据 | ✅ 完成 |
+| 3 | 新增 `@cesium-nexus/diagnosis` package | ✅ 完成 |
+| 4 | Knowledge Loader + 校验测试 | ✅ 完成 |
+| 5 | Problem Matcher + 规则匹配测试 | ✅ 完成 |
+| 6 | DiagnosticContextPack token budget | ✅ 完成 |
+| 7 | Diagnosis Assembly | ✅ 完成 |
+| 8 | Evaluation Dataset 测试 | ✅ 完成 |
+| 9 | CLI: diagnose / pkb list / stage | ✅ 完成 |
+| 10 | MCP: diagnose_problem / query_render_stage | ✅ 完成 |
+| 11 | README / CHANGELOG / Roadmap 更新 | ✅ 完成 |

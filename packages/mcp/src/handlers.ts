@@ -3,6 +3,12 @@ import type { IssueRepo } from "@cesium-nexus/storage";
 import type { CallGraphRepo } from "@cesium-nexus/storage";
 import { resolveSymbolId } from "@cesium-nexus/storage";
 import { buildContextPack } from "@cesium-nexus/context-pack";
+import {
+  loadProblemPatterns,
+  loadRenderStages,
+  diagnoseProblem,
+  queryRenderStages,
+} from "@cesium-nexus/diagnosis";
 
 export interface ToolResponse {
   success: boolean;
@@ -190,6 +196,69 @@ export async function handleBuildContextPack(
     }
 
     return { success: true, data: result };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── diagnose_problem ──────────────────────────────────────
+
+export async function handleDiagnoseProblem(
+  symbolRepo: SymbolRepo,
+  callGraphRepo: CallGraphRepo,
+  issueRepo: IssueRepo,
+  input: { problem: string; limit?: number; budget?: number },
+): Promise<ToolResponse> {
+  try {
+    const patterns = await loadProblemPatterns();
+    const stages = await loadRenderStages();
+
+    const result = await diagnoseProblem({
+      query: input.problem,
+      patterns,
+      stages,
+      symbolRepo,
+      callGraphRepo,
+      issueRepo,
+      limit: input.limit,
+      budget: input.budget,
+    });
+
+    return { success: true, data: result };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── query_render_stage ────────────────────────────────────
+
+export async function handleQueryRenderStage(
+  input: { stageId?: string; problemId?: string },
+): Promise<ToolResponse> {
+  try {
+    const patterns = await loadProblemPatterns();
+    const stages = await loadRenderStages();
+
+    const result = queryRenderStages({
+      stageId: input.stageId,
+      problemId: input.problemId,
+      patterns,
+      stages,
+    });
+
+    return {
+      success: true,
+      data: {
+        count: result.length,
+        stages: result,
+      },
+    };
   } catch (err) {
     return {
       success: false,
