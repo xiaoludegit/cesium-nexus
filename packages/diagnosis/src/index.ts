@@ -1,4 +1,13 @@
-export { loadProblemPatterns, loadRenderStages } from "./knowledge-loader.js";
+export {
+  loadProblemPatterns,
+  loadRenderStages,
+  validateProblemPatterns,
+  validateRenderStages,
+  buildRenderPipelineGraph,
+  validatePipelineDAG,
+  getStageDependencies,
+  getDownstreamStages,
+} from "./knowledge-loader.js";
 export { normalizeQuery, matchProblemPatterns } from "./matcher.js";
 export { diagnoseProblem, queryRenderStages } from "./diagnoser.js";
 export type { DiagnoseOptions } from "./diagnoser.js";

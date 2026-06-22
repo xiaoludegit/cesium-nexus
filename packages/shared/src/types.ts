@@ -120,6 +120,22 @@ export interface RenderStage {
   description: string;
   keySymbols: string[];
   symptomHints: string[];
+  dependsOn: string[];
+  perfHotspot?: boolean;
+  isOptional?: boolean;
+}
+
+export type StageRelation = "sequential" | "conditional" | "parallel";
+
+export interface RenderStageEdge {
+  from: string;
+  to: string;
+  relation: StageRelation;
+}
+
+export interface RenderPipelineGraph {
+  stages: RenderStage[];
+  edges: RenderStageEdge[];
 }
 
 export interface DiagnosisMatch {
@@ -151,4 +167,145 @@ export interface DiagnosisResult {
 
 export interface DiagnosticContextPack extends DiagnosisResult {
   kind: "diagnosis";
+}
+
+/* ────────────────────────────────────────────
+ *  Phase 2B — Render Pipeline Intelligence Types
+ * ──────────────────────────────────────────── */
+
+export type SkillId = "api" | "debug" | "performance" | "shader" | "general";
+
+export type SkillSection =
+  | "symbol"
+  | "source"
+  | "callgraph"
+  | "issues"
+  | "render_stage"
+  | "diagnosis"
+  | "forum"
+  | "experience"
+  | "fixes";
+
+export interface ExtractedEntity {
+  type: "symbol" | "version" | "stage" | "problem";
+  value: string;
+}
+
+export interface SkillDispatchResult {
+  skill: SkillId;
+  confidence: number;
+  matchedKeywords: string[];
+  extractedEntities: ExtractedEntity[];
+}
+
+export interface SkillRetrievalHints {
+  includeDiagnosis: boolean;
+  includeRenderStages: boolean;
+  includeForum: boolean;
+  includeExperience: boolean;
+  callgraphDepth: number;
+  issueLimit: number;
+  forumLimit: number;
+}
+
+export interface SkillConfig {
+  id: SkillId;
+  name: string;
+  description: string;
+  triggerKeywords: string[];
+  tokenBudget: number;
+  sections: SkillSection[];
+  retrieval: SkillRetrievalHints;
+}
+
+export interface ForumPost {
+  id: number;
+  topicId: number;
+  title: string;
+  body: string;
+  author: string;
+  repliesCount: number;
+  viewsCount: number;
+  hasSolution: boolean;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+  qualityScore: number;
+}
+
+export interface ForumSearchResult {
+  post: ForumPost;
+  score: number;
+}
+
+export interface PullRequestRecord {
+  id: number;
+  repo: string;
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  mergedAt: string | null;
+  author: string;
+  labels: string[];
+  reviewComments: number;
+  filesChanged: number;
+  createdAt: string;
+  updatedAt: string;
+  htmlUrl: string;
+  closingIssueReferences: number[];
+}
+
+export interface PRSearchResult {
+  pr: PullRequestRecord;
+  score: number;
+}
+
+export type ExperienceNodeType = "issue" | "pr_review" | "forum";
+
+export interface ExperienceNode {
+  id: string;
+  type: ExperienceNodeType;
+  title: string;
+  url: string;
+  source: string;
+  summary: string;
+  relatedSymbols: string[];
+  tags: string[];
+  qualityScore: number;
+  publishedAt: string;
+}
+
+export interface ExperienceSearchResult {
+  node: ExperienceNode;
+  score: number;
+}
+
+export interface SkillContextPackMetadata {
+  skill: SkillId;
+  totalTokens: number;
+  truncated: boolean;
+  tokenBudget: number;
+  sectionsIncluded: SkillSection[];
+  symbolResolved?: string;
+  unavoidableOverflow?: boolean;
+  minimumPossibleTokens?: number;
+}
+
+export interface SkillContextPack {
+  kind: "skill";
+  skill: SkillId;
+  query: string;
+  dispatch: SkillDispatchResult;
+  symbol?: SymbolRecord;
+  source: SourceSnippet[];
+  callgraph: Edge[];
+  issues: IssueRecord[];
+  renderStages?: RenderStage[];
+  diagnosis?: DiagnosisResult;
+  forum?: ForumPost[];
+  experience?: ExperienceNode[];
+  fixSuggestions?: string[];
+  metadata: SkillContextPackMetadata;
 }

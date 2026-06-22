@@ -21,42 +21,41 @@
 
 ---
 
-## Phase 2B: Render Pipeline Intelligence
+## Phase 2B: Render Pipeline Intelligence ✅ 完成
 
 **目标：** 在 Problem Diagnosis 基础上，Agent 能理解完整渲染管线，回答"explain / why"类问题。
 
-### 新增功能
+### 已实现功能
 
-| 功能 | 说明 |
+| 功能 | 状态 |
 |---|---|
-| Render Pipeline Graph（完整版） | 扩展 render_stage 到完整管线，增加 stage 间依赖关系 |
-| Skill Dispatch（规则版） | 5 个 Skill 硬编码（api / debug / performance / shader / general），关键词规则 + 实体抽取 |
-| Context Pack v2 | 新增 `render_stage` section，Token 预算按 Skill 差异化 |
+| Render Pipeline Graph（完整版） | ✅ 12 个阶段 + DAG 依赖 + 环检测 |
+| Skill Dispatch（规则版） | ✅ 5 个 Skill + 关键词评分 + 实体增强 |
+| Context Pack v2 | ✅ Skill 差异化 Token 预算 + 渐进截断 |
+| Forum Crawler（Discourse JSON API） | ✅ 质量评分过滤 |
+| GitHub PR Sync（merged） | ✅ 增量游标 |
+| Experience Node（统一检索层） | ✅ type/symbol/quality 过滤 |
+| `@cesium-nexus/skills` 包 | ✅ router + extractor + builder + budget |
 
-### 新增 MCP Tools
+### 已实现 MCP Tools
 
-| Tool | 说明 |
+| Tool | 状态 |
 |---|---|
-| `search_forum` | 全文搜索 Forum 帖子 |
-| `search_experience` | 在 experience_node 中检索，支持 type / symbol / problem 过滤 |
+| `search_forum` | ✅ |
+| `search_experience` | ✅ |
+| `dispatch_skill` | ✅ |
+| `build_skill_pack` | ✅ |
 
-### 新增 CLI 命令
+### 已实现 CLI 命令
 
 ```bash
-cesium forum search <keywords>   # 搜索 Forum
+cesium forum sync                          # 爬取 Forum
+cesium forum search <keywords>             # 搜索 Forum
+cesium skills list                         # 列出技能配置
+cesium dispatch <query>                    # 查看技能分发结果
+cesium skill-pack <query>                  # 构建 Skill-aware Context Pack v2
+cesium pipeline [stage_id]                 # 查看渲染管线 DAG
 ```
-
-### 新增数据源
-
-- Cesium Community Forum（HTML 抓取）
-- GitHub PRs（merged，description + review comments）
-
-### 验收标准
-
-- Context Pack（debug_skill）包含 render_stage section
-- Forum 数据接入后信噪比 > 70%（人工评估 20 个随机样本）
-
-**预估工时：** 3–4 周（1 人）
 
 ---
 
@@ -167,13 +166,13 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 | 功能 | 归入 Phase | 理由 |
 |---|---|---|
 | ~~Problem KB~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现 | 静态 JSON + 关键词匹配 |
-| Skill Router / Dispatch | Phase 2D | MVP 仅做检索，不做意图分类 |
+| ~~Skill Router / Dispatch~~ | ~~Phase 2D~~ → ✅ Phase 2B 已实现 | 5 个 Skill 硬编码 + 关键词评分 |
 | Experience Graph | Phase 2C+ | 先积累节点数据，再建边 |
-| ~~Render Graph~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现（简化版） | 9 个诊断阶段 |
+| ~~Render Graph~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现（简化版） | 9 个诊断阶段 → Phase 2B 扩展为 12 阶段 DAG |
 | Loop Agent | — | 不在规划范围内 |
 | Auto Fix / Auto Patch | — | 不在规划范围内 |
 | Auto Code Generation | — | 不在规划范围内 |
-| Forum Crawler | Phase 2B | HTML 抓取成本高，优先级低于 Issue |
+| ~~Forum Crawler~~ | ~~Phase 2B~~ → ✅ Phase 2B 已实现 | Discourse JSON API + 质量评分 |
 | Blog Sync | Phase 3 (P2) | 数据量少，Release Note 已覆盖官方信息 |
 | GitHub Discussion | Phase 3 (P2) | 与 Issue/Forum 高度重叠 |
 | Intent 向量 Fallback | — | 已删除：关键词规则 + General Skill 兜底足够 |
@@ -190,9 +189,9 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 |---|---|---|---|---|
 | 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 |
 | AST 解析 | ts-morph + Babel Parser | 同左 | 同左 | 同左 |
-| MCP Tools | 5 个 | 7 个 | 9 个 | 12+ 个 |
-| Context Pack | 4 sections | 4 sections | 5 sections | 6+ sections |
-| Token Budget | 4000–6000（硬编码） | 6000（diagnosis） | 5000–6000（按 Skill 差异化） | 同左 |
+| MCP Tools | 5 个 | 7 个 | 11 个 | 12+ 个 |
+| Context Pack | 4 sections | 4 sections | 5+ sections (skill-aware) | 6+ sections |
+| Token Budget | 4000–6000（硬编码） | 6000（diagnosis） | 4000–6000（按 Skill 差异化） | 同左 |
 | Problem KB | — | 静态 JSON + 关键词匹配 | 同左 | 静态 JSON + 向量化 |
 
 ---

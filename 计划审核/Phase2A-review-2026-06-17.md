@@ -197,4 +197,44 @@ node packages/cli/dist/index.js diagnose "what is the weather today" --db databa
 
 ## 最终判定
 
-当前 Phase 2A 可以认为“结构完成、基础功能可运行”，但还不能认为“验收完成”。建议修复上述 P1 问题后再进入最终验收或提交。
+当前 Phase 2A 可以认为”结构完成、基础功能可运行”，但还不能认为”验收完成”。建议修复上述 P1 问题后再进入最终验收或提交。
+
+---
+
+## 最终验收（2026-06-22）
+
+### P1 修复验证
+
+P1 修复已在 commit `d06e479`（feat(Phase2A): 问题诊断系统 + P1 修复）中合入。本次验收对该 commit 进行了完整验证。
+
+#### P1-1: Matcher 最小匹配阈值 — 已修复
+
+- `matcher.ts` 第 124 行：`if (score > 0 && hasStrong)` 已要求至少命中 alias / trigger keyword / symptom phrase（2+ token overlap）中的强信号。
+- `relatedSymbols` 和 `category` 命中仅提供低权重辅助分，不触发 `hasStrong`，不会单独产生诊断匹配。
+- 烟测验证：
+  - `diagnose “camera”` → “No matching problem patterns found.”（不再返回 5 个噪声诊断）
+  - `diagnose “tiles”` → 仅返回 `tiles_jitter` 一个精确匹配
+- 回归测试：`matcher.test.ts` 已覆盖弱查询过滤和强症状查询命中。
+
+#### P1-2: Token Budget 硬上限 — 已修复
+
+- `token-budget.ts` 第 201–214 行：新增 “Final hard-cap enforcement” 阶段，当裁剪后仍超预算时，依次丢弃 `fixSuggestions` 和 `investigationSteps`。
+- 第 216–239 行：计算 `minimumPossibleTokens`，并在无法进一步裁剪时标记 `unavoidableOverflow: true`。
+- 烟测验证：
+  - `diagnose “tiles” --budget 1000` → `tokens: 988/1000`（在预算内）
+  - `diagnose “camera” --budget 1000` → 无匹配，不产生超预算包
+- 回归测试：`token-budget.test.ts` 已覆盖硬上限校验（200/500/1000/2000 多档预算）、`unavoidableOverflow` 标记和最小裁剪结构。
+
+### 测试套件
+
+```bash
+pnpm run typecheck  # 通过
+pnpm run build      # 通过
+pnpm run test       # 20 test files, 239 passed, 5 skipped
+```
+
+测试数从审核时的 232 增长到 239（+7 回归测试）。
+
+### 验收结论
+
+**Phase 2A 验收通过。** 两个 P1 问题已修复并配有回归测试，烟测和全量测试均通过。Phase 2A（问题诊断系统）正式完成。

@@ -1,6 +1,9 @@
 import type { SymbolRepo } from "@cesium-nexus/storage";
 import type { IssueRepo } from "@cesium-nexus/storage";
 import type { CallGraphRepo } from "@cesium-nexus/storage";
+import type { PullRequestRepo } from "@cesium-nexus/storage";
+import type { ForumRepo } from "@cesium-nexus/storage";
+import type { ExperienceRepo } from "@cesium-nexus/storage";
 import { resolveSymbolId } from "@cesium-nexus/storage";
 import { buildContextPack } from "@cesium-nexus/context-pack";
 import {
@@ -9,6 +12,11 @@ import {
   diagnoseProblem,
   queryRenderStages,
 } from "@cesium-nexus/diagnosis";
+import {
+  loadSkillConfigs,
+  dispatchSkill,
+  buildSkillContextPack,
+} from "@cesium-nexus/skills";
 
 export interface ToolResponse {
   success: boolean;
@@ -236,7 +244,157 @@ export async function handleDiagnoseProblem(
   }
 }
 
-// ─── query_render_stage ────────────────────────────────────
+// ─── search_forum ─────────────────────────────────────────
+
+export async function handleSearchForum(
+  forumRepo: ForumRepo,
+  input: { query: string; limit?: number; minQuality?: number },
+): Promise<ToolResponse> {
+  try {
+    const limit = input.limit ?? 10;
+    const results = forumRepo.searchFts(input.query, {
+      limit,
+      minQuality: input.minQuality,
+    });
+    return {
+      success: true,
+      data: {
+        query: input.query,
+        count: results.length,
+        results: results.map((r) => ({
+          id: r.post.id,
+          topicId: r.post.topicId,
+          title: r.post.title,
+          author: r.post.author,
+          repliesCount: r.post.repliesCount,
+          viewsCount: r.post.viewsCount,
+          hasSolution: r.post.hasSolution,
+          tags: r.post.tags,
+          url: r.post.url,
+          qualityScore: r.post.qualityScore,
+          score: r.score,
+        })),
+      },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── search_experience ────────────────────────────────────
+
+export async function handleSearchExperience(
+  experienceRepo: ExperienceRepo,
+  input: {
+    query: string;
+    limit?: number;
+    type?: "issue" | "pr_review" | "forum";
+    symbol?: string;
+    minQuality?: number;
+  },
+): Promise<ToolResponse> {
+  try {
+    const limit = input.limit ?? 10;
+    const results = experienceRepo.searchFts(input.query, {
+      limit,
+      type: input.type,
+      symbol: input.symbol,
+      minQuality: input.minQuality,
+    });
+    return {
+      success: true,
+      data: {
+        query: input.query,
+        count: results.length,
+        results: results.map((r) => ({
+          id: r.node.id,
+          type: r.node.type,
+          title: r.node.title,
+          url: r.node.url,
+          source: r.node.source,
+          summary: r.node.summary,
+          relatedSymbols: r.node.relatedSymbols,
+          tags: r.node.tags,
+          qualityScore: r.node.qualityScore,
+          score: r.score,
+        })),
+      },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── dispatch_skill ───────────────────────────────────────
+
+export async function handleDispatchSkill(
+  symbolRepo: SymbolRepo,
+  input: { query: string },
+): Promise<ToolResponse> {
+  try {
+    const configs = await loadSkillConfigs();
+    const patterns = await loadProblemPatterns();
+    const stages = await loadRenderStages();
+
+    const result = dispatchSkill(input.query, configs, {
+      symbolRepo,
+      stages,
+      patterns,
+    });
+
+    return { success: true, data: result };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── build_skill_pack ─────────────────────────────────────
+
+export async function handleBuildSkillPack(
+  symbolRepo: SymbolRepo,
+  callGraphRepo: CallGraphRepo,
+  issueRepo: IssueRepo,
+  prRepo: PullRequestRepo,
+  forumRepo: ForumRepo,
+  experienceRepo: ExperienceRepo,
+  input: { query: string; budget?: number },
+): Promise<ToolResponse> {
+  try {
+    const configs = await loadSkillConfigs();
+    const patterns = await loadProblemPatterns();
+    const stages = await loadRenderStages();
+
+    const result = await buildSkillContextPack({
+      query: input.query,
+      symbolRepo,
+      callGraphRepo,
+      issueRepo,
+      prRepo,
+      forumRepo,
+      experienceRepo,
+      patterns,
+      stages,
+      configs,
+      budget: input.budget,
+    });
+
+    return { success: true, data: result };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
 
 export async function handleQueryRenderStage(
   input: { stageId?: string; problemId?: string },

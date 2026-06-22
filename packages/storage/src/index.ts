@@ -4,5 +4,8 @@ export { SymbolRepo } from "./symbol-repo.js";
 export type { SourceFtsEntry, SourceSearchResult, SourceCodeEntry } from "./symbol-repo.js";
 export { IssueRepo } from "./issue-repo.js";
 export { CallGraphRepo } from "./callgraph-repo.js";
+export { PullRequestRepo } from "./pr-repo.js";
+export { ForumRepo } from "./forum-repo.js";
+export { ExperienceRepo, buildExperienceNode } from "./experience-repo.js";
 export { resolveSymbolId } from "./symbol-resolver.js";
 export type { ResolvedSymbol } from "./symbol-resolver.js";

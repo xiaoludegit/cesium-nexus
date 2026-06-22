@@ -50,6 +50,9 @@ importers:
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cesium-nexus/skills':
+        specifier: workspace:*
+        version: link:../skills
       '@cesium-nexus/storage':
         specifier: workspace:*
         version: link:../storage
@@ -104,6 +107,9 @@ importers:
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cesium-nexus/skills':
+        specifier: workspace:*
+        version: link:../skills
       '@cesium-nexus/storage':
         specifier: workspace:*
         version: link:../storage
@@ -124,6 +130,21 @@ importers:
         version: 25.0.1
 
   packages/shared: {}
+
+  packages/skills:
+    dependencies:
+      '@cesium-nexus/context-pack':
+        specifier: workspace:*
+        version: link:../context-pack
+      '@cesium-nexus/diagnosis':
+        specifier: workspace:*
+        version: link:../diagnosis
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
 
   packages/storage:
     dependencies:

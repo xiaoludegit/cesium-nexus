@@ -8,6 +8,9 @@ import {
   SymbolRepo,
   IssueRepo,
   CallGraphRepo,
+  PullRequestRepo,
+  ForumRepo,
+  ExperienceRepo,
 } from "@cesium-nexus/storage";
 import type { Database } from "@cesium-nexus/storage";
 import type { SymbolRecord, IssueRecord } from "@cesium-nexus/shared";
@@ -41,6 +44,9 @@ describe("MCP Protocol Integration", () => {
     const symbolRepo = new SymbolRepo(db);
     const issueRepo = new IssueRepo(db);
     const callGraphRepo = new CallGraphRepo(db);
+    const prRepo = new PullRequestRepo(db);
+    const forumRepo = new ForumRepo(db);
+    const experienceRepo = new ExperienceRepo(db);
 
     // Insert test fixtures
     symbolRepo.insertMany([
@@ -102,7 +108,7 @@ describe("MCP Protocol Integration", () => {
       name: "cesium-nexus-test",
       version: "0.1.0",
     });
-    registerTools(server, { symbolRepo, issueRepo, callGraphRepo });
+    registerTools(server, { symbolRepo, issueRepo, callGraphRepo, prRepo, forumRepo, experienceRepo });
 
     // Create linked transport pair and connect
     const [clientTransport, serverTransport] =
@@ -130,9 +136,9 @@ describe("MCP Protocol Integration", () => {
     expect(client).toBeDefined();
   });
 
-  it("tools/list returns 7 tools", async () => {
+  it("tools/list returns 11 tools", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(7);
+    expect(tools).toHaveLength(11);
   });
 
   it("tools/list contains correct tool names", async () => {
@@ -140,9 +146,13 @@ describe("MCP Protocol Integration", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "build_context_pack",
+      "build_skill_pack",
       "diagnose_problem",
+      "dispatch_skill",
       "get_source",
       "query_render_stage",
+      "search_experience",
+      "search_forum",
       "search_issue",
       "search_symbol",
       "trace_callgraph",

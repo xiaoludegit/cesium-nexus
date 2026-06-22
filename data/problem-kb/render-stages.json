@@ -5,70 +5,112 @@
     "order": 1,
     "description": "Scene.update() traverses all primitives, tilesets, and data sources. Each object updates its state, computes transforms, and prepares render commands for the current frame.",
     "keySymbols": ["Scene", "Primitive", "Cesium3DTileset", "PrimitiveCollection", "Camera", "ScreenSpaceCameraController"],
-    "symptomHints": ["objects not updating", "stale transforms", "camera movement lag", "primitive state not refreshing"]
+    "symptomHints": ["objects not updating", "stale transforms", "camera movement lag", "primitive state not refreshing"],
+    "dependsOn": [],
+    "perfHotspot": true
+  },
+  {
+    "id": "culling_stage",
+    "name": "Frustum Culling Stage",
+    "order": 2,
+    "description": "Performs view-frustum culling to determine which primitives and tiles are visible. Objects outside the camera frustum are excluded from rendering to reduce draw calls.",
+    "keySymbols": ["Scene", "BoundingSphere", "CullingVolume", "Cesium3DTile", "Occluder"],
+    "symptomHints": ["objects disappearing incorrectly", "frustum culling issues", "visible objects not rendered", "camera frustum problems"],
+    "dependsOn": ["update_stage"]
   },
   {
     "id": "command_build_stage",
     "name": "Command Build Stage",
-    "order": 2,
+    "order": 3,
     "description": "After update, each primitive produces DrawCommand objects. Commands are sorted into render queues (opaque, translucent, compute) and assigned RenderState, shader programs, and uniform maps.",
     "keySymbols": ["DrawCommand", "RenderState", "Primitive", "Context", "PassState"],
-    "symptomHints": ["draw call issues", "render state errors", "command sorting problems", "missing draw commands"]
+    "symptomHints": ["draw call issues", "render state errors", "command sorting problems", "missing draw commands"],
+    "dependsOn": ["culling_stage"],
+    "perfHotspot": true
   },
   {
     "id": "depth_pass",
     "name": "Depth Pass",
-    "order": 3,
+    "order": 4,
     "description": "The depth pre-pass writes depth values for opaque geometry without color output. This populates the depth buffer used by subsequent passes for occlusion testing and depth comparisons.",
     "keySymbols": ["Scene", "DepthPlane", "RenderState", "Context", "Framebuffer"],
-    "symptomHints": ["z-fighting", "depth precision", "objects rendering behind others", "depth buffer artifacts"]
+    "symptomHints": ["z-fighting", "depth precision", "objects rendering behind others", "depth buffer artifacts"],
+    "dependsOn": ["command_build_stage"],
+    "isOptional": true
   },
   {
     "id": "opaque_pass",
     "name": "Opaque Pass",
-    "order": 4,
+    "order": 5,
     "description": "Renders all opaque geometry sorted front-to-back. Uses the depth buffer from the depth pass to skip occluded fragments. This includes most primitives, terrain, and opaque 3D Tiles.",
     "keySymbols": ["Primitive", "GroundPrimitive", "ClassificationPrimitive", "Globe", "Scene", "DrawCommand"],
-    "symptomHints": ["opaque objects invisible", "terrain rendering issues", "primitive not showing", "front-to-back sorting problems"]
+    "symptomHints": ["opaque objects invisible", "terrain rendering issues", "primitive not showing", "front-to-back sorting problems"],
+    "dependsOn": ["depth_pass"]
   },
   {
     "id": "translucent_pass",
     "name": "Translucent Pass",
-    "order": 5,
+    "order": 6,
     "description": "Renders translucent geometry sorted back-to-front. Depth writes are disabled to allow proper alpha blending. Includes translucent primitives, labels, billboards, and translucent 3D Tiles.",
     "keySymbols": ["Label", "Billboard", "Primitive", "Scene", "DrawCommand", "PassState"],
-    "symptomHints": ["label not visible", "translucent sorting wrong", "alpha blending artifacts", "billboard disappearing"]
+    "symptomHints": ["label not visible", "translucent sorting wrong", "alpha blending artifacts", "billboard disappearing"],
+    "dependsOn": ["opaque_pass"]
   },
   {
     "id": "classification_stage",
     "name": "Classification Stage",
-    "order": 6,
+    "order": 7,
     "description": "Handles rendering of ClassificationPrimitive and GroundPrimitive with classificationType. Modifies the appearance of underlying 3D Tiles or terrain based on stencil buffer operations.",
     "keySymbols": ["ClassificationPrimitive", "GroundPrimitive", "Globe", "Cesium3DTileset", "Scene"],
-    "symptomHints": ["classification not working", "ground primitive conflict", "terrain overlay issues", "stencil buffer problems"]
+    "symptomHints": ["classification not working", "ground primitive conflict", "terrain overlay issues", "stencil buffer problems"],
+    "dependsOn": ["opaque_pass"]
   },
   {
     "id": "picking_stage",
     "name": "Picking Stage",
-    "order": 7,
+    "order": 8,
     "description": "Renders pickable objects to an offscreen framebuffer using unique pick colors. scene.pick() reads this framebuffer to determine which object is under the cursor.",
     "keySymbols": ["Picking", "Scene", "Primitive", "Cesium3DTileset", "Label", "Billboard"],
-    "symptomHints": ["pick returns undefined", "wrong object picked", "picking not working", "pick color collision"]
+    "symptomHints": ["pick returns undefined", "wrong object picked", "picking not working", "pick color collision"],
+    "dependsOn": ["translucent_pass"],
+    "isOptional": true
   },
   {
     "id": "tileset_traversal_stage",
     "name": "3D Tiles Traversal Stage",
-    "order": 8,
+    "order": 9,
     "description": "Traverses the 3D Tiles spatial tree (quadtree/octree/kd-tree) to determine which tiles to render based on screen-space error, visibility, and frustum culling. Manages tile loading, caching, and unloading.",
     "keySymbols": ["Cesium3DTileset", "Cesium3DTile", "Cesium3DTileContent", "TileBoundingSphere", "TileOrientedBoundingBox", "Cesium3DTilePass", "Cesium3DTilePassState", "RequestScheduler"],
-    "symptomHints": ["tiles not loading", "tile jitter", "lod popping", "tile culling issues", "tiles stuck"]
+    "symptomHints": ["tiles not loading", "tile jitter", "lod popping", "tile culling issues", "tiles stuck"],
+    "dependsOn": ["update_stage"],
+    "perfHotspot": true
   },
   {
     "id": "shader_compile_stage",
     "name": "Shader Compile Stage",
-    "order": 9,
+    "order": 10,
     "description": "Compiles and links GLSL shader programs. Includes vertex shaders, fragment shaders, and optional geometry shaders. Shader compilation may happen asynchronously and is cached by ShaderProgram.",
     "keySymbols": ["ShaderSource", "ShaderProgram", "Context", "AutomaticUniforms", "Material"],
-    "symptomHints": ["shader compile error", "glsl error", "shader link failure", "black primitives", "material not applying"]
+    "symptomHints": ["shader compile error", "glsl error", "shader link failure", "black primitives", "material not applying"],
+    "dependsOn": [],
+    "isOptional": true
+  },
+  {
+    "id": "post_process_stage",
+    "name": "Post-Process Stage",
+    "order": 11,
+    "description": "Applies post-processing effects after the main rendering passes. Includes bloom, ambient occlusion, FXAA anti-aliasing, and other screen-space effects applied via full-screen quad passes.",
+    "keySymbols": ["PostProcessStage", "PostProcessStageComposite", "Scene", "Framebuffer", "Context"],
+    "symptomHints": ["post-processing not working", "bloom artifacts", "fxaa issues", "screen-space effects missing"],
+    "dependsOn": ["translucent_pass"]
+  },
+  {
+    "id": "primitive_release_stage",
+    "name": "Primitive Release / Destroy Stage",
+    "order": 12,
+    "description": "Releases GPU resources when primitives are removed from the scene. Destroys WebGL buffers, textures, framebuffers, and shader programs to prevent memory leaks.",
+    "keySymbols": ["Primitive", "Cesium3DTileset", "Context", "ShaderProgram", "Buffer", "Texture"],
+    "symptomHints": ["memory leak", "GPU memory growing", "primitive not releasing", "destroy errors"],
+    "dependsOn": []
   }
 ]

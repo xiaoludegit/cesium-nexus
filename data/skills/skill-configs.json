@@ -1,0 +1,105 @@
+[
+  {
+    "id": "api",
+    "name": "API Skill",
+    "description": "Handles API usage questions, parameter lookups, and documentation queries.",
+    "triggerKeywords": [
+      "api", "how to use", "usage", "parameter", "method", "function",
+      "constructor", "property", "option", "config", "type", "interface",
+      "class", "namespace", "typedef", "documentation", "example"
+    ],
+    "tokenBudget": 4000,
+    "sections": ["symbol", "source", "callgraph"],
+    "retrieval": {
+      "includeDiagnosis": false,
+      "includeRenderStages": false,
+      "includeForum": false,
+      "includeExperience": false,
+      "callgraphDepth": 2,
+      "issueLimit": 3,
+      "forumLimit": 0
+    }
+  },
+  {
+    "id": "debug",
+    "name": "Debug Skill",
+    "description": "Diagnoses bugs, errors, visual artifacts, and unexpected behavior.",
+    "triggerKeywords": [
+      "bug", "error", "not working", "broken", "crash", "exception",
+      "wrong", "fail", "flickering", "flashing", "artifact", "invisible",
+      "not showing", "disappear", "glitch", "undefined", "null",
+      "problem", "issue", "why", "fix", "debug"
+    ],
+    "tokenBudget": 6000,
+    "sections": ["diagnosis", "render_stage", "symbol", "source", "issues", "fixes", "forum", "experience"],
+    "retrieval": {
+      "includeDiagnosis": true,
+      "includeRenderStages": true,
+      "includeForum": true,
+      "includeExperience": true,
+      "callgraphDepth": 1,
+      "issueLimit": 5,
+      "forumLimit": 3
+    }
+  },
+  {
+    "id": "performance",
+    "name": "Performance Skill",
+    "description": "Handles performance issues, optimization, FPS drops, and memory concerns.",
+    "triggerKeywords": [
+      "performance", "slow", "fps", "lag", "stutter", "jank",
+      "optimize", "optimization", "memory", "leak", "cpu", "gpu",
+      "frame", "bottleneck", "heavy", "overhead", "batch",
+      "culling", "lod", "level of detail"
+    ],
+    "tokenBudget": 6000,
+    "sections": ["render_stage", "callgraph", "symbol", "source", "issues", "forum", "experience"],
+    "retrieval": {
+      "includeDiagnosis": false,
+      "includeRenderStages": true,
+      "includeForum": true,
+      "includeExperience": true,
+      "callgraphDepth": 2,
+      "issueLimit": 5,
+      "forumLimit": 3
+    }
+  },
+  {
+    "id": "shader",
+    "name": "Shader Skill",
+    "description": "Handles GLSL shader compilation, custom materials, and appearance customization.",
+    "triggerKeywords": [
+      "shader", "glsl", "fragment", "vertex", "material", "appearance",
+      "custom shader", "shader program", "compile", "link", "uniform",
+      "varying", "attribute", "texture", "sampler", "color", "lighting"
+    ],
+    "tokenBudget": 5000,
+    "sections": ["render_stage", "symbol", "source", "issues", "forum"],
+    "retrieval": {
+      "includeDiagnosis": false,
+      "includeRenderStages": true,
+      "includeForum": true,
+      "includeExperience": false,
+      "callgraphDepth": 1,
+      "issueLimit": 3,
+      "forumLimit": 3
+    }
+  },
+  {
+    "id": "general",
+    "name": "General Skill",
+    "description": "Fallback skill for queries that do not match any specific category.",
+    "triggerKeywords": [],
+    "tokenBudget": 4000,
+    "sections": ["symbol", "source", "issues"],
+    "retrieval": {
+      "includeDiagnosis": false,
+      "includeRenderStages": false,
+      "includeForum": false,
+      "includeExperience": false,
+      "callgraphDepth": 1,
+      "issueLimit": 3,
+      "forumLimit": 0
+    }
+  }
+]

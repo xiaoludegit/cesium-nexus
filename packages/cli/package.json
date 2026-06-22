@@ -20,6 +20,7 @@
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/indexer": "workspace:*",
     "@cesium-nexus/mcp": "workspace:*",
+    "@cesium-nexus/skills": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",
     "commander": "^13.1.0"
   }

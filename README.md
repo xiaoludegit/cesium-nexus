@@ -2,7 +2,7 @@
 
 > **Cesium AI Expert** — A knowledge-base CLI and MCP server that turns Cesium's source code, API docs, issues, and community data into structured context for AI agents.
 
-**当前阶段：v3.1 MVP（Phase 1 — Can Query）**
+**当前阶段：v0.2.0（Phase 2B — Render Pipeline Intelligence）**
 
 本文档描述当前 MVP 的实现范围。完整设计蓝图和延后功能见 [future-roadmap.md](./future-roadmap.md)。
 
@@ -16,41 +16,52 @@ Cesium is a large, fast-moving codebase. Understanding why `Primitive.update` cr
 
 ---
 
-## Architecture Overview (MVP)
+## Architecture Overview
 
 ```
 Agent (Claude / Codex / Hermes)
         │
         ▼
-  MCP Server (stdio)
+  MCP Server (stdio) — 11 tools
+        │
+  ┌─────┴──────────────────────────────────┐
+  │          Skill Dispatch                │
+  │  api / debug / performance / shader /  │
+  │  general (keyword scoring + entities)  │
+  └─────┬──────────────────────────────────┘
         │
   ┌─────┴──────────────────────────────────┐
   │          Retrieval Layer               │
   │                                        │
-  │  SQLite                                │
-  │  ─────────                             │
-  │  symbol                                │
-  │  call_graph                            │
-  │  issue (FTS5)                          │
-  │  source (FTS5)                         │
+  │  SQLite (FTS5)                         │
+  │  ──────────────                        │
+  │  symbol / call_graph / issue / source  │
+  │  pull_requests / forum_posts           │
+  │  experience_node                       │
+  │                                        │
+  │  Problem KB + Render Pipeline (JSON)   │
   └─────┬──────────────────────────────────┘
         │
   ┌─────┴──────────────────────────────────┐
-  │         Context Pack Builder           │
-  │  symbol + source + call_graph + issues │
-  │  Token budget: 4000–6000               │
+  │     Context Pack v2 (Skill-aware)      │
+  │  symbol + source + callgraph + issues  │
+  │  + render_stages + diagnosis           │
+  │  + forum + experience                  │
+  │  Token budget: 4000–6000 (per skill)   │
   └────────────────────────────────────────┘
         │
         ▼
    LLM Reasoning → Markdown Answer
 ```
 
-**MVP 数据源：**
+**数据源：**
 
 - Cesium source code (GitHub, multi-version: 1.100–present)
 - GitHub Issues (closed + fixed, ~2000)
-
-**延后到后续 Phase 的数据源：** GitHub Releases, Community Forum, GitHub PRs, Blog, GitHub Discussion（详见 [future-roadmap.md](./future-roadmap.md)）。
+- GitHub PRs (merged, incremental sync)
+- Cesium Community Forum (Discourse API, quality-filtered)
+- Problem Knowledge Base (static JSON, 10 patterns)
+- Render Pipeline (static JSON, 12 stages with DAG)
 
 ---
 
@@ -124,6 +135,18 @@ cesium pkb list
 # Query render stages by stage ID or problem pattern ID
 cesium stage z_fighting
 cesium stage depth_pass
+
+# Crawl and search Cesium community forum (Phase 2B)
+cesium forum sync --max-pages 10
+cesium forum search "z-fighting flickering"
+
+# Skill dispatch and skill-aware context pack (Phase 2B)
+cesium dispatch "why does my polygon flicker?"
+cesium skill-pack "how to use Viewer.render?" --budget 6000
+
+# View render pipeline DAG (Phase 2B)
+cesium pipeline
+cesium pipeline update_stage
 ```
 
 ### Use as an MCP server (for AI agents)
@@ -146,7 +169,7 @@ The server starts on stdio and exposes all MCP tools automatically.
 
 ---
 
-## CLI Reference (MVP)
+## CLI Reference
 
 ### Index Management
 
@@ -189,6 +212,27 @@ The server starts on stdio and exposes all MCP tools automatically.
 | `cesium pkb list` | List all problem patterns in the Problem Knowledge Base |
 | `cesium stage <id>` | Query render stages by stage ID or problem pattern ID |
 
+### Forum (Phase 2B)
+
+| Command | Description |
+|---|---|
+| `cesium forum sync` | Crawl Cesium community forum and index posts (`--max-pages`, `--min-replies`, `--min-views`) |
+| `cesium forum search <keywords>` | Search forum posts via FTS5 (`--limit`, `--min-quality`) |
+
+### Skills & Context Pack v2 (Phase 2B)
+
+| Command | Description |
+|---|---|
+| `cesium skills list` | List all available skills and their configurations |
+| `cesium dispatch <query>` | Show which skill a query would be dispatched to |
+| `cesium skill-pack <query>` | Build a skill-aware Context Pack v2 (`--budget N`) |
+
+### Render Pipeline (Phase 2B)
+
+| Command | Description |
+|---|---|
+| `cesium pipeline [stage_id]` | Display the render pipeline DAG or a specific stage's dependencies |
+
 ### MCP Server
 
 | Command | Description |
@@ -210,6 +254,10 @@ When running as an MCP server (`cesium mcp`), the following tools are available 
 | `build_context_pack` | `{ symbol, depth?, budget? }` | Full Context Pack: `{symbol, source, callgraph, issues}` with token budget truncation |
 | `diagnose_problem` | `{ problem, limit?, budget? }` | Diagnostic Context Pack: matched patterns, related source, issues, investigation steps, fix suggestions |
 | `query_render_stage` | `{ stageId?, problemId? }` | Render stages by stage ID or problem pattern ID |
+| `search_forum` | `{ query, limit?, minQuality? }` | Forum post results with quality scores |
+| `search_experience` | `{ query, limit?, type?, symbol?, minQuality? }` | Unified experience search across issues, PRs, and forum posts |
+| `dispatch_skill` | `{ query }` | Skill dispatch result: best skill, confidence, matched keywords, extracted entities |
+| `build_skill_pack` | `{ query, budget? }` | Skill-aware Context Pack v2 with diagnosis, render stages, forum, and experience data |
 
 All tools return JSON with a standard envelope:
 
@@ -220,7 +268,7 @@ All tools return JSON with a standard envelope:
 }
 ```
 
-**延后到后续 Phase 的 MCP tools：** `compare_version`, `search_forum`, `search_experience`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
+**延后到后续 Phase 的 MCP tools：** `compare_version`, `get_experience_chain`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
 
 ---
 
@@ -291,8 +339,13 @@ cesium-nexus/
 │   │
 │   ├── indexer/             # Knowledge base construction pipelines
 │   │   └── src/
-│   │       ├── cesium-source.ts     # Scan packages/engine/Source
-│   │       └── github-issues.ts      # GitHub Issues API sync (incremental)
+│   │       ├── cesium-source.ts        # Scan packages/engine/Source
+│   │       ├── github/
+│   │       │   ├── github-issues.ts      # GitHub Issues API sync (incremental)
+│   │       │   └── github-prs.ts         # GitHub PRs sync (merged, incremental)
+│   │       ├── forum/
+│   │       │   └── forum-crawler.ts      # Discourse forum crawler
+│   │       └── experience-node-builder.ts # Unified experience index builder
 │   │
 │   ├── storage/             # SQLite data layer
 │   │   └── src/
@@ -300,7 +353,10 @@ cesium-nexus/
 │   │       ├── symbol-repo.ts       # Symbol CRUD + queries
 │   │       ├── symbol-resolver.ts   # Shared symbol name→ID resolution
 │   │       ├── callgraph-repo.ts    # CallGraph traversal (BFS, depth-limited)
-│   │       └── issue-repo.ts        # Issue queries + full-text search
+│   │       ├── issue-repo.ts        # Issue queries + full-text search
+│   │       ├── pr-repo.ts           # Pull request storage + FTS5
+│   │       ├── forum-repo.ts        # Forum post storage + FTS5
+│   │       └── experience-repo.ts   # Experience node unified search
 │   │
 │   ├── cli/                 # CLI entry point (Commander)
 │   │   └── src/
@@ -313,40 +369,52 @@ cesium-nexus/
 │   │           ├── issue-cmd.ts     # cesium issue
 │   │           ├── mcp-cmd.ts       # cesium mcp (start MCP server)
 │   │           ├── context-cmd.ts   # cesium context (build Context Pack)
-│   │           └── diagnose-cmd.ts  # cesium diagnose / pkb list / stage
+│   │           ├── diagnose-cmd.ts  # cesium diagnose / pkb list / stage
+│   │           ├── forum-cmd.ts     # cesium forum sync / search
+│   │           ├── skill-cmd.ts     # cesium skills / dispatch / skill-pack
+│   │           └── pipeline-cmd.ts  # cesium pipeline
 │   │
 │   ├── mcp/                 # MCP server (stdio transport)
 │   │   └── src/
-│   │       ├── handlers.ts          # Pure handler functions (7 tools)
+│   │       ├── handlers.ts          # Pure handler functions (11 tools)
 │   │       └── server.ts            # MCP server setup + tool registration
 │   │
-│   ├── context-pack/        # Context Pack builder
+│   ├── context-pack/        # Context Pack v1 builder
 │   │   └── src/
 │   │       ├── builder.ts           # Assemble context pack from retrieval results
 │   │       └── token-budget.ts      # Section-level token limits + truncation
 │   │
 │   ├── diagnosis/           # Problem Diagnosis Engine
 │   │   └── src/
-│   │       ├── knowledge-loader.ts  # Load and validate Problem KB + Render Stage JSON
+│   │       ├── knowledge-loader.ts  # Load and validate Problem KB + Render Stage JSON + Pipeline DAG
 │   │       ├── matcher.ts           # Symptom-to-pattern keyword matching
 │   │       ├── diagnoser.ts         # Assemble DiagnosticContextPack
 │   │       └── token-budget.ts      # Diagnosis-specific token truncation
 │   │
+│   ├── skills/              # Skill Dispatch + Context Pack v2
+│   │   └── src/
+│   │       ├── skill-router.ts      # Skill dispatch (keyword scoring + entity boosting)
+│   │       ├── entity-extractor.ts  # Extract entities (symbol, version, stage, problem)
+│   │       ├── context-pack-builder.ts # Skill-aware context pack assembly
+│   │       └── token-budget.ts      # Progressive truncation for skill packs
+│   │
 │   └── shared/              # Shared types and utilities
 │       └── src/
-│           ├── types.ts             # SymbolRecord, IssueRecord, Edge, ContextPack
+│           ├── types.ts             # All types: SymbolRecord, IssueRecord, SkillConfig, etc.
 │           └── utils.ts
 │
 ├── data/
 │   ├── cesium/              # Cesium source cache (gitignored)
 │   ├── problem-kb/          # Problem Knowledge Base (static JSON)
 │   │   ├── problem-patterns.json
-│   │   └── render-stages.json
+│   │   └── render-stages.json       # 12 stages with DAG dependencies
+│   ├── skills/              # Skill configurations
+│   │   └── skill-configs.json       # 5 skills: api/debug/performance/shader/general
 │   └── evaluation/          # Evaluation datasets
 │       └── phase2a-diagnosis-cases.json
 │
 ├── database/                # SQLite databases (gitignored)
-│   └── cesium.db            # symbols, call_graph, issues + FTS5 indexes
+│   └── cesium.db            # symbols, call_graph, issues, PRs, forum, experience + FTS5
 │
 ├── docs/                    # Design documents
 │   ├── future-roadmap.md
@@ -422,7 +490,7 @@ pnpm test               # vitest
 
 ### Testing strategy
 
-Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (7 tools with :memory: DB), Problem Diagnosis matching and assembly.
+Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (11 tools with :memory: DB), Problem Diagnosis matching and assembly, Skill dispatch routing and entity extraction, Render Pipeline DAG validation and traversal.
 
 Integration tests cover: End-to-end `cesium symbol Viewer` against a real indexed version, MCP protocol integration (SDK Client + InMemoryTransport for tools/list and tools/call), Context Pack output with metadata validation.
 
@@ -546,7 +614,7 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 
 ---
 
-## Milestones (MVP — Phase 1: Can Query)
+## Milestones
 
 | Milestone | Goal | Key Deliverables | Status |
 |---|---|---|---|
@@ -554,10 +622,12 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 | **M2: Source Retrieval** | Retrieve source code by symbol | `symbol`, `source`, `search` (source FTS) + CLI | ✅ Done |
 | **M3: Issue Index** | Build local GitHub Issue index | Sync CesiumGS/cesium issues, FTS5 search + CLI | ✅ Done |
 | **M4: CallGraph** | Build lightweight call relationships | CallEdge schema, TypeChecker resolution, BFS traversal + `trace` CLI | ✅ Done |
-| **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools: `search_symbol`, `get_source`, `search_issue`, `trace_callgraph` + `cesium mcp` | ✅ Done |
-| **M6: Context Pack** | Build standard context packages | `build_context_pack` MCP tool, `cesium context` CLI, `{symbol, source, callgraph, issues}` + metadata | ✅ Done |
+| **M5: MCP Server** | Provide LLM tool-calling capability | 4 tools + `cesium mcp` | ✅ Done |
+| **M6: Context Pack** | Build standard context packages | `build_context_pack` MCP tool, 4-section structured JSON | ✅ Done |
+| **Phase 2A** | Problem Diagnosis | Problem KB (10 patterns), Render Stage KB (9 stages), `diagnose_problem` MCP tool | ✅ Done |
+| **Phase 2B** | Render Pipeline Intelligence | Pipeline DAG (12 stages), Skill Dispatch (5 skills), Context Pack v2, Forum Crawler, PR Sync, Experience Node, 4 new MCP tools | ✅ Done |
 
-See [future-roadmap.md](./future-roadmap.md) for Phase 2 (Can Explain) and Phase 3 (Can Diagnose) milestones.
+See [future-roadmap.md](./future-roadmap.md) for Phase 2C (Semantic Retrieval) and Phase 3 (Can Diagnose) milestones.
 
 ### Acceptance Criteria
 

@@ -7,6 +7,9 @@ import {
   SymbolRepo,
   IssueRepo,
   CallGraphRepo,
+  PullRequestRepo,
+  ForumRepo,
+  ExperienceRepo,
 } from "@cesium-nexus/storage";
 import {
   handleSearchSymbol,
@@ -16,10 +19,14 @@ import {
   handleBuildContextPack,
   handleDiagnoseProblem,
   handleQueryRenderStage,
+  handleSearchForum,
+  handleSearchExperience,
+  handleDispatchSkill,
+  handleBuildSkillPack,
 } from "./handlers.js";
 
 /**
- * Register the 7 Cesium knowledge-base tools on an existing McpServer.
+ * Register the 11 Cesium knowledge-base tools on an existing McpServer.
  * Exported for testing with :memory: databases.
  */
 export function registerTools(
@@ -28,9 +35,19 @@ export function registerTools(
     symbolRepo: SymbolRepo;
     issueRepo: IssueRepo;
     callGraphRepo: CallGraphRepo;
+    prRepo: PullRequestRepo;
+    forumRepo: ForumRepo;
+    experienceRepo: ExperienceRepo;
   },
 ): void {
-  const { symbolRepo, issueRepo, callGraphRepo } = repos;
+  const {
+    symbolRepo,
+    issueRepo,
+    callGraphRepo,
+    prRepo,
+    forumRepo,
+    experienceRepo,
+  } = repos;
 
   // ── search_symbol ──────────────────────────────────────────
   server.tool(
@@ -167,10 +184,89 @@ export function registerTools(
       };
     },
   );
+
+  // ── search_forum ──────────────────────────────────────────
+  server.tool(
+    "search_forum",
+    "Search Cesium community forum posts via full-text search with quality filtering",
+    {
+      query: z.string().min(1),
+      limit: z.number().int().min(1).max(100).default(10),
+      minQuality: z.number().min(0).max(1).optional(),
+    },
+    async (input) => {
+      const result = await handleSearchForum(forumRepo, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ── search_experience ─────────────────────────────────────
+  server.tool(
+    "search_experience",
+    "Search unified experience index (issues, PR reviews, forum posts) with type and symbol filtering",
+    {
+      query: z.string().min(1),
+      limit: z.number().int().min(1).max(100).default(10),
+      type: z.enum(["issue", "pr_review", "forum"]).optional(),
+      symbol: z.string().optional(),
+      minQuality: z.number().min(0).max(1).optional(),
+    },
+    async (input) => {
+      const result = await handleSearchExperience(experienceRepo, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ── dispatch_skill ────────────────────────────────────────
+  server.tool(
+    "dispatch_skill",
+    "Dispatch a user query to the most appropriate skill (api, debug, performance, shader, general) based on keyword and entity analysis",
+    {
+      query: z.string().min(1),
+    },
+    async (input) => {
+      const result = await handleDispatchSkill(symbolRepo, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ── build_skill_pack ──────────────────────────────────────
+  server.tool(
+    "build_skill_pack",
+    "Build a skill-aware Context Pack v2 that assembles diagnosis, render stages, source, issues, forum posts, and experience data tailored to the dispatched skill",
+    {
+      query: z.string().min(1),
+      budget: z.number().int().min(1000).default(6000),
+    },
+    async (input) => {
+      const result = await handleBuildSkillPack(
+        symbolRepo,
+        callGraphRepo,
+        issueRepo,
+        prRepo,
+        forumRepo,
+        experienceRepo,
+        input,
+      );
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
 }
 
 /**
- * Create an MCP server with 7 Cesium knowledge-base tools.
+ * Create an MCP server with 11 Cesium knowledge-base tools.
  *
  * No console.log during server lifetime — stdout is the JSON-RPC channel.
  */
@@ -187,6 +283,9 @@ export function createServer(dbPath: string): McpServer {
     symbolRepo: new SymbolRepo(db),
     issueRepo: new IssueRepo(db),
     callGraphRepo: new CallGraphRepo(db),
+    prRepo: new PullRequestRepo(db),
+    forumRepo: new ForumRepo(db),
+    experienceRepo: new ExperienceRepo(db),
   });
 
   return server;

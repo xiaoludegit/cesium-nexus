@@ -1,5 +1,10 @@
 import { readFile } from "node:fs/promises";
-import type { ProblemPattern, RenderStage } from "@cesium-nexus/shared";
+import type {
+  ProblemPattern,
+  RenderStage,
+  RenderPipelineGraph,
+  RenderStageEdge,
+} from "@cesium-nexus/shared";
 
 const DATA_DIR = new URL("../../../data/problem-kb/", import.meta.url);
 
@@ -86,6 +91,18 @@ export function validateRenderStages(stages: RenderStage[]): RenderStage[] {
     }
   }
 
+  for (const s of stages) {
+    if (s.dependsOn) {
+      for (const dep of s.dependsOn) {
+        if (!seenIds.has(dep)) {
+          errors.push(
+            `RenderStage "${s.id}": dependsOn references unknown stage "${dep}"`,
+          );
+        }
+      }
+    }
+  }
+
   if (errors.length > 0) {
     throw new Error(
       `RenderStage validation failed:\n${errors.join("\n")}`,
@@ -93,4 +110,98 @@ export function validateRenderStages(stages: RenderStage[]): RenderStage[] {
   }
 
   return stages;
+}
+
+export function buildRenderPipelineGraph(
+  stages: RenderStage[],
+): RenderPipelineGraph {
+  const edges: RenderStageEdge[] = [];
+  for (const stage of stages) {
+    for (const depId of stage.dependsOn ?? []) {
+      edges.push({ from: depId, to: stage.id, relation: "sequential" });
+    }
+  }
+  return { stages, edges };
+}
+
+export function validatePipelineDAG(graph: RenderPipelineGraph): boolean {
+  const inDegree = new Map<string, number>();
+  const adj = new Map<string, string[]>();
+
+  for (const s of graph.stages) {
+    inDegree.set(s.id, 0);
+    adj.set(s.id, []);
+  }
+  for (const e of graph.edges) {
+    adj.get(e.from)?.push(e.to);
+    inDegree.set(e.to, (inDegree.get(e.to) ?? 0) + 1);
+  }
+
+  const queue: string[] = [];
+  for (const [id, deg] of inDegree) {
+    if (deg === 0) queue.push(id);
+  }
+
+  let visited = 0;
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    visited++;
+    for (const neighbor of adj.get(node) ?? []) {
+      const newDeg = (inDegree.get(neighbor) ?? 0) - 1;
+      inDegree.set(neighbor, newDeg);
+      if (newDeg === 0) queue.push(neighbor);
+    }
+  }
+
+  return visited === graph.stages.length;
+}
+
+export function getStageDependencies(
+  stageId: string,
+  stages: RenderStage[],
+): RenderStage[] {
+  const map = new Map(stages.map((s) => [s.id, s]));
+  const result: RenderStage[] = [];
+  const visited = new Set<string>();
+  const stack = [stageId];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    const stage = map.get(current);
+    if (!stage) continue;
+    for (const depId of stage.dependsOn ?? []) {
+      if (!visited.has(depId)) {
+        visited.add(depId);
+        const dep = map.get(depId);
+        if (dep) {
+          result.push(dep);
+          stack.push(depId);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+export function getDownstreamStages(
+  stageId: string,
+  stages: RenderStage[],
+): RenderStage[] {
+  const result: RenderStage[] = [];
+  const visited = new Set<string>();
+  const queue = [stageId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const s of stages) {
+      if ((s.dependsOn ?? []).includes(current) && !visited.has(s.id)) {
+        visited.add(s.id);
+        result.push(s);
+        queue.push(s.id);
+      }
+    }
+  }
+
+  return result;
 }

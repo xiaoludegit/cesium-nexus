@@ -6,6 +6,9 @@ import { registerTraceCommand } from "./commands/trace-cmd.js";
 import { registerMcpCommand } from "./commands/mcp-cmd.js";
 import { registerContextCommand } from "./commands/context-cmd.js";
 import { registerDiagnoseCommand } from "./commands/diagnose-cmd.js";
+import { registerForumCommands } from "./commands/forum-cmd.js";
+import { registerSkillCommands } from "./commands/skill-cmd.js";
+import { registerPipelineCommand } from "./commands/pipeline-cmd.js";
 
 const program = new Command();
 
@@ -21,5 +24,8 @@ registerTraceCommand(program);
 registerMcpCommand(program);
 registerContextCommand(program);
 registerDiagnoseCommand(program);
+registerForumCommands(program);
+registerSkillCommands(program);
+registerPipelineCommand(program);
 
 program.parse();

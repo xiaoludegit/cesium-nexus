@@ -143,5 +143,124 @@ export function initSchema(db: Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_call_source ON call_edges(source_id);
     CREATE INDEX IF NOT EXISTS idx_call_target ON call_edges(target_id);
+
+    -- Pull requests table
+    CREATE TABLE IF NOT EXISTS pull_requests (
+      id INTEGER PRIMARY KEY,
+      repo TEXT NOT NULL,
+      number INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT,
+      state TEXT,
+      merged_at TEXT,
+      author TEXT,
+      labels TEXT,
+      review_comments INTEGER,
+      files_changed INTEGER,
+      created_at TEXT,
+      updated_at TEXT,
+      html_url TEXT,
+      closing_issue_refs TEXT,
+      UNIQUE(repo, number)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_prs_state ON pull_requests(state);
+    CREATE INDEX IF NOT EXISTS idx_prs_updated ON pull_requests(updated_at);
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS prs_fts
+      USING fts5(title, body, content='pull_requests', content_rowid='id');
+
+    CREATE TRIGGER IF NOT EXISTS prs_fts_ai AFTER INSERT ON pull_requests BEGIN
+      INSERT INTO prs_fts(rowid, title, body)
+      VALUES (new.id, new.title, new.body);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS prs_fts_ad AFTER DELETE ON pull_requests BEGIN
+      INSERT INTO prs_fts(prs_fts, rowid, title, body)
+      VALUES ('delete', old.id, old.title, old.body);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS prs_fts_au AFTER UPDATE ON pull_requests BEGIN
+      INSERT INTO prs_fts(prs_fts, rowid, title, body)
+      VALUES ('delete', old.id, old.title, old.body);
+      INSERT INTO prs_fts(rowid, title, body)
+      VALUES (new.id, new.title, new.body);
+    END;
+
+    -- Forum posts table
+    CREATE TABLE IF NOT EXISTS forum_posts (
+      id INTEGER PRIMARY KEY,
+      topic_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT,
+      author TEXT,
+      replies_count INTEGER,
+      views_count INTEGER,
+      has_solution INTEGER,
+      tags TEXT,
+      created_at TEXT,
+      updated_at TEXT,
+      url TEXT,
+      quality_score REAL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_forum_quality ON forum_posts(quality_score);
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS forum_fts
+      USING fts5(title, body, content='forum_posts', content_rowid='id');
+
+    CREATE TRIGGER IF NOT EXISTS forum_fts_ai AFTER INSERT ON forum_posts BEGIN
+      INSERT INTO forum_fts(rowid, title, body)
+      VALUES (new.id, new.title, new.body);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS forum_fts_ad AFTER DELETE ON forum_posts BEGIN
+      INSERT INTO forum_fts(forum_fts, rowid, title, body)
+      VALUES ('delete', old.id, old.title, old.body);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS forum_fts_au AFTER UPDATE ON forum_posts BEGIN
+      INSERT INTO forum_fts(forum_fts, rowid, title, body)
+      VALUES ('delete', old.id, old.title, old.body);
+      INSERT INTO forum_fts(rowid, title, body)
+      VALUES (new.id, new.title, new.body);
+    END;
+
+    -- Experience node table (unified Issue/PR/Forum search)
+    CREATE TABLE IF NOT EXISTS experience_node (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT,
+      source TEXT,
+      summary TEXT,
+      related_symbols TEXT,
+      tags TEXT,
+      quality_score REAL,
+      published_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_exp_type ON experience_node(type);
+    CREATE INDEX IF NOT EXISTS idx_exp_quality ON experience_node(quality_score);
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS experience_fts
+      USING fts5(title, summary, content='experience_node', content_rowid='rowid');
+
+    CREATE TRIGGER IF NOT EXISTS experience_fts_ai AFTER INSERT ON experience_node BEGIN
+      INSERT INTO experience_fts(rowid, title, summary)
+      VALUES (new.rowid, new.title, new.summary);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS experience_fts_ad AFTER DELETE ON experience_node BEGIN
+      INSERT INTO experience_fts(experience_fts, rowid, title, summary)
+      VALUES ('delete', old.rowid, old.title, old.summary);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS experience_fts_au AFTER UPDATE ON experience_node BEGIN
+      INSERT INTO experience_fts(experience_fts, rowid, title, summary)
+      VALUES ('delete', old.rowid, old.title, old.summary);
+      INSERT INTO experience_fts(rowid, title, summary)
+      VALUES (new.rowid, new.title, new.summary);
+    END;
   `);
 }
