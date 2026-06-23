@@ -133,6 +133,24 @@ importers:
         specifier: ^4.4.0
         version: 4.4.3
 
+  packages/mining:
+    dependencies:
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@cesium-nexus/vector':
+        specifier: workspace:*
+        version: link:../vector
+      '@qdrant/js-client-rest':
+        specifier: ^1.18.0
+        version: 1.18.0(typescript@5.9.3)
+      better-sqlite3:
+        specifier: ^11.9.0
+        version: 11.10.0
+
   packages/parser:
     dependencies:
       '@cesium-nexus/shared':

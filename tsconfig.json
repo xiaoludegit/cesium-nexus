@@ -9,6 +9,8 @@
     { "path": "packages/mcp" },
     { "path": "packages/context-pack" },
     { "path": "packages/diagnosis" },
-    { "path": "packages/skills" }
+    { "path": "packages/skills" },
+    { "path": "packages/vector" },
+    { "path": "packages/mining" }
   ]
 }

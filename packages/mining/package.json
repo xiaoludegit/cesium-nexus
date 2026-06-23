@@ -1,0 +1,25 @@
+{
+  "name": "@cesium-nexus/mining",
+  "version": "0.1.0",
+  "description": "Problem Mining Pipeline — cluster issue / forum / experience data into CanonicalProblems and draft PatternCandidates for human review",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/shared": "workspace:*",
+    "@cesium-nexus/storage": "workspace:*",
+    "@cesium-nexus/vector": "workspace:*",
+    "@qdrant/js-client-rest": "^1.18.0",
+    "better-sqlite3": "^11.9.0"
+  }
+}
