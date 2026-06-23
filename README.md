@@ -2,7 +2,7 @@
 
 > **Cesium AI Expert** — A knowledge-base CLI and MCP server that turns Cesium's source code, API docs, issues, and community data into structured context for AI agents.
 
-**当前阶段：v0.4.0（Phase 2C+ — Qdrant Vector Search Integration）**
+**当前阶段：v0.5.0（Phase 2D — Diagnosis Retrieval Enhancement）**
 
 本文档描述当前 MVP 的实现范围。完整设计蓝图和延后功能见 [future-roadmap.md](./future-roadmap.md)。
 
@@ -160,6 +160,11 @@ cesium experience stats
 cesium experience embed
 cesium experience semantic "z-fighting flickering polygon"
 cesium experience references
+
+# Hybrid diagnosis + PKB embedding (Phase 2D)
+cesium pkb embed
+cesium pkb search "tiles shaking near ground"
+cesium diagnose "my tileset jitters near terrain" --hybrid
 ```
 
 ### Use as an MCP server (for AI agents)
@@ -217,12 +222,14 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium context <symbol>` | Build a Context Pack (structured JSON) for a symbol. `--depth N`, `--issue-limit N`, `--budget N` |
 
-### Diagnosis (Phase 2A)
+### Diagnosis (Phase 2A / 2D)
 
 | Command | Description |
 |---|---|
-| `cesium diagnose <problem>` | Diagnose a Cesium problem: matched patterns, related source, issues, investigation steps, fix suggestions |
+| `cesium diagnose <problem>` | Diagnose a Cesium problem: matched patterns, related source, issues, investigation steps, fix suggestions. `--hybrid` enables vector semantic search + experience recall |
 | `cesium pkb list` | List all problem patterns in the Problem Knowledge Base |
+| `cesium pkb embed` | Embed problem patterns and render stages to Qdrant for semantic search |
+| `cesium pkb search <query>` | Semantic search across knowledge base (patterns, stages, experiences). `--type pattern\|stage\|experience` |
 | `cesium stage <id>` | Query render stages by stage ID or problem pattern ID |
 
 ### Forum (Phase 2B)
@@ -673,8 +680,9 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 | **Phase 2B** | Render Pipeline Intelligence | Pipeline DAG (12 stages), Skill Dispatch (5 skills), Context Pack v2, Forum Crawler, PR Sync, Experience Node, 4 new MCP tools | ✅ Done |
 | **Phase 2C** | Experience Graph | Experience Edge (fixes), BFS traversal, `get_experience_chain` MCP tool, `experience` CLI commands, 12 MCP tools total | ✅ Done |
 | **Phase 2C+** | Qdrant Vector Search | `@cesium-nexus/vector` package, embedding (384-dim), semantic search, `references` edges, `semantic_search_experience` MCP tool, 13 MCP tools total | ✅ Done |
+| **Phase 2D** | Diagnosis Retrieval Enhancement | Hybrid matcher (keyword + vector), PKB vectorization, experience recall, score fusion, `diagnose --hybrid` CLI, `diagnose_problem` hybrid MCP param | ✅ Done |
 
-See [future-roadmap.md](./future-roadmap.md) for Phase 2D (Agent Context System) and Phase 3 (Can Diagnose) milestones.
+See [future-roadmap.md](./future-roadmap.md) for Phase 2E (Problem Mining Pipeline) and Phase 3 milestones.
 
 ### Acceptance Criteria
 

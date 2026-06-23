@@ -9,12 +9,26 @@ import type {
   DiagnosisMatch,
 } from "@cesium-nexus/shared";
 import type { SymbolRepo, CallGraphRepo, IssueRepo } from "@cesium-nexus/storage";
-import { matchProblemPatterns } from "./matcher.js";
+import { matchProblemPatterns, type MatcherVectorScores } from "./matcher.js";
 import { truncateDiagnosticPack } from "./token-budget.js";
 
 const DEFAULT_LIMIT = 5;
 const DEFAULT_BUDGET = 6000;
 const ISSUE_LIMIT_PER_QUERY = 3;
+const EXPERIENCE_LIMIT = 5;
+
+export interface ExperienceSearchResult {
+  nodeId: string;
+  nodeType: string;
+  title: string;
+  url: string;
+  score: number;
+}
+
+export type ExperienceSearchFn = (
+  query: string,
+  limit: number,
+) => Promise<ExperienceSearchResult[]>;
 
 export interface DiagnoseOptions {
   query: string;
@@ -25,6 +39,8 @@ export interface DiagnoseOptions {
   issueRepo: IssueRepo;
   limit?: number;
   budget?: number;
+  vectorScores?: MatcherVectorScores;
+  experienceSearchFn?: ExperienceSearchFn;
 }
 
 export async function diagnoseProblem(
@@ -39,6 +55,8 @@ export async function diagnoseProblem(
     issueRepo,
     limit = DEFAULT_LIMIT,
     budget = DEFAULT_BUDGET,
+    vectorScores,
+    experienceSearchFn,
   } = options;
 
   // 1. Match problem patterns
@@ -46,10 +64,11 @@ export async function diagnoseProblem(
     query,
     patterns,
     limit,
+    vectorScores,
   );
 
   if (matchedPatterns.length === 0) {
-    return {
+    const pack: DiagnosticContextPack = {
       kind: "diagnosis",
       query,
       matchedPatterns: [],
@@ -62,6 +81,16 @@ export async function diagnoseProblem(
       fixSuggestions: [],
       metadata: { totalTokens: 0, truncated: false, tokenBudget: budget },
     };
+
+    if (experienceSearchFn) {
+      try {
+        pack.relatedExperiences = await experienceSearchFn(query, EXPERIENCE_LIMIT);
+      } catch {
+        // experience search is best-effort
+      }
+    }
+
+    return pack;
   }
 
   // 2. Merge related stage IDs and resolve render stages
@@ -146,7 +175,7 @@ export async function diagnoseProblem(
     }
   }
 
-  // 8. Merge fix suggestions (deduplicated, preserve order)
+  // 9. Merge fix suggestions (deduplicated, preserve order)
   const fixSet = new Set<string>();
   const fixSuggestions: string[] = [];
   for (const m of matchedPatterns) {
@@ -158,7 +187,17 @@ export async function diagnoseProblem(
     }
   }
 
-  // 9. Assemble pack and truncate
+  // 10. Search related experiences (if vector search available)
+  let relatedExperiences: ExperienceSearchResult[] | undefined;
+  if (experienceSearchFn) {
+    try {
+      relatedExperiences = await experienceSearchFn(query, EXPERIENCE_LIMIT);
+    } catch {
+      // experience search is best-effort
+    }
+  }
+
+  // 11. Assemble pack and truncate
   const pack: DiagnosticContextPack = {
     kind: "diagnosis",
     query,
@@ -170,6 +209,7 @@ export async function diagnoseProblem(
     relatedIssues,
     investigationSteps,
     fixSuggestions,
+    relatedExperiences,
     metadata: { totalTokens: 0, truncated: false, tokenBudget: budget },
   };
 

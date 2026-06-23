@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.0 (Unreleased)
+
+### Added — Phase 2D: Diagnosis Retrieval Enhancement
+
+- **Hybrid Matcher** — 6th signal (vector semantic similarity, weight 3) added to `matchProblemPatterns`, `VECTOR_STRONG_THRESHOLD = 0.75` gate
+- **PKB Vectorization** — `embedProblemPatterns` / `embedRenderStages` embed problem patterns and render stages to Qdrant (384 dim)
+- **Unified Search** — `searchKnowledgeBase` searches across all node types (pattern/stage/experience), `semanticSearch` generalized filter
+- **Experience Recall** — `diagnoseProblem` accepts `experienceSearchFn` for vector-based experience node recall in diagnosis output
+- **Score Fusion** — `DiagnosisMatch.vectorScore` field, keyword + cosine similarity weighted combination
+- **Token Budget** — `relatedExperiences` integrated into truncation pipeline (priority between issues and callgraph)
+- **CLI commands**: `cesium pkb embed`, `cesium pkb search <query>`, `cesium diagnose --hybrid`
+- **MCP `diagnose_problem`** — New `hybrid` parameter for vector-enhanced diagnosis (tool count stays 13)
+- 297 tests passing (was 286)
+
 ## v0.4.0 (Unreleased)
 
 ### Added — Phase 2C+: Qdrant Vector Search Integration

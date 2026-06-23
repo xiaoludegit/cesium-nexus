@@ -21,10 +21,12 @@ export function registerDiagnoseCommand(program: Command): void {
     .option("--db <path>", "SQLite database path", "./database/cesium.db")
     .option("--limit <n>", "Max matched patterns", "5")
     .option("--budget <n>", "Token budget", "6000")
+    .option("--hybrid", "Enable hybrid search (keyword + vector semantic)", false)
+    .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .action(
       async (
         problem: string,
-        opts: { db: string; limit: string; budget: string },
+        opts: { db: string; limit: string; budget: string; hybrid: boolean; qdrantUrl: string },
       ) => {
         const limit = parseInt(opts.limit, 10);
         if (!Number.isInteger(limit) || limit < 1) {
@@ -48,6 +50,48 @@ export function registerDiagnoseCommand(program: Command): void {
         const callGraphRepo = new CallGraphRepo(db);
         const issueRepo = new IssueRepo(db);
 
+        let vectorScores: Record<string, number> | undefined;
+        let experienceSearchFn: ((query: string, limit: number) => Promise<{ nodeId: string; nodeType: string; title: string; url: string; score: number }[]>) | undefined;
+
+        if (opts.hybrid) {
+          try {
+            const { getQdrantClient, embedText, semanticSearch, searchKnowledgeBase } = await import(
+              "@cesium-nexus/vector"
+            );
+            const client = getQdrantClient(opts.qdrantUrl);
+            const queryEmbedding = await embedText(problem);
+
+            const patternResults = await semanticSearch(client, queryEmbedding, {
+              type: "cesium-problem-pattern",
+              limit: patterns.length,
+            });
+
+            if (patternResults.length > 0) {
+              vectorScores = {};
+              for (const r of patternResults) {
+                vectorScores[r.nodeId] = r.score;
+              }
+            }
+
+            experienceSearchFn = async (q: string, lim: number) => {
+              const results = await searchKnowledgeBase(q, client, {
+                type: "cesium-experience",
+                limit: lim,
+              });
+              return results.map((r) => ({
+                nodeId: r.nodeId,
+                nodeType: r.nodeType,
+                title: r.title,
+                url: r.url,
+                score: r.score,
+              }));
+            };
+          } catch (err) {
+            console.error("Warning: hybrid search unavailable —", err instanceof Error ? err.message : String(err));
+            console.error("Falling back to keyword-only mode.\n");
+          }
+        }
+
         const result = await diagnoseProblem({
           query: problem,
           patterns,
@@ -57,6 +101,8 @@ export function registerDiagnoseCommand(program: Command): void {
           issueRepo,
           limit,
           budget,
+          vectorScores,
+          experienceSearchFn,
         });
 
         db.close();
@@ -70,7 +116,8 @@ export function registerDiagnoseCommand(program: Command): void {
 
         console.log("Possible Causes:");
         for (const m of result.matchedPatterns) {
-          console.log(`  [${m.pattern.id}] ${m.pattern.name}`);
+          const vecInfo = m.vectorScore != null ? ` (vector: ${m.vectorScore.toFixed(2)})` : "";
+          console.log(`  [${m.pattern.id}] ${m.pattern.name} — score: ${m.score.toFixed(1)}${vecInfo}`);
           for (const cause of m.pattern.possibleCauses) {
             console.log(`    - ${cause}`);
           }
@@ -112,6 +159,14 @@ export function registerDiagnoseCommand(program: Command): void {
           }
         }
 
+        if (result.relatedExperiences && result.relatedExperiences.length > 0) {
+          console.log("\nRelated Experiences:");
+          for (const exp of result.relatedExperiences) {
+            console.log(`  [${exp.nodeType}] ${exp.title} (score: ${exp.score.toFixed(2)})`);
+            if (exp.url) console.log(`    ${exp.url}`);
+          }
+        }
+
         if (result.investigationSteps.length > 0) {
           console.log("\nInvestigation Steps:");
           for (const step of result.investigationSteps) {
@@ -145,6 +200,68 @@ export function registerDiagnoseCommand(program: Command): void {
         console.log(`  aliases: ${p.aliases.join(", ")}`);
       }
     });
+
+  pkb
+    .command("embed")
+    .description("Embed problem patterns and render stages to Qdrant")
+    .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
+    .action(async (opts: { qdrantUrl: string }) => {
+      const patterns = await loadProblemPatterns();
+      const stages = await loadRenderStages();
+
+      const { getQdrantClient, embedAllPKB } = await import(
+        "@cesium-nexus/vector"
+      );
+      const client = getQdrantClient(opts.qdrantUrl);
+
+      const result = await embedAllPKB(patterns, stages, client);
+      console.log(
+        `Embedded ${result.totalPatterns} problem patterns and ${result.totalStages} render stages to Qdrant (eng-knowledge)`,
+      );
+    });
+
+  pkb
+    .command("search <query>")
+    .description("Semantic search across knowledge base (patterns, stages, experiences)")
+    .option("--type <type>", "Filter by type: pattern, stage, experience")
+    .option("--limit <n>", "Max results", "10")
+    .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
+    .action(
+      async (
+        query: string,
+        opts: { type?: string; limit: string; qdrantUrl: string },
+      ) => {
+        const limit = parseInt(opts.limit, 10);
+
+        const typeMap: Record<string, string> = {
+          pattern: "cesium-problem-pattern",
+          stage: "cesium-render-stage",
+          experience: "cesium-experience",
+        };
+        const qdrantType = opts.type ? typeMap[opts.type] : undefined;
+
+        const { getQdrantClient, searchKnowledgeBase } = await import(
+          "@cesium-nexus/vector"
+        );
+        const client = getQdrantClient(opts.qdrantUrl);
+
+        const results = await searchKnowledgeBase(query, client, {
+          limit,
+          type: qdrantType,
+        });
+
+        if (results.length === 0) {
+          console.log("No results found.");
+          return;
+        }
+
+        console.log(`Found ${results.length} results:\n`);
+        for (const r of results) {
+          console.log(`  [${r.nodeType}] ${r.title} (score: ${r.score.toFixed(3)})`);
+          if (r.url) console.log(`    ${r.url}`);
+        }
+      },
+    );
 
   program
     .command("stage <id>")

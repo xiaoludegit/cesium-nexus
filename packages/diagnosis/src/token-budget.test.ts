@@ -224,4 +224,34 @@ describe("truncateDiagnosticPack", () => {
     expect(result.fixSuggestions).toEqual([]);
     expect(result.investigationSteps).toEqual([]);
   });
+
+  it("should estimate tokens for relatedExperiences", () => {
+    const withExperiences = makePack({
+      relatedExperiences: [
+        { nodeId: "issue:1", nodeType: "cesium-experience", title: "Z-fighting fix", url: "https://example.com", score: 0.9 },
+        { nodeId: "forum:2", nodeType: "cesium-experience", title: "Depth buffer tips", url: "https://example.com/2", score: 0.8 },
+      ],
+    });
+    const withoutExperiences = makePack();
+    expect(estimateDiagnosticTokens(withExperiences)).toBeGreaterThan(
+      estimateDiagnosticTokens(withoutExperiences),
+    );
+  });
+
+  it("should truncate relatedExperiences when over budget", () => {
+    const pack = makePack({
+      relatedExperiences: [
+        { nodeId: "issue:1", nodeType: "cesium-experience", title: "Experience 1", url: "", score: 0.9 },
+        { nodeId: "issue:2", nodeType: "cesium-experience", title: "Experience 2", url: "", score: 0.8 },
+        { nodeId: "issue:3", nodeType: "cesium-experience", title: "Experience 3", url: "", score: 0.7 },
+      ],
+      relatedSource: [
+        { symbol: "A", file: "a.js", lineStart: 1, lineEnd: 100, code: "x".repeat(4000) },
+      ],
+    });
+    const origTokens = estimateDiagnosticTokens(pack);
+    const budget = Math.floor(origTokens * 0.6);
+    const result = truncateDiagnosticPack(pack, budget);
+    expect(result.relatedExperiences!.length).toBeLessThanOrEqual(pack.relatedExperiences!.length);
+  });
 });

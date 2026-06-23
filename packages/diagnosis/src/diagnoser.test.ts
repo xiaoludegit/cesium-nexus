@@ -201,6 +201,72 @@ describe("diagnoseProblem", () => {
     const uniqueFixes = new Set(result.fixSuggestions);
     expect(uniqueFixes.size).toBe(result.fixSuggestions.length);
   });
+
+  it("should include relatedExperiences when experienceSearchFn is provided", async () => {
+    const repos = makeMockRepos();
+    const experienceSearchFn = vi.fn(async () => [
+      { nodeId: "issue:123", nodeType: "cesium-experience", title: "Z-fighting fix", url: "https://example.com", score: 0.85 },
+      { nodeId: "forum:456", nodeType: "cesium-experience", title: "Depth buffer tips", url: "https://example.com/2", score: 0.78 },
+    ]);
+
+    const result = await diagnoseProblem({
+      query: "polygon flickering",
+      patterns,
+      stages,
+      ...repos,
+      experienceSearchFn,
+    });
+
+    expect(experienceSearchFn).toHaveBeenCalledWith("polygon flickering", 5);
+    expect(result.relatedExperiences).toBeDefined();
+    expect(result.relatedExperiences!.length).toBe(2);
+    expect(result.relatedExperiences![0].title).toBe("Z-fighting fix");
+  });
+
+  it("should not include relatedExperiences when experienceSearchFn is not provided", async () => {
+    const repos = makeMockRepos();
+    const result = await diagnoseProblem({
+      query: "polygon flickering",
+      patterns,
+      stages,
+      ...repos,
+    });
+
+    expect(result.relatedExperiences).toBeUndefined();
+  });
+
+  it("should handle experienceSearchFn failure gracefully", async () => {
+    const repos = makeMockRepos();
+    const experienceSearchFn = vi.fn(async () => {
+      throw new Error("Qdrant unavailable");
+    });
+
+    const result = await diagnoseProblem({
+      query: "polygon flickering",
+      patterns,
+      stages,
+      ...repos,
+      experienceSearchFn,
+    });
+
+    expect(result.matchedPatterns.length).toBeGreaterThan(0);
+    expect(result.relatedExperiences).toBeUndefined();
+  });
+
+  it("should pass vectorScores to matcher", async () => {
+    const repos = makeMockRepos();
+    const result = await diagnoseProblem({
+      query: "polygon flickering",
+      patterns,
+      stages,
+      ...repos,
+      vectorScores: { z_fighting: 0.92 },
+    });
+
+    const match = result.matchedPatterns.find((m) => m.pattern.id === "z_fighting");
+    expect(match).toBeDefined();
+    expect(match!.vectorScore).toBe(0.92);
+  });
 });
 
 describe("queryRenderStages", () => {

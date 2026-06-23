@@ -121,40 +121,70 @@ cesium experience references                     # 构建 references 边
 
 ---
 
-## Phase 2D: Agent Context System
+## Phase 2D: Diagnosis Retrieval Enhancement ✅ 完成
 
-**目标：** 完整的 Agent 上下文系统，支持 Skill Dispatch 和 Experience Graph。
+**目标：** 将向量语义检索集成到 diagnosis 管线，实现 Hybrid Search（关键词 + 向量）+ Score Fusion + Experience 统一召回。
+
+### 已实现功能
+
+| 功能 | 状态 |
+|---|---|
+| Hybrid Matcher（6 信号：alias/keyword/symptom/symbol/category + vector） | ✅ WEIGHT_VECTOR=3, threshold=0.75 |
+| PKB 向量化（Problem Patterns + Render Stages embed 到 Qdrant） | ✅ `embed-pkb.ts` |
+| 统一语义搜索（跨 pattern/stage/experience） | ✅ `searchKnowledgeBase` |
+| Score Fusion（`DiagnosisMatch.vectorScore`） | ✅ |
+| Experience 统一召回（`relatedExperiences` in DiagnosticContextPack） | ✅ |
+| Token Budget 集成（relatedExperiences 截断优先级） | ✅ |
+| `semanticSearch` 泛化过滤条件 | ✅ 多类型支持 |
+| Graceful fallback（Qdrant 不可用时降级为 keyword-only） | ✅ |
+
+### 已实现 CLI 命令
+
+```bash
+cesium pkb embed                                  # Embed patterns + stages 到 Qdrant
+cesium pkb search <query>                         # 统一语义搜索（--type pattern|stage|experience）
+cesium diagnose <problem> --hybrid                # Hybrid 诊断（向量 + 关键词 + 经验召回）
+```
+
+### 已实现 MCP 增强
+
+| Tool | 变更 |
+|---|---|
+| `diagnose_problem` | ✅ 新增 `hybrid` 参数（tool count 保持 13） |
+
+---
+
+## Phase 2E: Problem Mining Pipeline
+
+**目标：** 从 issue/forum 数据中自动挖掘高频问题模式，生成 PKB 候选，实现知识库自动扩展。
 
 ### 新增功能
 
 | 功能 | 说明 |
 |---|---|
-| Skill Dispatch（规则版） | 5 个 Skill 硬编码（api / debug / performance / shader / general），关键词规则 + 实体抽取 |
-| Experience Graph 完整 | inferred 边（`mentions` / `references` / `supersedes`） + 图遍历查询 |
+| 自动 Pattern 发现 | 从 issue/forum 数据中挖掘高频问题模式 |
+| Pattern 建议生成 | 基于向量聚类发现新的 problem pattern 候选 |
+| Pattern 质量评估 | 评估现有 pattern 的覆盖率和命中率 |
+| 自动 KB 扩展 | 将高置信度挖掘结果追加到 `problem-patterns.json` |
 
 ---
 
 ## Phase 3: Can Diagnose
 
-**目标：** Agent 能主动推断根因、给出可操作的修复建议，并能比较版本间的差异。Problem Mining Pipeline 上线，PKB 可自动扩充。
+**目标：** Agent 能主动推断根因、给出可操作的修复建议，并能比较版本间的差异。
 
 ### 新增功能
 
 | 功能 | 说明 |
 |---|---|
-| Problem Mining Pipeline | 从 Issue/PR/Forum 自动挖掘问题候选 + 人工审核 CLI |
-| Experience Graph 完整 | inferred 边（`mentions` / `references` / `supersedes`） + 图遍历查询 |
-| Qdrant 向量检索 | Issue / Problem 向量化，语义搜索（✅ 基础已实现：Experience 向量化 + semantic search） |
 | Migration Skill | 跨版本 Breaking Change 查询 |
 | Shader Skill | GLSL shader symbol 检索 |
-| `get_experience_chain` | 图遍历：返回 fix → PR → release 完整链路 |
 | Cross-version Diff | 两版本间 Symbol diff 比较 |
 
 ### 新增 MCP Tools
 
 | Tool | 说明 |
 |---|---|
-| `get_experience_chain` | 展开经验节点关联图 |
 | `search_shader` | 搜索 GLSL shader symbol |
 | `compare_version` | 两版本 Symbol diff |
 
@@ -236,6 +266,7 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 
 - 架构审计报告：[`设计文档/Cesium-Architecture-Review-v3.md`](./设计文档/Cesium-Architecture-Review-v3.md)
 - MVP 实施计划：[`开发计划/plan.md`](./开发计划/plan.md)
+- **后续计划（Phase 2D 收尾 + Phase 2E）：[`开发计划/follow-up-plan.md`](./开发计划/follow-up-plan.md)**
 - 项目 README：[`README.md`](./README.md)
 
 ---

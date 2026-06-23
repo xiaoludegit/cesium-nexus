@@ -15,6 +15,24 @@ export async function searchExperienceSemantic(
   },
 ): Promise<VectorSearchResult[]> {
   const queryEmbedding = await embedText(query);
+  return semanticSearch(client, queryEmbedding, {
+    limit: options?.limit,
+    minScore: options?.minScore,
+    type: "cesium-experience",
+    nodeType: options?.type,
+  });
+}
+
+export async function searchKnowledgeBase(
+  query: string,
+  client: QdrantClient,
+  options?: {
+    limit?: number;
+    minScore?: number;
+    type?: string;
+  },
+): Promise<VectorSearchResult[]> {
+  const queryEmbedding = await embedText(query);
   return semanticSearch(client, queryEmbedding, options);
 }
 

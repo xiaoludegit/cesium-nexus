@@ -1,5 +1,15 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
-import type { VectorSearchResult, QdrantExperiencePayload } from "./types.js";
+import type {
+  ProblemPattern,
+  ProblemSeverity,
+  RenderStage,
+} from "@cesium-nexus/shared";
+import type {
+  VectorSearchResult,
+  QdrantExperiencePayload,
+  QdrantProblemPatternPayload,
+  QdrantRenderStagePayload,
+} from "./types.js";
 
 const DEFAULT_QDRANT_URL = "http://localhost:6333";
 const COLLECTION_NAME = "eng-knowledge";
@@ -74,17 +84,21 @@ export async function semanticSearch(
     limit?: number;
     minScore?: number;
     type?: string;
+    nodeType?: string;
   },
 ): Promise<VectorSearchResult[]> {
   const limit = options?.limit ?? 10;
 
   const must: Record<string, unknown>[] = [
     { key: "project", match: { value: "cesium-nexus" } },
-    { key: "type", match: { value: "cesium-experience" } },
   ];
 
   if (options?.type) {
-    must.push({ key: "node_type", match: { value: options.type } });
+    must.push({ key: "type", match: { value: options.type } });
+  }
+
+  if (options?.nodeType) {
+    must.push({ key: "node_type", match: { value: options.nodeType } });
   }
 
   const results = await client.search(COLLECTION_NAME, {
@@ -96,12 +110,12 @@ export async function semanticSearch(
   });
 
   return results.map((r) => {
-    const payload = r.payload as unknown as QdrantExperiencePayload;
+    const payload = r.payload as Record<string, unknown>;
     return {
-      nodeId: payload.node_id,
-      nodeType: payload.node_type,
-      title: payload.title,
-      url: payload.url,
+      nodeId: String(payload.node_id ?? payload.pattern_id ?? payload.stage_id ?? ""),
+      nodeType: String(payload.node_type ?? payload.type ?? ""),
+      title: String(payload.title ?? ""),
+      url: String(payload.url ?? ""),
       score: r.score ?? 0,
     };
   });
@@ -128,7 +142,6 @@ export async function findSimilarNodes(
 ): Promise<VectorSearchResult[]> {
   const must: Record<string, unknown>[] = [
     { key: "project", match: { value: "cesium-nexus" } },
-    { key: "type", match: { value: "cesium-experience" } },
   ];
 
   const mustNot: Record<string, unknown>[] = [
@@ -144,13 +157,71 @@ export async function findSimilarNodes(
   });
 
   return results.map((r) => {
-    const payload = r.payload as unknown as QdrantExperiencePayload;
+    const payload = r.payload as Record<string, unknown>;
     return {
-      nodeId: payload.node_id,
-      nodeType: payload.node_type,
-      title: payload.title,
-      url: payload.url,
+      nodeId: String(payload.node_id ?? payload.pattern_id ?? payload.stage_id ?? ""),
+      nodeType: String(payload.node_type ?? payload.type ?? ""),
+      title: String(payload.title ?? ""),
+      url: String(payload.url ?? ""),
       score: r.score ?? 0,
     };
+  });
+}
+
+const SEVERITY_SCORE: Record<ProblemSeverity, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
+export function buildProblemPatternPayload(
+  pattern: ProblemPattern,
+): QdrantProblemPatternPayload {
+  return {
+    type: "cesium-problem-pattern",
+    project: "cesium-nexus",
+    tags: pattern.relatedSymbols,
+    importance: SEVERITY_SCORE[pattern.severity] ?? 1,
+    status: "active",
+    pattern_id: pattern.id,
+    category: pattern.category,
+    title: pattern.name,
+  };
+}
+
+export function buildRenderStagePayload(
+  stage: RenderStage,
+): QdrantRenderStagePayload {
+  return {
+    type: "cesium-render-stage",
+    project: "cesium-nexus",
+    tags: stage.keySymbols,
+    importance: stage.perfHotspot ? 3 : 1,
+    status: "active",
+    stage_id: stage.id,
+    order: stage.order,
+    title: stage.name,
+  };
+}
+
+export interface GenericUpsertPoint {
+  id: string;
+  embedding: number[];
+  payload: Record<string, unknown>;
+}
+
+export async function upsertPoints(
+  client: QdrantClient,
+  points: GenericUpsertPoint[],
+): Promise<void> {
+  if (points.length === 0) return;
+
+  await client.upsert(COLLECTION_NAME, {
+    wait: true,
+    points: points.map((p) => ({
+      id: nodeIdToQdrantId(p.id),
+      vector: p.embedding,
+      payload: p.payload,
+    })),
   });
 }

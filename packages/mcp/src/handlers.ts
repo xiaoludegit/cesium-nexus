@@ -220,11 +220,51 @@ export async function handleDiagnoseProblem(
   symbolRepo: SymbolRepo,
   callGraphRepo: CallGraphRepo,
   issueRepo: IssueRepo,
-  input: { problem: string; limit?: number; budget?: number },
+  input: { problem: string; limit?: number; budget?: number; hybrid?: boolean },
 ): Promise<ToolResponse> {
   try {
     const patterns = await loadProblemPatterns();
     const stages = await loadRenderStages();
+
+    let vectorScores: Record<string, number> | undefined;
+    let experienceSearchFn: ((query: string, limit: number) => Promise<{ nodeId: string; nodeType: string; title: string; url: string; score: number }[]>) | undefined;
+
+    if (input.hybrid) {
+      try {
+        const { getQdrantClient, embedText, semanticSearch, searchKnowledgeBase } =
+          await import("@cesium-nexus/vector");
+        const client = getQdrantClient();
+        const queryEmbedding = await embedText(input.problem);
+
+        const patternResults = await semanticSearch(client, queryEmbedding, {
+          type: "cesium-problem-pattern",
+          limit: patterns.length,
+        });
+
+        if (patternResults.length > 0) {
+          vectorScores = {};
+          for (const r of patternResults) {
+            vectorScores[r.nodeId] = r.score;
+          }
+        }
+
+        experienceSearchFn = async (q: string, lim: number) => {
+          const results = await searchKnowledgeBase(q, client, {
+            type: "cesium-experience",
+            limit: lim,
+          });
+          return results.map((r) => ({
+            nodeId: r.nodeId,
+            nodeType: r.nodeType,
+            title: r.title,
+            url: r.url,
+            score: r.score,
+          }));
+        };
+      } catch {
+        // Qdrant unavailable — fall back to keyword-only
+      }
+    }
 
     const result = await diagnoseProblem({
       query: input.problem,
@@ -235,6 +275,8 @@ export async function handleDiagnoseProblem(
       issueRepo,
       limit: input.limit,
       budget: input.budget,
+      vectorScores,
+      experienceSearchFn,
     });
 
     return { success: true, data: result };

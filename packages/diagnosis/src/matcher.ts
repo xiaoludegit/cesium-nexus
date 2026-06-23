@@ -3,8 +3,14 @@ import type { ProblemPattern, DiagnosisMatch } from "@cesium-nexus/shared";
 const WEIGHT_ALIAS = 3;
 const WEIGHT_KEYWORD = 2;
 const WEIGHT_SYMPTOM = 2;
+const WEIGHT_VECTOR = 3;
 const WEIGHT_SYMBOL = 1;
 const WEIGHT_CATEGORY = 1;
+const VECTOR_STRONG_THRESHOLD = 0.75;
+
+export interface MatcherVectorScores {
+  [patternId: string]: number;
+}
 
 const STOPWORDS = new Set([
   "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
@@ -69,6 +75,7 @@ export function matchProblemPatterns(
   query: string,
   patterns: ProblemPattern[],
   limit?: number,
+  vectorScores?: MatcherVectorScores,
 ): DiagnosisMatch[] {
   const tokens = normalizeQuery(query);
   const results: DiagnosisMatch[] = [];
@@ -121,8 +128,23 @@ export function matchProblemPatterns(
       matchedKeywords.push(`category:${pattern.category}`);
     }
 
+    // 6. Vector semantic similarity (high weight — strong when above threshold)
+    const vecScore = vectorScores?.[pattern.id] ?? 0;
+    if (vecScore > 0) {
+      score += WEIGHT_VECTOR * vecScore;
+      if (vecScore >= VECTOR_STRONG_THRESHOLD) {
+        hasStrong = true;
+        matchedKeywords.push(`vector:${vecScore.toFixed(3)}`);
+      }
+    }
+
     if (score > 0 && hasStrong) {
-      results.push({ pattern, matchedKeywords, score });
+      results.push({
+        pattern,
+        matchedKeywords,
+        score,
+        vectorScore: vecScore > 0 ? vecScore : undefined,
+      });
     }
   }
 

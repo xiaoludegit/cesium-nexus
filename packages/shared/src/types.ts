@@ -142,6 +142,7 @@ export interface DiagnosisMatch {
   pattern: ProblemPattern;
   matchedKeywords: string[];
   score: number;
+  vectorScore?: number;
 }
 
 export interface DiagnosisMetadata {
@@ -162,6 +163,13 @@ export interface DiagnosisResult {
   relatedIssues: IssueRecord[];
   investigationSteps: string[];
   fixSuggestions: string[];
+  relatedExperiences?: {
+    nodeId: string;
+    nodeType: string;
+    title: string;
+    url: string;
+    score: number;
+  }[];
   metadata: DiagnosisMetadata;
 }
 

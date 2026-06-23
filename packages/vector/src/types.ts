@@ -29,3 +29,30 @@ export interface QdrantExperiencePayload {
   url: string;
   repo: string;
 }
+
+export interface QdrantProblemPatternPayload {
+  type: "cesium-problem-pattern";
+  project: "cesium-nexus";
+  tags: string[];
+  importance: number;
+  status: "active";
+  pattern_id: string;
+  category: string;
+  title: string;
+}
+
+export interface QdrantRenderStagePayload {
+  type: "cesium-render-stage";
+  project: "cesium-nexus";
+  tags: string[];
+  importance: number;
+  status: "active";
+  stage_id: string;
+  order: number;
+  title: string;
+}
+
+export interface EmbedPKBResult {
+  totalPatterns: number;
+  totalStages: number;
+}

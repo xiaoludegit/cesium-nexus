@@ -61,6 +61,13 @@ export function estimateDiagnosticTokens(
   // callgraph
   total += estimateTokens(JSON.stringify(pack.callgraph));
 
+  // related experiences
+  if (pack.relatedExperiences) {
+    for (const exp of pack.relatedExperiences) {
+      total += estimateTokens(exp.title) + estimateTokens(exp.nodeType) + 20;
+    }
+  }
+
   // render stages
   for (const r of pack.renderStages) {
     total += estimateTokens(r.name) + estimateTokens(r.description) + 10;
@@ -134,6 +141,16 @@ export function truncateDiagnosticPack(
     }
     if (issues.length < result.relatedIssues.length) truncated = true;
     result = { ...result, relatedIssues: issues };
+  }
+
+  // ── 2c. Drop related experiences from last ──────────────────
+  if (estimateDiagnosticTokens(result) > budget && result.relatedExperiences && result.relatedExperiences.length > 0) {
+    const exps = [...result.relatedExperiences];
+    while (exps.length > 0 && estimateDiagnosticTokens({ ...result, relatedExperiences: exps }) > budget) {
+      exps.pop();
+    }
+    if (exps.length < result.relatedExperiences!.length) truncated = true;
+    result = { ...result, relatedExperiences: exps };
   }
 
   // ── 3. Truncate callgraph (drop edges from last) ──────────
@@ -222,6 +239,7 @@ export function truncateDiagnosticPack(
     renderStages: [],
     investigationSteps: [],
     fixSuggestions: [],
+    relatedExperiences: undefined,
     metadata: { totalTokens: 0, truncated: false, tokenBudget: budget },
   };
   const minimumPossibleTokens = estimateDiagnosticTokens(minimumPack);

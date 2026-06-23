@@ -153,11 +153,12 @@ export function registerTools(
   // ── diagnose_problem ────────────────────────────────────────
   server.tool(
     "diagnose_problem",
-    "Diagnose a Cesium problem by matching symptoms to known patterns and assembling a diagnostic context pack with causes, related source, issues, and fix suggestions",
+    "Diagnose a Cesium problem by matching symptoms to known patterns and assembling a diagnostic context pack with causes, related source, issues, and fix suggestions. Set hybrid=true to enhance with vector semantic search and experience recall.",
     {
       problem: z.string().min(1),
       limit: z.number().int().min(1).max(20).default(5),
       budget: z.number().int().min(1000).default(6000),
+      hybrid: z.boolean().default(false),
     },
     async (input) => {
       const result = await handleDiagnoseProblem(
