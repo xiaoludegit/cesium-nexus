@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## v0.5.0 (Unreleased)
+## v0.5.0 (2026-06-23) — commit `e04a5ea`, tag `v0.5.0`
 
 ### Added — Phase 2D: Diagnosis Retrieval Enhancement
 
