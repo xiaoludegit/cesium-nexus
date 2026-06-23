@@ -7,7 +7,7 @@ import type {
   ProblemPattern,
 } from "@cesium-nexus/shared";
 import type { SymbolRepo } from "@cesium-nexus/storage";
-import { matchProblemPatterns } from "@cesium-nexus/diagnosis";
+import { matchProblemPatterns as _matchProblemPatterns } from "@cesium-nexus/diagnosis";
 import { extractEntities } from "./entity-extractor.js";
 
 const DATA_DIR = new URL("../../../data/skills/", import.meta.url);

@@ -365,11 +365,11 @@ MCP tools/list 返回 12 个工具，`get_experience_chain` 可正常调用。
 
 | 子里程碑 | 内容 | 状态 |
 |---|---|---|
-| P2C-1 | shared types + experience_edge 表 + ExperienceEdgeRepo | 待开始 |
-| P2C-2 | ExperienceRepo / PullRequestRepo / IssueRepo 扩展查询 | 待开始 |
-| P2C-3 | Edge Builder — fixes 边构建 | 待开始 |
-| P2C-4 | Graph Traversal — ExperienceChain | 待开始 |
-| P2C-5 | MCP Tool — get_experience_chain | 待开始 |
-| P2C-6 | CLI — experience 命令组 | 待开始 |
-| P2C-7 | 全面测试 | 待开始 |
-| P2C-8 | Docs 更新 | 待开始 |
+| P2C-1 | shared types + experience_edge 表 + ExperienceEdgeRepo | ✅ 完成 |
+| P2C-2 | ExperienceRepo / PullRequestRepo / IssueRepo 扩展查询 | ✅ 完成 |
+| P2C-3 | Edge Builder — fixes 边构建 | ✅ 完成 |
+| P2C-4 | Graph Traversal — ExperienceChain | ✅ 完成 |
+| P2C-5 | MCP Tool — get_experience_chain | ✅ 完成 |
+| P2C-6 | CLI — experience 命令组 | ✅ 完成 |
+| P2C-7 | 全面测试 | ✅ 完成 |
+| P2C-8 | Docs 更新 | ✅ 完成 |

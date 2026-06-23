@@ -9,6 +9,7 @@ import { registerDiagnoseCommand } from "./commands/diagnose-cmd.js";
 import { registerForumCommands } from "./commands/forum-cmd.js";
 import { registerSkillCommands } from "./commands/skill-cmd.js";
 import { registerPipelineCommand } from "./commands/pipeline-cmd.js";
+import { registerExperienceCommands } from "./commands/experience-cmd.js";
 
 const program = new Command();
 
@@ -27,5 +28,6 @@ registerDiagnoseCommand(program);
 registerForumCommands(program);
 registerSkillCommands(program);
 registerPipelineCommand(program);
+registerExperienceCommands(program);
 
 program.parse();

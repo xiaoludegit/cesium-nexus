@@ -87,7 +87,7 @@ export class ExperienceRepo {
       params.push(options.minQuality);
     }
 
-    let sql = `
+    const sql = `
       SELECT e.id, e.type, e.title, e.url, e.source, e.summary,
              e.related_symbols, e.tags, e.quality_score, e.published_at,
              bm25(experience_fts) AS score

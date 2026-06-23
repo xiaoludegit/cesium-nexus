@@ -15,6 +15,9 @@
     "dev": "tsup --watch",
     "clean": "rm -rf dist"
   },
+  "devDependencies": {
+    "better-sqlite3": "^11.9.1"
+  },
   "dependencies": {
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/parser": "workspace:*",

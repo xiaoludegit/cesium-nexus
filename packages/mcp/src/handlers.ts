@@ -4,6 +4,7 @@ import type { CallGraphRepo } from "@cesium-nexus/storage";
 import type { PullRequestRepo } from "@cesium-nexus/storage";
 import type { ForumRepo } from "@cesium-nexus/storage";
 import type { ExperienceRepo } from "@cesium-nexus/storage";
+import type { ExperienceEdgeRepo } from "@cesium-nexus/storage";
 import { resolveSymbolId } from "@cesium-nexus/storage";
 import { buildContextPack } from "@cesium-nexus/context-pack";
 import {
@@ -17,6 +18,7 @@ import {
   dispatchSkill,
   buildSkillContextPack,
 } from "@cesium-nexus/skills";
+import { getExperienceChain } from "@cesium-nexus/indexer";
 
 export interface ToolResponse {
   success: boolean;
@@ -415,6 +417,92 @@ export async function handleQueryRenderStage(
       data: {
         count: result.length,
         stages: result,
+      },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── get_experience_chain ─────────────────────────────────
+
+export async function handleGetExperienceChain(
+  experienceRepo: ExperienceRepo,
+  edgeRepo: ExperienceEdgeRepo,
+  input: { nodeId: string; maxDepth?: number },
+): Promise<ToolResponse> {
+  try {
+    const maxDepth = input.maxDepth ?? 3;
+    const chain = getExperienceChain(
+      input.nodeId,
+      experienceRepo,
+      edgeRepo,
+      maxDepth,
+    );
+
+    return {
+      success: true,
+      data: {
+        rootId: chain.rootId,
+        nodeCount: chain.nodes.length,
+        edgeCount: chain.edges.length,
+        depth: chain.depth,
+        truncated: chain.truncated,
+        nodes: chain.nodes.map((n) => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          url: n.url,
+          qualityScore: n.qualityScore,
+        })),
+        edges: chain.edges.map((e) => ({
+          id: e.id,
+          sourceNodeId: e.sourceNodeId,
+          targetNodeId: e.targetNodeId,
+          edgeType: e.edgeType,
+          confidence: e.confidence,
+        })),
+      },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── semantic_search_experience ───────────────────────────
+
+export async function handleSemanticSearchExperience(
+  input: { query: string; limit?: number; minScore?: number; type?: string },
+): Promise<ToolResponse> {
+  try {
+    const { getQdrantClient, searchExperienceSemantic } = await import(
+      "@cesium-nexus/vector"
+    );
+    const client = getQdrantClient();
+    const results = await searchExperienceSemantic(input.query, client, {
+      limit: input.limit,
+      minScore: input.minScore,
+      type: input.type,
+    });
+
+    return {
+      success: true,
+      data: {
+        query: input.query,
+        count: results.length,
+        results: results.map((r) => ({
+          nodeId: r.nodeId,
+          nodeType: r.nodeType,
+          title: r.title,
+          url: r.url,
+          score: r.score,
+        })),
       },
     };
   } catch (err) {

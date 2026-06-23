@@ -67,8 +67,8 @@ export async function buildSkillContextPack(
   const hasSection = (s: string) => config.sections.includes(s as never);
 
   let symbol: SymbolRecord | undefined;
-  let source: SourceSnippet[] = [];
-  let callgraph: Edge[] = [];
+  const source: SourceSnippet[] = [];
+  const callgraph: Edge[] = [];
   let issues: IssueRecord[] = [];
   let renderStages: RenderStage[] | undefined;
   let diagnosis: DiagnosisResult | undefined;

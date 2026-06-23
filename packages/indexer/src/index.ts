@@ -35,5 +35,10 @@ export {
   buildExperienceNodesFromForum,
   rebuildExperienceIndex,
 } from "./experience-node-builder.js";
+export {
+  buildFixesEdges,
+  rebuildExperienceGraph,
+  getExperienceChain,
+} from "./experience-edge-builder.js";
 export { CallGraphExtractor, buildSymbolMap } from "./callgraph-extractor.js";
 export type { CallGraphStats } from "./callgraph-extractor.js";

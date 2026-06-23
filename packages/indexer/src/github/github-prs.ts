@@ -1,6 +1,5 @@
 import type { PullRequestRecord } from "@cesium-nexus/shared";
 import { githubFetch } from "./github-issues.js";
-import type { GitHubFetchOptions } from "./github-issues.js";
 
 interface GitHubPRItem {
   id: number;

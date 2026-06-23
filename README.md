@@ -2,7 +2,7 @@
 
 > **Cesium AI Expert** — A knowledge-base CLI and MCP server that turns Cesium's source code, API docs, issues, and community data into structured context for AI agents.
 
-**当前阶段：v0.2.0（Phase 2B — Render Pipeline Intelligence）**
+**当前阶段：v0.4.0（Phase 2C+ — Qdrant Vector Search Integration）**
 
 本文档描述当前 MVP 的实现范围。完整设计蓝图和延后功能见 [future-roadmap.md](./future-roadmap.md)。
 
@@ -22,7 +22,7 @@ Cesium is a large, fast-moving codebase. Understanding why `Primitive.update` cr
 Agent (Claude / Codex / Hermes)
         │
         ▼
-  MCP Server (stdio) — 11 tools
+  MCP Server (stdio) — 13 tools
         │
   ┌─────┴──────────────────────────────────┐
   │          Skill Dispatch                │
@@ -33,11 +33,12 @@ Agent (Claude / Codex / Hermes)
   ┌─────┴──────────────────────────────────┐
   │          Retrieval Layer               │
   │                                        │
-  │  SQLite (FTS5)                         │
-  │  ──────────────                        │
-  │  symbol / call_graph / issue / source  │
-  │  pull_requests / forum_posts           │
-  │  experience_node                       │
+  │  SQLite (FTS5)          Qdrant (384d)  │
+  │  ──────────────         ──────────────  │
+  │  symbol / call_graph    eng-knowledge   │
+  │  issue / source         (cosine sim)    │
+  │  pull_requests / forum  cesium-experience│
+  │  experience_node / edge                 │
   │                                        │
   │  Problem KB + Render Pipeline (JSON)   │
   └─────┬──────────────────────────────────┘
@@ -62,6 +63,7 @@ Agent (Claude / Codex / Hermes)
 - Cesium Community Forum (Discourse API, quality-filtered)
 - Problem Knowledge Base (static JSON, 10 patterns)
 - Render Pipeline (static JSON, 12 stages with DAG)
+- Qdrant Vector DB (`eng-knowledge` collection, 384-dim Cosine, `Xenova/all-MiniLM-L6-v2`)
 
 ---
 
@@ -147,6 +149,17 @@ cesium skill-pack "how to use Viewer.render?" --budget 6000
 # View render pipeline DAG (Phase 2B)
 cesium pipeline
 cesium pipeline update_stage
+
+# Experience graph (Phase 2C)
+cesium experience rebuild
+cesium experience search "z-fighting"
+cesium experience chain "issue:12345"
+cesium experience stats
+
+# Vector semantic search (Phase 2C+)
+cesium experience embed
+cesium experience semantic "z-fighting flickering polygon"
+cesium experience references
 ```
 
 ### Use as an MCP server (for AI agents)
@@ -233,6 +246,23 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium pipeline [stage_id]` | Display the render pipeline DAG or a specific stage's dependencies |
 
+### Experience Graph (Phase 2C)
+
+| Command | Description |
+|---|---|
+| `cesium experience search <keywords>` | Search experience nodes via FTS5 (`--type`, `--symbol`, `--limit`) |
+| `cesium experience rebuild` | Rebuild experience nodes and edges from indexed data |
+| `cesium experience chain <node_id>` | Show connected nodes and edges (fix chains) for a node (`--depth N`) |
+| `cesium experience stats` | Show experience graph statistics (nodes, edges, connected, orphan) |
+
+### Vector Semantic Search (Phase 2C+)
+
+| Command | Description |
+|---|---|
+| `cesium experience embed` | Embed all experience nodes to Qdrant for semantic search |
+| `cesium experience semantic <query>` | Semantic search using vector similarity (`--limit`, `--min-score`, `--type`) |
+| `cesium experience references` | Build `references` edges from semantic similarity (`--threshold`) |
+
 ### MCP Server
 
 | Command | Description |
@@ -258,6 +288,8 @@ When running as an MCP server (`cesium mcp`), the following tools are available 
 | `search_experience` | `{ query, limit?, type?, symbol?, minQuality? }` | Unified experience search across issues, PRs, and forum posts |
 | `dispatch_skill` | `{ query }` | Skill dispatch result: best skill, confidence, matched keywords, extracted entities |
 | `build_skill_pack` | `{ query, budget? }` | Skill-aware Context Pack v2 with diagnosis, render stages, forum, and experience data |
+| `get_experience_chain` | `{ nodeId, maxDepth? }` | Experience graph traversal: connected nodes and edges (fix chains linking PRs to issues) |
+| `semantic_search_experience` | `{ query, limit?, minScore?, type? }` | Semantic search over experience nodes using Qdrant vector similarity (cosine) |
 
 All tools return JSON with a standard envelope:
 
@@ -268,7 +300,7 @@ All tools return JSON with a standard envelope:
 }
 ```
 
-**延后到后续 Phase 的 MCP tools：** `compare_version`, `get_experience_chain`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
+**延后到后续 Phase 的 MCP tools：** `compare_version`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
 
 ---
 
@@ -345,7 +377,8 @@ cesium-nexus/
 │   │       │   └── github-prs.ts         # GitHub PRs sync (merged, incremental)
 │   │       ├── forum/
 │   │       │   └── forum-crawler.ts      # Discourse forum crawler
-│   │       └── experience-node-builder.ts # Unified experience index builder
+│   │       ├── experience-node-builder.ts # Unified experience index builder
+│   │       └── experience-edge-builder.ts # Experience graph edge builder + traversal
 │   │
 │   ├── storage/             # SQLite data layer
 │   │   └── src/
@@ -356,7 +389,8 @@ cesium-nexus/
 │   │       ├── issue-repo.ts        # Issue queries + full-text search
 │   │       ├── pr-repo.ts           # Pull request storage + FTS5
 │   │       ├── forum-repo.ts        # Forum post storage + FTS5
-│   │       └── experience-repo.ts   # Experience node unified search
+│   │       ├── experience-repo.ts   # Experience node unified search
+│   │       └── experience-edge-repo.ts # Experience edge BFS traversal + stats
 │   │
 │   ├── cli/                 # CLI entry point (Commander)
 │   │   └── src/
@@ -372,11 +406,12 @@ cesium-nexus/
 │   │           ├── diagnose-cmd.ts  # cesium diagnose / pkb list / stage
 │   │           ├── forum-cmd.ts     # cesium forum sync / search
 │   │           ├── skill-cmd.ts     # cesium skills / dispatch / skill-pack
-│   │           └── pipeline-cmd.ts  # cesium pipeline
+│   │           ├── pipeline-cmd.ts  # cesium pipeline
+│   │           └── experience-cmd.ts # cesium experience search/rebuild/chain/stats/embed/semantic/references
 │   │
 │   ├── mcp/                 # MCP server (stdio transport)
 │   │   └── src/
-│   │       ├── handlers.ts          # Pure handler functions (11 tools)
+│   │       ├── handlers.ts          # Pure handler functions (13 tools)
 │   │       └── server.ts            # MCP server setup + tool registration
 │   │
 │   ├── context-pack/        # Context Pack v1 builder
@@ -397,6 +432,14 @@ cesium-nexus/
 │   │       ├── entity-extractor.ts  # Extract entities (symbol, version, stage, problem)
 │   │       ├── context-pack-builder.ts # Skill-aware context pack assembly
 │   │       └── token-budget.ts      # Progressive truncation for skill packs
+│   │
+│   ├── vector/              # Vector Search (Qdrant + Embedding)
+│   │   └── src/
+│   │       ├── embedding.ts         # Local ONNX embedding (Xenova/all-MiniLM-L6-v2, 384 dim)
+│   │       ├── qdrant-client.ts     # Qdrant client (eng-knowledge collection)
+│   │       ├── embed-experience.ts  # Batch embed experience nodes
+│   │       ├── semantic-search.ts   # Semantic search + references edge builder
+│   │       └── types.ts             # VectorSearchResult, QdrantExperiencePayload
 │   │
 │   └── shared/              # Shared types and utilities
 │       └── src/
@@ -476,6 +519,8 @@ CESIUM_CLI_DB_PATH=/custom/path/database
 | CLI framework | `commander` |
 | MCP server | `@modelcontextprotocol/sdk` |
 | Database | `better-sqlite3` (with FTS5) |
+| Vector DB | `@qdrant/js-client-rest` (Qdrant) |
+| Embedding | `@xenova/transformers` (ONNX, all-MiniLM-L6-v2) |
 | AST parsing | `ts-morph` + `@babel/parser` |
 | Testing | `vitest` |
 
@@ -490,7 +535,7 @@ pnpm test               # vitest
 
 ### Testing strategy
 
-Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (11 tools with :memory: DB), Problem Diagnosis matching and assembly, Skill dispatch routing and entity extraction, Render Pipeline DAG validation and traversal.
+Unit tests cover: AST parser output correctness (Symbol extraction for Class/Function/Method/Enum/Constant), CallGraph edge extraction (depth limits), Issue sync and FTS5 search, Token budget truncation logic, Context Pack section assembly, MCP handler functions (13 tools with :memory: DB), Problem Diagnosis matching and assembly, Skill dispatch routing and entity extraction, Render Pipeline DAG validation and traversal, Experience Edge builder and BFS graph traversal.
 
 Integration tests cover: End-to-end `cesium symbol Viewer` against a real indexed version, MCP protocol integration (SDK Client + InMemoryTransport for tools/list and tools/call), Context Pack output with metadata validation.
 
@@ -626,8 +671,10 @@ CREATE VIRTUAL TABLE issues_fts USING fts5(title, body, content=issues, content_
 | **M6: Context Pack** | Build standard context packages | `build_context_pack` MCP tool, 4-section structured JSON | ✅ Done |
 | **Phase 2A** | Problem Diagnosis | Problem KB (10 patterns), Render Stage KB (9 stages), `diagnose_problem` MCP tool | ✅ Done |
 | **Phase 2B** | Render Pipeline Intelligence | Pipeline DAG (12 stages), Skill Dispatch (5 skills), Context Pack v2, Forum Crawler, PR Sync, Experience Node, 4 new MCP tools | ✅ Done |
+| **Phase 2C** | Experience Graph | Experience Edge (fixes), BFS traversal, `get_experience_chain` MCP tool, `experience` CLI commands, 12 MCP tools total | ✅ Done |
+| **Phase 2C+** | Qdrant Vector Search | `@cesium-nexus/vector` package, embedding (384-dim), semantic search, `references` edges, `semantic_search_experience` MCP tool, 13 MCP tools total | ✅ Done |
 
-See [future-roadmap.md](./future-roadmap.md) for Phase 2C (Semantic Retrieval) and Phase 3 (Can Diagnose) milestones.
+See [future-roadmap.md](./future-roadmap.md) for Phase 2D (Agent Context System) and Phase 3 (Can Diagnose) milestones.
 
 ### Acceptance Criteria
 

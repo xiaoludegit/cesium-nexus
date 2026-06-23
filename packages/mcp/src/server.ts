@@ -10,6 +10,7 @@ import {
   PullRequestRepo,
   ForumRepo,
   ExperienceRepo,
+  ExperienceEdgeRepo,
 } from "@cesium-nexus/storage";
 import {
   handleSearchSymbol,
@@ -23,10 +24,12 @@ import {
   handleSearchExperience,
   handleDispatchSkill,
   handleBuildSkillPack,
+  handleGetExperienceChain,
+  handleSemanticSearchExperience,
 } from "./handlers.js";
 
 /**
- * Register the 11 Cesium knowledge-base tools on an existing McpServer.
+ * Register the 13 Cesium knowledge-base tools on an existing McpServer.
  * Exported for testing with :memory: databases.
  */
 export function registerTools(
@@ -38,6 +41,7 @@ export function registerTools(
     prRepo: PullRequestRepo;
     forumRepo: ForumRepo;
     experienceRepo: ExperienceRepo;
+    experienceEdgeRepo: ExperienceEdgeRepo;
   },
 ): void {
   const {
@@ -47,6 +51,7 @@ export function registerTools(
     prRepo,
     forumRepo,
     experienceRepo,
+    experienceEdgeRepo,
   } = repos;
 
   // ── search_symbol ──────────────────────────────────────────
@@ -263,10 +268,50 @@ export function registerTools(
       };
     },
   );
+
+  // ── get_experience_chain ────────────────────────────────────
+  server.tool(
+    "get_experience_chain",
+    "Traverse the experience graph from a given node, returning connected nodes and edges (fix chains linking PRs to issues)",
+    {
+      nodeId: z.string().min(1),
+      maxDepth: z.number().int().min(1).max(10).default(3),
+    },
+    async (input) => {
+      const result = await handleGetExperienceChain(
+        experienceRepo,
+        experienceEdgeRepo,
+        input,
+      );
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ── semantic_search_experience ─────────────────────────────
+  server.tool(
+    "semantic_search_experience",
+    "Semantic search over experience nodes using vector similarity (Qdrant). Returns nodes ranked by cosine similarity to the query.",
+    {
+      query: z.string().min(1),
+      limit: z.number().int().min(1).max(50).default(10),
+      minScore: z.number().min(0).max(1).optional(),
+      type: z.enum(["issue", "pr_review", "forum"]).optional(),
+    },
+    async (input) => {
+      const result = await handleSemanticSearchExperience(input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
 }
 
 /**
- * Create an MCP server with 11 Cesium knowledge-base tools.
+ * Create an MCP server with 13 Cesium knowledge-base tools.
  *
  * No console.log during server lifetime — stdout is the JSON-RPC channel.
  */
@@ -286,6 +331,7 @@ export function createServer(dbPath: string): McpServer {
     prRepo: new PullRequestRepo(db),
     forumRepo: new ForumRepo(db),
     experienceRepo: new ExperienceRepo(db),
+    experienceEdgeRepo: new ExperienceEdgeRepo(db),
   });
 
   return server;

@@ -11,6 +11,7 @@ import {
   PullRequestRepo,
   ForumRepo,
   ExperienceRepo,
+  ExperienceEdgeRepo,
 } from "@cesium-nexus/storage";
 import type { Database } from "@cesium-nexus/storage";
 import type { SymbolRecord, IssueRecord } from "@cesium-nexus/shared";
@@ -47,6 +48,7 @@ describe("MCP Protocol Integration", () => {
     const prRepo = new PullRequestRepo(db);
     const forumRepo = new ForumRepo(db);
     const experienceRepo = new ExperienceRepo(db);
+    const experienceEdgeRepo = new ExperienceEdgeRepo(db);
 
     // Insert test fixtures
     symbolRepo.insertMany([
@@ -108,7 +110,7 @@ describe("MCP Protocol Integration", () => {
       name: "cesium-nexus-test",
       version: "0.1.0",
     });
-    registerTools(server, { symbolRepo, issueRepo, callGraphRepo, prRepo, forumRepo, experienceRepo });
+    registerTools(server, { symbolRepo, issueRepo, callGraphRepo, prRepo, forumRepo, experienceRepo, experienceEdgeRepo });
 
     // Create linked transport pair and connect
     const [clientTransport, serverTransport] =
@@ -136,9 +138,9 @@ describe("MCP Protocol Integration", () => {
     expect(client).toBeDefined();
   });
 
-  it("tools/list returns 11 tools", async () => {
+  it("tools/list returns 13 tools", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(11);
+    expect(tools).toHaveLength(13);
   });
 
   it("tools/list contains correct tool names", async () => {
@@ -149,12 +151,14 @@ describe("MCP Protocol Integration", () => {
       "build_skill_pack",
       "diagnose_problem",
       "dispatch_skill",
+      "get_experience_chain",
       "get_source",
       "query_render_stage",
       "search_experience",
       "search_forum",
       "search_issue",
       "search_symbol",
+      "semantic_search_experience",
       "trace_callgraph",
     ]);
   });

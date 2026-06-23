@@ -1,0 +1,156 @@
+import { QdrantClient } from "@qdrant/js-client-rest";
+import type { VectorSearchResult, QdrantExperiencePayload } from "./types.js";
+
+const DEFAULT_QDRANT_URL = "http://localhost:6333";
+const COLLECTION_NAME = "eng-knowledge";
+
+let _client: QdrantClient | null = null;
+
+export function getQdrantClient(url?: string): QdrantClient {
+  if (!_client) {
+    _client = new QdrantClient({ url: url ?? DEFAULT_QDRANT_URL });
+  }
+  return _client;
+}
+
+export function nodeIdToQdrantId(nodeId: string): string {
+  let hash = 0;
+  for (let i = 0; i < nodeId.length; i++) {
+    const ch = nodeId.charCodeAt(i);
+    hash = ((hash << 5) - hash + ch) | 0;
+  }
+  return `cn-${Math.abs(hash).toString(36)}`;
+}
+
+export function buildExperiencePayload(
+  nodeId: string,
+  nodeType: string,
+  title: string,
+  url: string,
+  repo: string,
+  tags: string[],
+  qualityScore: number,
+): QdrantExperiencePayload {
+  return {
+    type: "cesium-experience",
+    project: "cesium-nexus",
+    tags,
+    importance: qualityScore,
+    status: "active",
+    node_id: nodeId,
+    node_type: nodeType,
+    title,
+    url,
+    repo,
+  };
+}
+
+export interface UpsertPoint {
+  nodeId: string;
+  embedding: number[];
+  payload: QdrantExperiencePayload;
+}
+
+export async function upsertExperienceEmbeddings(
+  client: QdrantClient,
+  points: UpsertPoint[],
+): Promise<void> {
+  if (points.length === 0) return;
+
+  await client.upsert(COLLECTION_NAME, {
+    wait: true,
+    points: points.map((p) => ({
+      id: nodeIdToQdrantId(p.nodeId),
+      vector: p.embedding,
+      payload: p.payload as unknown as Record<string, unknown>,
+    })),
+  });
+}
+
+export async function semanticSearch(
+  client: QdrantClient,
+  queryEmbedding: number[],
+  options?: {
+    limit?: number;
+    minScore?: number;
+    type?: string;
+  },
+): Promise<VectorSearchResult[]> {
+  const limit = options?.limit ?? 10;
+
+  const must: Record<string, unknown>[] = [
+    { key: "project", match: { value: "cesium-nexus" } },
+    { key: "type", match: { value: "cesium-experience" } },
+  ];
+
+  if (options?.type) {
+    must.push({ key: "node_type", match: { value: options.type } });
+  }
+
+  const results = await client.search(COLLECTION_NAME, {
+    vector: queryEmbedding,
+    limit,
+    filter: { must },
+    with_payload: true,
+    score_threshold: options?.minScore,
+  });
+
+  return results.map((r) => {
+    const payload = r.payload as unknown as QdrantExperiencePayload;
+    return {
+      nodeId: payload.node_id,
+      nodeType: payload.node_type,
+      title: payload.title,
+      url: payload.url,
+      score: r.score ?? 0,
+    };
+  });
+}
+
+export async function deleteExperienceEmbeddings(
+  client: QdrantClient,
+  nodeIds: string[],
+): Promise<void> {
+  if (nodeIds.length === 0) return;
+
+  await client.delete(COLLECTION_NAME, {
+    wait: true,
+    points: nodeIds.map((id) => nodeIdToQdrantId(id)),
+  });
+}
+
+export async function findSimilarNodes(
+  client: QdrantClient,
+  embedding: number[],
+  excludeNodeId: string,
+  limit: number,
+  minScore: number,
+): Promise<VectorSearchResult[]> {
+  const must: Record<string, unknown>[] = [
+    { key: "project", match: { value: "cesium-nexus" } },
+    { key: "type", match: { value: "cesium-experience" } },
+  ];
+
+  const mustNot: Record<string, unknown>[] = [
+    { has_id: [nodeIdToQdrantId(excludeNodeId)] },
+  ];
+
+  const results = await client.search(COLLECTION_NAME, {
+    vector: embedding,
+    limit,
+    filter: { must, must_not: mustNot },
+    with_payload: true,
+    score_threshold: minScore,
+  });
+
+  return results.map((r) => {
+    const payload = r.payload as unknown as QdrantExperiencePayload;
+    return {
+      nodeId: payload.node_id,
+      nodeType: payload.node_type,
+      title: payload.title,
+      url: payload.url,
+      score: r.score ?? 0,
+    };
+  });
+}

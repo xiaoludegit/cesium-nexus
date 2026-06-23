@@ -134,7 +134,7 @@ export class ExperienceEdgeRepo {
       `SELECT edge_type, COUNT(*) as count FROM experience_edge GROUP BY edge_type`,
     );
     const rows = stmt.all() as { edge_type: string; count: number }[];
-    const result: Record<ExperienceEdgeType, number> = { fixes: 0 };
+    const result: Record<ExperienceEdgeType, number> = { fixes: 0, references: 0 };
     for (const row of rows) {
       if (row.edge_type in result) {
         result[row.edge_type as ExperienceEdgeType] = row.count;

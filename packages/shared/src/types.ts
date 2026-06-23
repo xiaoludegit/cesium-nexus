@@ -314,7 +314,7 @@ export interface SkillContextPack {
  *  Phase 2C — Experience Graph Types
  * ──────────────────────────────────────────── */
 
-export type ExperienceEdgeType = "fixes";
+export type ExperienceEdgeType = "fixes" | "references";
 
 export interface ExperienceEdge {
   id: string;

@@ -22,6 +22,7 @@
     "@cesium-nexus/mcp": "workspace:*",
     "@cesium-nexus/skills": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",
+    "@cesium-nexus/vector": "workspace:*",
     "commander": "^13.1.0"
   }
 }

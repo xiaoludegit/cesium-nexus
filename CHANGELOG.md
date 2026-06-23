@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.0 (Unreleased)
+
+### Added — Phase 2C+: Qdrant Vector Search Integration
+
+- **`@cesium-nexus/vector` package** (new) — Local ONNX embedding (Xenova/all-MiniLM-L6-v2, 384 dim) + Qdrant client
+- **Semantic Search** — `semanticSearch` embeds query → searches `eng-knowledge` collection with `project: "cesium-nexus"` filter
+- **Experience Embedding** — `embedAllExperienceNodes` batch-embeds all experience nodes (title + summary) into Qdrant vectors
+- **`references` Edges** — `buildReferencesEdges` infers semantic similarity edges (cosine > 0.85) between experience nodes
+- **`ExperienceEdgeType`** — Extended from `"fixes"` to `"fixes" | "references"`
+- **MCP tool**: `semantic_search_experience` (`{ query, limit?, minScore?, type? }`) — vector semantic search (13 tools total, was 12)
+- **CLI commands**: `cesium experience embed`, `cesium experience semantic <query>`, `cesium experience references`
+- Dynamic imports for `@xenova/transformers` to avoid eager `sharp` module loading
+- 286 tests passing, 10 packages (was 9)
+
+## v0.3.0 (Unreleased)
+
+### Added — Phase 2C: Experience Graph
+
+- **Experience Edge** — `experience_edge` table with `fixes` edge type (PR → Issue), auto-built from `closingIssueReferences`
+- **`ExperienceEdgeRepo`** — BFS traversal (downstream/upstream/connected), depth-limited, cycle-safe, edge statistics
+- **Edge Builder** — `buildFixesEdges` constructs deterministic edges from merged PRs, `rebuildExperienceGraph` rebuilds nodes + edges
+- **Graph Traversal** — `getExperienceChain` returns bidirectional BFS chain with connected nodes and edges
+- **MCP tool**: `get_experience_chain` (`{ nodeId, maxDepth? }`) — experience graph traversal (12 tools total, was 11)
+- **CLI commands**: `cesium experience search`, `cesium experience rebuild`, `cesium experience chain <node_id>`, `cesium experience stats`
+- 286 tests passing (was 282)
+
 ## v0.2.0 (Unreleased)
 
 ### Added — Phase 2B: Render Pipeline Intelligence

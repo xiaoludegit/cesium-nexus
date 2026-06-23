@@ -59,29 +59,65 @@ cesium pipeline [stage_id]                 # 查看渲染管线 DAG
 
 ---
 
-## Phase 2C: Semantic Retrieval
+## Phase 2C: Experience Graph ✅ 完成
 
-**目标：** 引入向量检索，让语义相似的问题能被召回。
+**目标：** 在已有 ExperienceNode 基础上，建立节点间的关联边（`fixes`），形成可遍历的经验图谱。
 
-### 新增功能
+### 已实现功能
 
-| 功能 | 说明 |
+| 功能 | 状态 |
 |---|---|
-| Qdrant 向量检索 | Issue / Problem 向量化，语义搜索 |
-| Experience Graph 扩展 | 新增 `forum` / `pr_review` node type |
-| Experience Graph 边层 | 仅建 `certain` 边（`fixes` / `released_in`） |
+| `experience_edge` 表（SQLite） | ✅ `fixes` 确定性边 |
+| Edge Builder（PR closingIssueReferences → fixes 边） | ✅ |
+| BFS 图遍历（downstream / upstream / connected） | ✅ depth-limited, cycle-safe |
+| `getExperienceChain` 查询 | ✅ |
+| `ExperienceEdgeStats` 统计 | ✅ |
 
-### 新增 MCP Tools
+### 已实现 MCP Tools
 
-| Tool | 说明 |
+| Tool | 状态 |
 |---|---|
-| `search_experience` | 在 experience_node 中检索，支持 type / symbol / problem 过滤 |
+| `get_experience_chain` | ✅ |
 
-### 验收标准
+### 已实现 CLI 命令
 
-- 向量检索在语义相似问题上召回率比全文检索提升 > 20%
+```bash
+cesium experience search <keywords>        # FTS5 检索
+cesium experience rebuild                  # 全量重建节点 + 边
+cesium experience chain <node_id>          # 查看经验链
+cesium experience stats                    # 图谱统计
+```
 
-**预估工时：** 2–3 周（1 人）
+---
+
+## Phase 2C+: Qdrant Vector Search Integration ✅ 完成
+
+**目标：** 将 Experience Graph 与向量语义检索结合，支持基于语义相似性的推断性边和语义搜索。
+
+### 已实现功能
+
+| 功能 | 状态 |
+|---|---|
+| `@cesium-nexus/vector` 包 | ✅ embedding + Qdrant client |
+| 本地 ONNX Embedding（Xenova/all-MiniLM-L6-v2, 384 维） | ✅ |
+| 全量 Embed Experience Nodes | ✅ batch upsert |
+| `references` 推断边（cosine > 0.85） | ✅ |
+| 语义搜索（query → embed → Qdrant search） | ✅ |
+| 动态 import 避免 eager loading `sharp` | ✅ |
+
+### 已实现 MCP Tools
+
+| Tool | 状态 |
+|---|---|
+| `semantic_search_experience` | ✅ |
+
+### 已实现 CLI 命令
+
+```bash
+cesium experience embed                          # 全量 embed 到 Qdrant
+cesium experience semantic <query>               # 语义搜索
+cesium experience references                     # 构建 references 边
+```
 
 ---
 
@@ -108,7 +144,7 @@ cesium pipeline [stage_id]                 # 查看渲染管线 DAG
 |---|---|
 | Problem Mining Pipeline | 从 Issue/PR/Forum 自动挖掘问题候选 + 人工审核 CLI |
 | Experience Graph 完整 | inferred 边（`mentions` / `references` / `supersedes`） + 图遍历查询 |
-| Qdrant 向量检索 | Issue / Problem 向量化，语义搜索 |
+| Qdrant 向量检索 | Issue / Problem 向量化，语义搜索（✅ 基础已实现：Experience 向量化 + semantic search） |
 | Migration Skill | 跨版本 Breaking Change 查询 |
 | Shader Skill | GLSL shader symbol 检索 |
 | `get_experience_chain` | 图遍历：返回 fix → PR → release 完整链路 |
@@ -167,7 +203,7 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 |---|---|---|
 | ~~Problem KB~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现 | 静态 JSON + 关键词匹配 |
 | ~~Skill Router / Dispatch~~ | ~~Phase 2D~~ → ✅ Phase 2B 已实现 | 5 个 Skill 硬编码 + 关键词评分 |
-| Experience Graph | Phase 2C+ | 先积累节点数据，再建边 |
+| Experience Graph | Phase 2C+ → ✅ Phase 2C 已实现（fixes 边）+ Phase 2C+ 已实现（references 推断边） | 确定性边 + BFS 遍历 + 语义相似边 |
 | ~~Render Graph~~ | ~~Phase 2~~ → ✅ Phase 2A 已实现（简化版） | 9 个诊断阶段 → Phase 2B 扩展为 12 阶段 DAG |
 | Loop Agent | — | 不在规划范围内 |
 | Auto Fix / Auto Patch | — | 不在规划范围内 |
@@ -187,9 +223,9 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 
 | 组件 | MVP (Phase 1) | Phase 2A | Phase 2B | Phase 3 |
 |---|---|---|---|---|
-| 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 |
+| 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 ✅ |
 | AST 解析 | ts-morph + Babel Parser | 同左 | 同左 | 同左 |
-| MCP Tools | 5 个 | 7 个 | 11 个 | 12+ 个 |
+| MCP Tools | 5 个 | 7 个 | 11 个 | 13 个 ✅ |
 | Context Pack | 4 sections | 4 sections | 5+ sections (skill-aware) | 6+ sections |
 | Token Budget | 4000–6000（硬编码） | 6000（diagnosis） | 4000–6000（按 Skill 差异化） | 同左 |
 | Problem KB | — | 静态 JSON + 关键词匹配 | 同左 | 静态 JSON + 向量化 |
