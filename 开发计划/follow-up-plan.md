@@ -2,9 +2,10 @@
 
 > 起草时间：2026-06-23
 > 第一版审核：2026-06-23（有条件通过，A-）
-> 本次修订：吸收 5 个 P1 + 7 个 P2 审核意见
+> v2 修订：吸收 5 个 P1 + 7 个 P2 审核意见（同日晚）
+> v3 修订：2026-06-23，回填已完成工作的 commit hash，标注 W1 完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ 质量与验收
-> 状态：**已审核通过，可进入执行**
+> 状态：**执行中** — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / 待启动 W2
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -20,60 +21,67 @@
 | Phase 2B Render Pipeline Intelligence | ✅ 完成 | 12-stage DAG + 5 Skills |
 | Phase 2C Experience Graph | ✅ 完成 | `fixes` 确定性边 + BFS |
 | Phase 2C+ Qdrant Vector Search | ✅ 完成 | 384 维 ONNX embed + `references` 推断边 |
-| Phase 2D Diagnosis Retrieval Enhancement | ⚠️ 代码完成、**未提交** | 18 个文件改动未 commit，CHANGELOG 已起草 v0.5.0 |
-| Phase 2E Problem Mining Pipeline | 🔲 未开始 | 本文档规划对象 |
+| Phase 2D Diagnosis Retrieval Enhancement | ✅ 完成 + 已发布 | commit `e04a5ea`，tag `v0.5.0`，297 tests |
+| Phase 2E Problem Mining Pipeline | 🟡 W1 已完成 | commit `ae32352`，30 新测试，327 passed |
 | Phase 3 Can Diagnose | 🔲 未开始 | 待 Phase 2E 完成后**单独**做范围重审 |
 
-### 0.1 Phase 2D 未提交变更清单（必须先收尾）
+### 0.0 进度日志
+
+| 时间 | 事项 | Commit |
+|---|---|---|
+| 2026-06-23 | Phase 2D 收尾 — commit + tag `v0.5.0` | `e04a5ea` / `c69ab03` / `aa050c8` |
+| 2026-06-23 | Phase 2D Review 通过（无 P1，2 个 P2 环境项） | [`计划审核/Phase2D-review-2026-06-23.md`](../计划审核/Phase2D-review-2026-06-23.md) |
+| 2026-06-23 | P2-1 + P2-2 sharp graceful（dynamic import + CLI friendly error） | `6e81c48` |
+| 2026-06-23 | Phase 2E W1 — `@cesium-nexus/mining` 包脚手架 + 4 层架构 | `ae32352` |
+| 2026-06-23 | **W2 待启动** — LLM backend + Drafter + Scorer + 去重 | — |
+
+### 0.1 W1 已落地的文件清单
 
 ```
-CHANGELOG.md                          +14
-README.md                             +16
-future-roadmap.md                     +50
-packages/cli/src/commands/diagnose-cmd.ts        +121
-packages/diagnosis/src/diagnoser.test.ts         +66
-packages/diagnosis/src/diagnoser.ts              +48
-packages/diagnosis/src/index.ts                  +3/-1
-packages/diagnosis/src/matcher.test.ts           +58
-packages/diagnosis/src/matcher.ts                +24
-packages/diagnosis/src/token-budget.test.ts      +30
-packages/diagnosis/src/token-budget.ts           +18
-packages/mcp/src/handlers.ts                     +44
-packages/mcp/src/server.ts                       +3/-1
-packages/shared/src/types.ts                     +8
-packages/vector/src/index.ts                     +17
-packages/vector/src/qdrant-client.ts             +99
-packages/vector/src/semantic-search.ts           +18
-packages/vector/src/types.ts                     +27
-packages/vector/src/embed-pkb.ts                 (new file)
+packages/mining/
+  ├─ package.json                       (+@qdrant/js-client-rest, +better-sqlite3)
+  ├─ tsconfig.json
+  ├─ tsup.config.ts
+  └─ src/
+       ├─ types.ts                      (CanonicalProblem / ProblemCandidate / Cluster / EmbeddingSearchProvider / VectorScope / ...)
+       ├─ index.ts
+       ├─ discovery/
+       │    ├─ cosine-clusterer.ts      (+ cosine-clusterer.test.ts, 10 tests)
+       │    ├─ canonical-problem.ts     (+ canonical-problem.test.ts, 5 tests)
+       │    └─ qdrant-embedding-provider.ts
+       ├─ drafting/
+       │    └─ candidate-factory.ts     (+ candidate-factory.test.ts, 4 tests)
+       └─ review/
+            └─ mining-store.ts          (+ mining-store.test.ts, 11 tests)
+
+pnpm-lock.yaml                          (updated)
+tsconfig.json                           (root references 加 vector + mining)
 ```
 
-共计 18 个改动文件 + 1 个新文件，净增 ~625 行。
+测试总计：**327 passed / 11 skipped**（W0 基线 297，+30 mining tests）。
 
 ---
 
-## 1. 阶段 0：Phase 2D 收尾（预计 0.5 天）
+## 1. 阶段 0：Phase 2D 收尾 ✅ 完成
 
-**目标：** 把 Phase 2D 的代码从工作区固化成一个可追溯的 commit，并补齐验收材料。
+**已交付（2026-06-23）：**
 
-### 任务清单
+- commit `e04a5ea` — `feat(Phase2D): Hybrid Diagnosis + Vector KB + Experience Recall`（21 files, 1463 行）
+- commit `c69ab03` — `chore: mark v0.5.0 released (2026-06-23)`
+- commit `aa050c8` — `docs: roadmap 技术栈列头对齐实际 Phase + 补 Phase2D review 链接`
+- tag `v0.5.0`
+- 审核文档：[`计划审核/Phase2D-review-2026-06-23.md`](../计划审核/Phase2D-review-2026-06-23.md)（无 P1，2 个 P2 环境项）
 
-| # | 任务 | 产出 |
-|---|---|---|
-| 0.1 | 跑全量验证：`pnpm typecheck` / `pnpm build` / `pnpm test` | 三份通过日志 |
-| 0.2 | CLI 烟测：`cesium pkb embed` / `cesium pkb search <query>` / `cesium diagnose --hybrid <problem>` | 输出样例存档 |
-| 0.3 | MCP 烟测：`diagnose_problem { hybrid: true }` | 响应样例 |
-| 0.4 | 起草 `计划审核/Phase2D-review-2026-06-23.md`，沿用 Phase2A review 的 P1/P2 格式 | 审核文档 |
-| 0.5 | 修复审核过程中发现的问题（如有） | 增量 commit |
-| 0.6 | 提交 commit：`feat(Phase2D): Hybrid Diagnosis + Vector KB + Experience Recall` | commit hash 回填 CHANGELOG |
-| 0.7 | Tag `v0.5.0` | 里程碑版本 |
-| 0.8 | 在 `future-roadmap.md` 把 Phase 2D 行的"状态"保持 ✅，补充 commit hash + tag | 文档一致性 |
+**验收门槛（已达成）：**
+- ✅ `pnpm test` 297 通过
+- ✅ CLI `diagnose "polygon flickering" --hybrid` 返回 z_fighting（graceful fallback 到 keyword-only）
+- ✅ MCP 13 tools 齐全，`diagnose_problem { hybrid: true }` 响应完整
 
-### 验收门槛
+**P2 跟进（已在 commit `6e81c48` 中修复）：**
+- P2-1 sharp 环境 → `embedding.ts` 改 dynamic import + CLI `pkb embed` / `pkb search` friendly error
+- P2-2 `searchKnowledgeBase` 无 fallback → 调用方 try/catch 已覆盖
 
-- `pnpm test` 至少 297 个通过（CHANGELOG 声称数）
-- CLI `diagnose "polygon flickering" --hybrid` 返回的 `relatedExperiences` 非空
-- Qdrant 不可用时 `--hybrid` 自动降级到 keyword-only（graceful fallback 验证）
+> 原阶段 0 的 8 项任务清单（0.1–0.8）已归档到 git history，不再列出。
 
 ---
 
@@ -321,12 +329,51 @@ cesium pkb mining-stats
 
 ### 2.11 任务排期（按 1 人 × 4 周）
 
-| 周次 | 任务 | 产出 |
+| 周次 | 状态 | 任务 | 产出 |
+|---|---|---|---|
+| **W1** | ✅ `ae32352` | CanonicalProblem + Clusterer + Candidate Store | 新包脚手架、`canonical_problem` + `problem_candidate` 表、Cosine Threshold Clusterer、`EmbeddingSearchProvider` 抽象 |
+| **W2** | 🔲 | Drafting + Scoring + Duplicate Detection | `Drafter`（Ollama 后端）、`Scorer`（与现有 pattern 的 cosine 去重）、自动生成 PatternCandidate |
+| **W3** | 🔲 | Review CLI + Promotion Flow | `cesium pkb review / promote / reject / diff` 串联、`generated-patterns.json` 写入 |
+| **W4** | 🔲 | 真实数据挖掘 + 覆盖率评估 | 在 CesiumGS/cesium 近 6 个月 issue 上做一轮完整挖掘、产出首批 accepted patterns、跑 Coverage 指标 |
+
+### 2.11.1 W1 实际产出（commit `ae32352`，2026-06-23）
+
+| 模块 | 文件 | 说明 |
 |---|---|---|
-| **W1** | CanonicalProblem + Clusterer + Candidate Store | 新包脚手架、`canonical_problem` + `problem_candidate` 表、Cosine Threshold Clusterer、`EmbeddingSearchProvider` 抽象 |
-| **W2** | Drafting + Scoring + Duplicate Detection | `Drafter`（Ollama 后端）、`Scorer`（与现有 pattern 的 cosine 去重）、自动生成 PatternCandidate |
-| **W3** | Review CLI + Promotion Flow | `cesium pkb review / promote / reject / diff` 串联、`generated-patterns.json` 写入 |
-| **W4** | 真实数据挖掘 + 覆盖率评估 | 在 CesiumGS/cesium 近 6 个月 issue 上做一轮完整挖掘、产出首批 accepted patterns、跑 Coverage 指标 |
+| 包脚手架 | `packages/mining/package.json` / `tsconfig.json` / `tsup.config.ts` | 依赖 `@cesium-nexus/{shared,storage,vector}` + `@qdrant/js-client-rest` + `better-sqlite3` |
+| 类型 | `src/types.ts` | `CanonicalProblem` / `ProblemCandidate` / `Cluster` / `ClusterConfig` / `EmbeddingSearchProvider` / `VectorRecord` / `EmbeddingHit` / `VectorScope` / `MiningRunStats` |
+| discovery | `src/discovery/cosine-clusterer.ts` | `CosineThresholdClusterer`（greedy seed + 全成员 cosine 阈值）+ `cosineSimilarity` 导出 |
+| discovery | `src/discovery/canonical-problem.ts` | `buildCanonicalProblems` 工厂 + `resetCanonicalSeq` 测试辅助 |
+| discovery | `src/discovery/qdrant-embedding-provider.ts` | `QdrantEmbeddingProvider` 实现 `EmbeddingSearchProvider`（search + listVectors + embedText） |
+| drafting | `src/drafting/candidate-factory.ts` | `buildCandidate` 工厂（默认 pending + source 统计聚合）+ `resetCandidateSeq` |
+| review | `src/review/mining-store.ts` | `MiningStore`：schema init + upsert/list/get/setStatus/stats 全套 |
+| 测试 | 4 个 `*.test.ts` | 共 30 tests（clusterer 10 / canonical 5 / candidate 4 / store 11） |
+| 配置 | 根 `tsconfig.json` | references 新增 `packages/vector`（之前缺失）+ `packages/mining` |
+
+**W1 决策记录（实施过程中的取舍）：**
+- Clusterer 使用 greedy seed 算法（每个 seed 吸纳所有 pairwise cosine ≥ threshold 的成员），而非"先两两相似度图再连通分量"，避免 O(N²) 内存；对 2000 issues 足够快
+- `CanonicalProblem.confidence` 暂用 `(clusterScore × 0.5 + size × 0.05)` 线性公式，cap 在 1.0；W4 真实数据上可能需要调
+- `MiningStore` 把 `canonical_problem` + `problem_candidate` 合并到一个类，避免 schema init 竞争；如果未来要跨包复用，再拆出独立 repo
+- `QdrantEmbeddingProvider.listVectors` 用 `scroll` 分页 + `next_page_offset` 收窄为 `string|number|undefined`（Qdrant SDK 类型允许 null/Record，需要显式过滤）
+
+### 2.11.2 W2 任务拆解（待启动，预计 1 周）
+
+**目标：** 把 Cluster + CanonicalProblem 推进到 PatternCandidate 草稿，并完成与现有 PKB 的去重打分，让 W3 的 review CLI 有真实数据可审。
+
+| # | 任务 | 文件 | 测试 |
+|---|---|---|---|
+| W2.1 | `LLMBackend` 抽象 + `OllamaBackend` 默认实现 + `OpenAICompatibleBackend` fallback | `packages/mining/src/drafting/llm-backend.ts` | 用 fake fetch 覆盖两种 backend；断言 prompt 格式 / retry / 超时 |
+| W2.2 | `Drafter`：把 Cluster + CanonicalProblem → LLM → `NewCandidateInput` | `packages/mining/src/drafting/drafter.ts` | mock LLMBackend，断言草稿字段（alias/symptoms/symbols/category）正确解析 |
+| W2.3 | `Scorer`：计算 candidate 与现有 `problem-patterns.json` 的 cosine，> 0.9 标 `dup_of` | `packages/mining/src/drafting/scorer.ts` | 对照 10 个现有 pattern，构造"z-fighting 换皮"草稿应命中 dup_of |
+| W2.4 | `MiningPipeline` orchestrator：串联 provider → clusterer → canonical → drafter → scorer → store | `packages/mining/src/pipeline.ts` | 用 in-memory `EmbeddingSearchProvider` + 已知向量跑端到端，断言 store 内有 candidate |
+| W2.5 | CLI 骨架 `cesium pkb mine --since <date> [--threshold 0.90] [--min-cluster 5]` | `packages/cli/src/commands/diagnose-cmd.ts`（扩展 `pkb`） | CLI e2e guard 覆盖 mine 命令注册；graceful fallback 到 keyword-only 不适用（mine 强依赖 vector） |
+| W2.6 | 端到端文档 + README for `@cesium-nexus/mining` | `packages/mining/README.md` | — |
+
+**W2 决策预设（实施时若偏离需回填 §2.11.1）：**
+- LLMBackend 只暴露 `complete(prompt, opts)`，不引入 function calling（避免 P2-5 禁止的"强绑 OpenAI"）
+- Drafter 的 prompt 模板作为 TypeScript 字符串常量，暂不做 YAML/JSON 配置（避免过早抽象）
+- Scorer 的 cosine 阈值与 Clusterer 解耦，独立配置（默认 0.9）
+- `MiningPipeline` 强依赖 `QdrantEmbeddingProvider`；W2 不做 graceful fallback（没有 vector 就没法 cluster，直接失败并提示 sharp 环境修复）
 
 ### 2.12 验收标准（P1-5 + P2-7）
 
@@ -499,13 +546,26 @@ Phase 2E Review 通过后，**另起**一份 `计划审核/Phase3-scope-review-*
 | P2-6 | 建议 | Phase 2E Review 与 Phase 3 Scope Review 严格分离 |
 | P2-7 | 建议 | 新增 `Problem Coverage` 指标，500 issue 命中率 ≥ +15pp |
 
+### 2026-06-23 v3（进度回填，无新决策）
+
+- header 状态更新为"执行中 — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / 待启动 W2"
+- 新增 §0.0 进度日志 + §0.1 W1 已落地文件清单
+- §1 阶段 0 压缩为归档引用（已交付 commits + tag + 审核链接）
+- §2.11 任务排期表加"状态"列，W1 标 ✅；新增 §2.11.1 W1 实际产出 + W1 决策记录；新增 §2.11.2 W2 任务拆解
+- §9 下一步 更新为当前真实状态
+
 ---
 
 ## 9. 下一步
 
-1. **立即**：执行阶段 0（Phase 2D 收尾 → commit → review → tag v0.5.0）
-2. **Phase 2D Review 通过后**：启动 Phase 2E W1（CanonicalProblem + Clusterer + Candidate Store）
-3. **Phase 2E W4 完成后**：起草独立的 `计划审核/Phase2E-review-*.md`，包含 Approved Rate / Coverage Gain / 去重效果
-4. **Phase 2E Review 通过后**：另起 `Phase3-scope-review-*.md`，不混在一起
+| # | 阶段 | 状态 | 备注 |
+|---|---|---|---|
+| 1 | Phase 2D 收尾 | ✅ 完成 | commits `e04a5ea` / `c69ab03` / `aa050c8`，tag `v0.5.0`，review 通过 |
+| 2 | Phase 2E W1 | ✅ 完成 | commit `ae32352`，mining 包脚手架 + 4 层架构，30 新测试 |
+| 3 | **Phase 2E W2** | 🔲 待启动 | LLM backend + Drafter + Scorer + 去重（见 §2.11.2） |
+| 4 | Phase 2E W3 | 🔲 | pkb mine / review / promote / diff CLI 串联 |
+| 5 | Phase 2E W4 | 🔲 | 真实数据挖掘 + Coverage 评估 |
+| 6 | Phase 2E Review | 🔲 | 独立审核文档（Approved Rate / Coverage Gain / 去重效果） |
+| 7 | Phase 3 Scope Review | 🔲 | Phase 2E 通过后**另起**，不合并 |
 
-**审核状态：✅ 已通过（v2 修订版），可进入执行阶段。**
+**当前阻塞：无。待用户指令启动 W2。**
