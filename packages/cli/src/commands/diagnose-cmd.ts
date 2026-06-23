@@ -206,18 +206,42 @@ export function registerDiagnoseCommand(program: Command): void {
     .description("Embed problem patterns and render stages to Qdrant")
     .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .action(async (opts: { qdrantUrl: string }) => {
-      const patterns = await loadProblemPatterns();
-      const stages = await loadRenderStages();
+      try {
+        const patterns = await loadProblemPatterns();
+        const stages = await loadRenderStages();
 
-      const { getQdrantClient, embedAllPKB } = await import(
-        "@cesium-nexus/vector"
-      );
-      const client = getQdrantClient(opts.qdrantUrl);
+        const { getQdrantClient, embedAllPKB } = await import(
+          "@cesium-nexus/vector"
+        );
+        const client = getQdrantClient(opts.qdrantUrl);
 
-      const result = await embedAllPKB(patterns, stages, client);
-      console.log(
-        `Embedded ${result.totalPatterns} problem patterns and ${result.totalStages} render stages to Qdrant (eng-knowledge)`,
-      );
+        const result = await embedAllPKB(patterns, stages, client);
+        console.log(
+          `Embedded ${result.totalPatterns} problem patterns and ${result.totalStages} render stages to Qdrant (eng-knowledge)`,
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (
+          (err as NodeJS.ErrnoException).code === "ECONNREFUSED" ||
+          msg.includes("ECONNREFUSED") ||
+          msg.includes("ENOTFOUND") ||
+          /Qdrant/i.test(msg)
+        ) {
+          console.error(`Error: Qdrant unreachable — ${msg.split("\n")[0]}`);
+        } else {
+          console.error(
+            "Error: vector embedding unavailable.\n" +
+              "  Hint: ensure 'sharp' native binary is built for this platform.\n" +
+              "        Add 'sharp' to pnpm.onlyBuiltDependencies, then 'pnpm install';\n" +
+              "        or run 'pnpm rebuild sharp' in the repo root.\n" +
+              `  Details:\n${msg
+                .split("\n")
+                .map((l) => "    " + l)
+                .join("\n")}`,
+          );
+        }
+        process.exitCode = 1;
+      }
     });
 
   pkb
@@ -231,34 +255,58 @@ export function registerDiagnoseCommand(program: Command): void {
         query: string,
         opts: { type?: string; limit: string; qdrantUrl: string },
       ) => {
-        const limit = parseInt(opts.limit, 10);
+        try {
+          const limit = parseInt(opts.limit, 10);
 
-        const typeMap: Record<string, string> = {
-          pattern: "cesium-problem-pattern",
-          stage: "cesium-render-stage",
-          experience: "cesium-experience",
-        };
-        const qdrantType = opts.type ? typeMap[opts.type] : undefined;
+          const typeMap: Record<string, string> = {
+            pattern: "cesium-problem-pattern",
+            stage: "cesium-render-stage",
+            experience: "cesium-experience",
+          };
+          const qdrantType = opts.type ? typeMap[opts.type] : undefined;
 
-        const { getQdrantClient, searchKnowledgeBase } = await import(
-          "@cesium-nexus/vector"
-        );
-        const client = getQdrantClient(opts.qdrantUrl);
+          const { getQdrantClient, searchKnowledgeBase } = await import(
+            "@cesium-nexus/vector"
+          );
+          const client = getQdrantClient(opts.qdrantUrl);
 
-        const results = await searchKnowledgeBase(query, client, {
-          limit,
-          type: qdrantType,
-        });
+          const results = await searchKnowledgeBase(query, client, {
+            limit,
+            type: qdrantType,
+          });
 
-        if (results.length === 0) {
-          console.log("No results found.");
-          return;
-        }
+          if (results.length === 0) {
+            console.log("No results found.");
+            return;
+          }
 
-        console.log(`Found ${results.length} results:\n`);
-        for (const r of results) {
-          console.log(`  [${r.nodeType}] ${r.title} (score: ${r.score.toFixed(3)})`);
-          if (r.url) console.log(`    ${r.url}`);
+          console.log(`Found ${results.length} results:\n`);
+          for (const r of results) {
+            console.log(`  [${r.nodeType}] ${r.title} (score: ${r.score.toFixed(3)})`);
+            if (r.url) console.log(`    ${r.url}`);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (
+            (err as NodeJS.ErrnoException).code === "ECONNREFUSED" ||
+            msg.includes("ECONNREFUSED") ||
+            msg.includes("ENOTFOUND") ||
+            /Qdrant/i.test(msg)
+          ) {
+            console.error(`Error: Qdrant unreachable — ${msg.split("\n")[0]}`);
+          } else {
+            console.error(
+              "Error: vector semantic search unavailable.\n" +
+                "  Hint: ensure 'sharp' native binary is built for this platform.\n" +
+                "        Add 'sharp' to pnpm.onlyBuiltDependencies, then 'pnpm install';\n" +
+                "        or run 'pnpm rebuild sharp' in the repo root.\n" +
+                `  Details:\n${msg
+                  .split("\n")
+                  .map((l) => "    " + l)
+                  .join("\n")}`,
+            );
+          }
+          process.exitCode = 1;
         }
       },
     );

@@ -1,4 +1,4 @@
-import { pipeline, type FeatureExtractionPipeline } from "@xenova/transformers";
+import type { FeatureExtractionPipeline } from "@xenova/transformers";
 
 const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 
@@ -6,6 +6,7 @@ let _extractor: FeatureExtractionPipeline | null = null;
 
 async function getExtractor(): Promise<FeatureExtractionPipeline> {
   if (!_extractor) {
+    const { pipeline } = await import("@xenova/transformers");
     _extractor = await pipeline("feature-extraction", EMBEDDING_MODEL);
   }
   return _extractor;
