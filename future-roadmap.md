@@ -251,14 +251,14 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 
 ## 技术栈演进
 
-| 组件 | MVP (Phase 1) | Phase 2A | Phase 2B | Phase 3 |
+| 组件 | MVP (Phase 1) | Phase 2A | Phase 2B | Phase 2C/2D |
 |---|---|---|---|---|
 | 全文检索 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 | SQLite FTS5 + Qdrant 向量 ✅ |
 | AST 解析 | ts-morph + Babel Parser | 同左 | 同左 | 同左 |
 | MCP Tools | 5 个 | 7 个 | 11 个 | 13 个 ✅ |
 | Context Pack | 4 sections | 4 sections | 5+ sections (skill-aware) | 6+ sections |
 | Token Budget | 4000–6000（硬编码） | 6000（diagnosis） | 4000–6000（按 Skill 差异化） | 同左 |
-| Problem KB | — | 静态 JSON + 关键词匹配 | 同左 | 静态 JSON + 向量化 |
+| Problem KB | — | 静态 JSON + 关键词匹配 | 同左 | 静态 JSON + 向量化 ✅ |
 
 ---
 
@@ -267,6 +267,7 @@ problem_candidate (id, source_issues, cluster_keywords, llm_draft, status, revie
 - 架构审计报告：[`设计文档/Cesium-Architecture-Review-v3.md`](./设计文档/Cesium-Architecture-Review-v3.md)
 - MVP 实施计划：[`开发计划/plan.md`](./开发计划/plan.md)
 - **后续计划（Phase 2D 收尾 + Phase 2E）：[`开发计划/follow-up-plan.md`](./开发计划/follow-up-plan.md)**
+- Phase 2D 审核结论：[`计划审核/Phase2D-review-2026-06-23.md`](./计划审核/Phase2D-review-2026-06-23.md)（✅ 通过，tag `v0.5.0` / commit `e04a5ea`）
 - 项目 README：[`README.md`](./README.md)
 
 ---
