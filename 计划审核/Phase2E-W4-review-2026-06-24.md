@@ -494,3 +494,26 @@ overall_score:     45/100
 | 回归测试 ≥ 15 个 | ≥15 | 374（全量） | ✅ |
 | 性能 < 60s | <60s | 63s（含 LLM）/ 0.2s（不含 LLM） | ⚠️ |
 | 审核文档 | 完成 | 本文档 | ✅ |
+
+---
+
+## 8. 审核决策（2026-06-24）
+
+| Candidate | 决策 | 原因 |
+|-----------|------|------|
+| candidate/1 | **REJECT** | Qdrant 去重异常导致无效 Cluster（同一 issue 重复） |
+| candidate/2 | **APPROVE → PROMOTE** | 符合 Diagnosis Pattern 定义（Billboard draw order） |
+| candidate/3 | **REJECT**（迁移到 Capability KB） | 功能请求，非 bug |
+| candidate/4 | **REJECT**（迁移到 Capability KB） | 功能请求，非 bug |
+
+**Promoted Pattern:**
+- ID: `billboard_draw_order`
+- Name: Billboard Draw Order / Z-Index Issue
+- Category: rendering / Severity: medium
+- File: `data/problem-kb/generated-patterns.json`
+
+**W5 方向确定：**
+- 在 Mining Pipeline 前增加 Issue Intent Classification
+- Bug → Diagnosis Mining
+- Feature Request → Capability KB（W5 不实现，仅预留接口）
+- Enhancement / Refactor → 忽略

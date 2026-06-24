@@ -104,7 +104,10 @@ export class Drafter {
     const results: DrafterResult[] = [];
     for (const item of items) {
       try {
-        results.push(await this.draft(item.canonical, item.cluster, item.memberSummaries));
+        const result = await this.draft(item.canonical, item.cluster, item.memberSummaries);
+        result.input.canonicalId = item.canonical.id;
+        result.input.clusterId = item.cluster.id;
+        results.push(result);
       } catch (err) {
         // Failed draft — store raw error as llmRaw, empty input, failedDraft flag
         const errMsg = err instanceof Error ? err.message : String(err);

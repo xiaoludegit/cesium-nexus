@@ -5,7 +5,7 @@
 > v2 修订：吸收 5 个 P1 + 7 个 P2 审核意见（同日晚）
 > v3 修订：2026-06-23，回填已完成工作的 commit hash，标注 W1 完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ 质量与验收
-> 状态：**执行中** — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / W2 ✅ / W3 ✅ / 待启动 W4
+> 状态：**执行中** — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / W2 ✅ / W3 ✅ / W4 ✅ / 待启动 W5
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -337,7 +337,7 @@ cesium pkb mining-stats
 | **W1** | ✅ `ae32352` | CanonicalProblem + Clusterer + Candidate Store | 新包脚手架、`canonical_problem` + `problem_candidate` 表、Cosine Threshold Clusterer、`EmbeddingSearchProvider` 抽象 |
 | **W2** | ✅ 2026-06-24 | Drafting + Scoring + Duplicate Detection | `LLMBackend`（Ollama + OpenAI-compatible）、`Drafter`（system+user prompt 拼接）、`Scorer`（async + 可注入 384 维 textEmbedder）、`MiningPipeline` 编排器、`cesium pkb mine` CLI、374 tests |
 | **W3** | ✅ 2026-06-24 | Review CLI + Promotion Flow | `Promoter`（generated-patterns.json 幂等写入 + 冲突检测）、`cesium pkb review/promote/approve/reject/diff/mining-stats`、14 个 promoter 测试 |
-| **W4** | 🔲 | 真实数据挖掘 + 覆盖率评估 | 在 CesiumGS/cesium 近 6 个月 issue 上做一轮完整挖掘、产出首批 accepted patterns、跑 Coverage 指标 |
+| **W4** | ✅ `8eae620` | 真实数据挖掘 + 覆盖率评估 | 在 CesiumGS/cesium 近 6 个月 issue 上做一轮完整挖掘、产出首批 accepted patterns、跑 Coverage 指标 |
 
 ### 2.11.1 W1 实际产出（commit `ae32352`，2026-06-23）
 
@@ -419,6 +419,70 @@ cesium pkb mining-stats
 - LLM 后端：默认 Ollama（`qwen2.5:7b`），若本地不可用则 fallback 到 OpenAI Compatible
 - Coverage 基线测量与 Phase 2E 结果测量必须使用**同一批** 500 条 issue（同 seed），避免抽样偏差
 - W4 结束时**不自动**启动 Phase 3 Scope Review，需用户明确指令
+
+
+### 2.11.5 W4 实际产出（commit `8eae620`，2026-06-24）
+
+| 项目 | 结果 |
+|---|---|
+| Coverage 基线 | 39.05%（132/338 issues, 10/10 patterns） |
+| Mining 配置 | threshold=0.85, min-cluster=2, HF mirror |
+| Clusters | 4（全部 2-member clusters） |
+| Candidates | 4（全部 draft 成功） |
+| Approved | 1（candidate/2 → billboard_draw_order） |
+| Rejected | 3（candidate/1 单例重复; candidate/3+4 功能请求→Capability KB） |
+| Promoted | 1（billboard_draw_order → generated-patterns.json） |
+| Coverage 提升 | ~0.6-1.8pp（远低于 15pp 目标） |
+| 性能 | 49s（含 LLM）/ 0.2s（不含 LLM） |
+
+**W4 关键发现：**
+- 338 条 issue 中 cosine ≥ 0.85 的 cluster 仅 4 个，每个仅 2 条成员 → 数据量是主要瓶颈
+- Candidate 3+4 是 Bentley glTF 扩展的 feature request，不是 bug → 不属于 Diagnosis Pattern
+- 需要在 Mining Pipeline 前增加 **Issue Intent Classification** 过滤
+
+**W4 Bug 修复：**
+- `drafter.ts` draftBatch 成功路径未设置 canonicalId/clusterId → 已修复
+- `qdrant-embedding-provider.ts` 字段名不匹配（nodeType vs node_type, created_at vs createdAt）→ 已修复
+- `llm-backend.ts` URL 重复（/v1/v1）→ 已修复
+- tsup 打包未 externalize better-sqlite3 → 已修复
+
+### 2.11.6 W5 任务拆解（待启动）
+
+**目标：** 在 Mining Pipeline 前增加 Issue Intent Classification，将 issue 分为 Bug / Feature Request / Enhancement / Refactor，仅对 Bug 类 issue 执行 Diagnosis Mining。
+
+**背景（W4 审核决策）：**
+- Candidate 3+4 是 feature request（"Create reference implementation for..."），不是 bug
+- 当前 Mining Pipeline 不区分 issue 类型，导致 feature request 混入 diagnosis candidates
+- 需要在 pipeline 入口增加分类层
+
+**架构：**
+
+```
+Issue (raw)
+  ↓
+Intent Classifier (LLM / rule-based)
+  ↓
+  ├── Bug → Diagnosis Mining (现有 pipeline)
+  ├── Feature Request → Capability KB (新模块，W5 不实现)
+  ├── Enhancement → 忽略
+  └── Refactor → 忽略
+```
+
+| # | 任务 | 文件 | 测试 / 验收 |
+|---|---|---|---|
+| W5.1 | **Intent Classifier 接口设计**：`IssueIntentClassifier` 接口 + `IntentType` enum | `packages/mining/src/classification/intent-classifier.ts` | 接口编译通过 |
+| W5.2 | **Rule-based Classifier**：基于标题关键词的快速分类（"fix"/"bug"/"error" → Bug, "feature"/"support"/"implement" → Feature, "refactor"/"cleanup" → Refactor） | `packages/mining/src/classification/rule-based-classifier.ts` | 20 个测试覆盖边界 |
+| W5.3 | **LLM Classifier（可选）**：对 rule-based 无法分类的 issue 用 LLM 做二次分类 | `packages/mining/src/classification/llm-classifier.ts` | 10 个测试 |
+| W5.4 | **Pipeline 集成**：在 MiningPipeline.run() 的 Step 1（fetch vectors）和 Step 2（cluster）之间插入分类步骤 | `packages/mining/src/pipeline.ts` | 仅 Bug 类 issue 进入聚类 |
+| W5.5 | **CLI 集成**：`cesium pkb mine --intent-filter bug` 默认只挖 Bug | `packages/cli/src/commands/diagnose-cmd.ts` | 默认行为不变（向后兼容） |
+| W5.6 | **重新挖掘**：在 338 条 issue 上重新跑 mining，验证 feature request 被过滤 | CLI | Candidate 中无 feature request 类 |
+| W5.7 | **Coverage 重测**：对比 W4 基线，验证 Bug-only mining 的覆盖率 | `cesium pkb coverage` | 覆盖率不低于 W4 基线 |
+
+**W5 决策预设：**
+- 默认分类方式：rule-based（快速、可解释），LLM 作为 fallback
+- 分类结果持久化到 `issue_intent` 表（issue_id → intent_type），避免重复分类
+- Capability KB 模块不在 W5 实现，仅预留接口
+- W5 结束时**不自动**启动 Phase 3，需用户明确指令
 
 ### 2.12 验收标准（P1-5 + P2-7）
 

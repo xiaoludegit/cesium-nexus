@@ -1,0 +1,54 @@
+[
+  {
+    "id": "billboard_draw_order",
+    "name": "Billboard Draw Order / Z-Index Issue",
+    "category": "rendering",
+    "severity": "medium",
+    "aliases": [
+      "billboard-z-order-clamp-to-ground",
+      "billboard-depth-sorting-issue",
+      "clamped-billboard-rendering-order",
+      "billboard-overlap-z-fighting"
+    ],
+    "triggerKeywords": [
+      "billboard-z-order-clamp-to-ground",
+      "billboard-depth-sorting-issue",
+      "clamped-billboard-rendering-order",
+      "billboard-overlap-z-fighting"
+    ],
+    "symptoms": [
+      "Billboards at the same location do not render in the expected order",
+      "Z-index settings are ignored when CLAMP_TO_GROUND is enabled",
+      "Overlapping billboards flicker or swap visibility unexpectedly",
+      "Draw order varies based on camera angle or frame rate"
+    ],
+    "possibleCauses": [
+      "(possible causes not yet filled by reviewer)"
+    ],
+    "relatedSymbols": [
+      "BillboardCollection",
+      "Billboard",
+      "CLAMP_TO_GROUND",
+      "Scene",
+      "Primitive"
+    ],
+    "relatedStages": [],
+    "issueQueries": [
+      "billboard-z-order-clamp-to-ground",
+      "billboard-depth-sorting-issue",
+      "clamped-billboard-rendering-order",
+      "billboard-overlap-z-fighting"
+    ],
+    "investigationSteps": [
+      "(investigation steps not yet filled by reviewer)"
+    ],
+    "fixSuggestions": [
+      "(fix suggestions not yet filled by reviewer)"
+    ],
+    "candidateId": "candidate/2",
+    "canonicalId": "canonical/2",
+    "clusterId": "cluster/2",
+    "promotedAt": "2026-06-24T14:11:49.783Z",
+    "sourceCount": 0
+  }
+]
