@@ -19,36 +19,50 @@ export function registerIssueCommands(program: Command): void {
     .option("--owner <owner>", "GitHub repository owner", "CesiumGS")
     .option("--repo <repo>", "GitHub repository name", "cesium")
     .option("--token <token>", "GitHub personal access token (or set GITHUB_TOKEN env)")
+    .option("--since <iso>", "Only fetch issues updated since this ISO date (e.g. 2025-12-24)")
+    .option("--max-pages <n>", "Stop after fetching N pages (graceful exit before rate limit)", (v: string) => parseInt(v, 10))
     .option("--full", "Full sync — clear existing data and re-fetch all", false)
     .action(async (opts: {
       db: string;
       owner: string;
       repo: string;
       token?: string;
+      since?: string;
+      maxPages?: number;
       full: boolean;
     }) => {
       const resolvedDb = path.resolve(opts.db);
       const token = opts.token ?? process.env.GITHUB_TOKEN;
       const repoSlug = `${opts.owner}/${opts.repo}`;
 
+      if (opts.since && isNaN(Date.parse(opts.since))) {
+        console.error(`Invalid --since value: ${opts.since} (expected ISO date)`);
+        process.exit(1);
+      }
+
       console.log(`Database: ${resolvedDb}`);
       console.log(`Repo:     ${repoSlug}`);
       console.log(`Mode:     ${opts.full ? "full sync" : "incremental"}`);
+      if (opts.since) console.log(`Since:    ${opts.since}`);
+      if (opts.maxPages) console.log(`Max pages: ${opts.maxPages}`);
       if (!token) {
         console.log(`Auth:     none (rate limit: 60 req/h)\n`);
       } else {
         console.log(`Auth:     token provided (rate limit: 5000 req/h)\n`);
       }
 
-      try {
-        const { repo, db } = getIssueRepo(resolvedDb);
+      const { repo, db } = getIssueRepo(resolvedDb);
+      let inserted = 0;
+      let fetchedCount = 0;
+      let latestCursor: string | null = null;
 
-        let since: string | null = null;
+      try {
+        let since: string | null = opts.since ?? null;
 
         if (opts.full) {
           console.log(`Clearing existing issues for ${repoSlug}...`);
           repo.clear(repoSlug);
-        } else {
+        } else if (!since) {
           since = repo.getSyncCursor(repoSlug);
           if (since) {
             console.log(`Incremental sync since: ${since}`);
@@ -62,37 +76,40 @@ export function registerIssueCommands(program: Command): void {
           repo: opts.repo,
           token,
           since,
+          maxPages: opts.maxPages,
         });
 
         console.log(`\nFiltered ${result.prsFiltered} pull requests`);
         console.log(`Fetched ${result.totalPages} pages`);
 
-        if (result.issues.length > 0) {
-          const inserted = repo.upsertMany(result.issues);
+        fetchedCount = result.issues.length;
+        if (fetchedCount > 0) {
+          inserted = repo.upsertMany(result.issues);
           console.log(`Upserted ${inserted} issues into database`);
         }
 
-        // Update sync cursor: use max updatedAt from results to avoid
-        // missing issues updated between sync start and now
-        if (result.maxUpdatedAt) {
-          repo.setSyncCursor(repoSlug, result.maxUpdatedAt);
-          console.log(`Sync cursor updated: ${result.maxUpdatedAt}`);
-        } else {
-          console.log("No issues fetched, cursor unchanged.");
-        }
-
-        db.close();
+        latestCursor = result.maxUpdatedAt;
       } catch (err) {
         if (err instanceof GitHubRateLimitError) {
           console.error(`\n${err.message}`);
-          console.error("Provide a token: cesium sync:issues --token <token>");
+          console.error("Provide a token for larger syncs: cesium sync:issues --token <token>");
           console.error("Or set GITHUB_TOKEN environment variable.");
+          console.error("Already-fetched issues will still be committed below.");
         } else if (err instanceof GitHubApiError) {
           console.error(`\n${err.message}`);
         } else {
           console.error("Sync failed:", (err as Error).message);
         }
-        process.exit(1);
+      } finally {
+        if (latestCursor) {
+          repo.setSyncCursor(repoSlug, latestCursor);
+          console.log(`Sync cursor updated: ${latestCursor}`);
+        }
+        db.close();
+        console.log(`Database closed. ${inserted} issues committed.`);
+        if (fetchedCount === 0 && inserted === 0) {
+          console.log("No issues fetched, cursor unchanged.");
+        }
       }
     });
 

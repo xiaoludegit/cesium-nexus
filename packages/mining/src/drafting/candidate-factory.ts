@@ -12,6 +12,8 @@ export interface NewCandidateInput {
   llmRaw?: string | null;
   qualityScore?: number | null;
   dupOf?: string | null;
+  /** True if the LLM draft failed — downstream should treat fields as empty/placeholder. */
+  failedDraft?: boolean;
 
   issueCount?: number;
   forumCount?: number;
@@ -38,6 +40,7 @@ export function buildCandidate(input: NewCandidateInput): ProblemCandidate {
     llmRaw: input.llmRaw ?? null,
     qualityScore: input.qualityScore ?? null,
     dupOf: input.dupOf ?? null,
+    failedDraft: input.failedDraft ?? false,
 
     status: "pending" satisfies CandidateStatus,
     reviewedAt: null,

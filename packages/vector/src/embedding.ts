@@ -6,8 +6,12 @@ let _extractor: FeatureExtractionPipeline | null = null;
 
 async function getExtractor(): Promise<FeatureExtractionPipeline> {
   if (!_extractor) {
-    const { pipeline } = await import("@xenova/transformers");
-    _extractor = await pipeline("feature-extraction", EMBEDDING_MODEL);
+    const mod = await import("@xenova/transformers");
+    const endpoint = process.env.HF_ENDPOINT?.trim();
+    if (endpoint) {
+      mod.env.remoteHost = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
+    }
+    _extractor = await mod.pipeline("feature-extraction", EMBEDDING_MODEL);
   }
   return _extractor;
 }

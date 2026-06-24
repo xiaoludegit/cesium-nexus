@@ -23,13 +23,13 @@ export function getQdrantClient(url?: string): QdrantClient {
   return _client;
 }
 
-export function nodeIdToQdrantId(nodeId: string): string {
+export function nodeIdToQdrantId(nodeId: string): number {
   let hash = 0;
   for (let i = 0; i < nodeId.length; i++) {
     const ch = nodeId.charCodeAt(i);
     hash = ((hash << 5) - hash + ch) | 0;
   }
-  return `cn-${Math.abs(hash).toString(36)}`;
+  return Math.abs(hash);
 }
 
 export function buildExperiencePayload(
@@ -205,7 +205,7 @@ export function buildRenderStagePayload(
 }
 
 export interface GenericUpsertPoint {
-  id: string;
+  id: number;
   embedding: number[];
   payload: Record<string, unknown>;
 }
@@ -219,7 +219,7 @@ export async function upsertPoints(
   await client.upsert(COLLECTION_NAME, {
     wait: true,
     points: points.map((p) => ({
-      id: nodeIdToQdrantId(p.id),
+      id: p.id,
       vector: p.embedding,
       payload: p.payload,
     })),

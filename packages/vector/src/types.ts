@@ -52,6 +52,23 @@ export interface QdrantRenderStagePayload {
   title: string;
 }
 
+export interface QdrantIssuePayload {
+  type: "cesium-issue";
+  project: "cesium-nexus";
+  tags: string[];
+  importance: number;
+  status: string;
+  node_id: string;
+  node_type: "github-issue";
+  title: string;
+  url: string;
+  repo: string;
+  issue_number: number;
+  state: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface EmbedPKBResult {
   totalPatterns: number;
   totalStages: number;

@@ -70,6 +70,8 @@ describe("Drafter", () => {
         expect(prompt).toContain("Z-Fighting");
         expect(prompt).toContain("Cluster Members");
         expect(prompt).toContain("draftAlias");
+        // P1-1 regression: systemPrompt must now be included
+        expect(prompt).toContain("CesiumJS expert analyst");
         return JSON.stringify({
           draftAlias: ["z-fighting", "polygon flicker"],
           draftSymptoms: ["Polygons flicker", "Shimmering"],
@@ -109,6 +111,33 @@ describe("Drafter", () => {
 
     expect(result.input.draftAlias).toEqual(["test"]);
     expect(result.input.draftCategory).toBe("debug");
+  });
+
+  it("extracts JSON fence surrounded by prose (P2-5 regression)", async () => {
+    const mockLlmProse = {
+      complete: async (): Promise<string> => {
+        return (
+          "Here is the structured pattern draft you requested:\n\n" +
+          "```json\n" +
+          "{\n" +
+          "  \"draftAlias\": [\"prose-test\"],\n" +
+          "  \"draftSymptoms\": [\"shimmer\"],\n" +
+          "  \"draftSymbols\": [\"Scene\"],\n" +
+          "  \"draftCategory\": \"rendering\"\n" +
+          "}\n" +
+          "```\n\n" +
+          "Let me know if you'd like me to refine this further."
+        );
+      },
+    };
+
+    const drafter = new Drafter({ llm: mockLlmProse });
+    const result = await drafter.draft(makeCanonical(), makeCluster(), ["test"]);
+
+    expect(result.input.draftAlias).toEqual(["prose-test"]);
+    expect(result.input.draftSymptoms).toEqual(["shimmer"]);
+    expect(result.input.draftSymbols).toEqual(["Scene"]);
+    expect(result.input.draftCategory).toBe("rendering");
   });
 
   it("falls back to default when LLM returns invalid JSON", async () => {
@@ -183,8 +212,13 @@ describe("Drafter", () => {
 
     expect(results).toHaveLength(2);
     expect(results[0]!.input.draftAlias).toEqual(["good"]);
+    // P2-8: failure case should set failedDraft=true and keep symptoms empty
+    expect(results[1]!.input.failedDraft).toBe(true);
+    expect(results[1]!.input.draftAlias).toEqual([]);
+    expect(results[1]!.input.draftSymptoms).toEqual([]);
+    expect(results[1]!.input.draftSymbols).toEqual([]);
     expect(results[1]!.llmRaw).toContain("ERROR");
-    expect(results[1]!.input.draftSymptoms[0]).toContain("LLM timeout");
+    expect(results[1]!.llmRaw).toContain("LLM timeout");
   });
 
   it("uses custom system prompt when provided", async () => {
@@ -206,8 +240,6 @@ describe("Drafter", () => {
       systemPrompt: customSystem,
     });
 
-    // The system prompt is not sent in the current implementation
-    // (only user prompt is sent to LLM). Verify drafter still works.
     const result = await drafter.draft(
       makeCanonical(),
       makeCluster(),
@@ -215,7 +247,9 @@ describe("Drafter", () => {
     );
 
     expect(result.input.draftAlias).toEqual(["x"]);
-    // Custom system prompt is stored but not used in single-turn completion
-    // This is by design — the user prompt contains all context
+    // P1-1 regression: custom systemPrompt must appear in the prompt sent to the LLM
+    expect(capturedPrompts[0]).toContain("You are a cat analyst.");
+    // Default CesiumJS expert prompt should NOT be present when overridden
+    expect(capturedPrompts[0]).not.toContain("CesiumJS expert analyst");
   });
 });

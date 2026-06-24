@@ -123,6 +123,34 @@ export class IssueRepo {
     return row ? this.rowToRecord(row) : null;
   }
 
+  listRecent(
+    repo: string,
+    options?: { since?: string; limit?: number },
+  ): IssueRecord[] {
+    const since = options?.since;
+    const limit = options?.limit;
+
+    let sql: string;
+    let params: (string | number)[];
+
+    if (since && limit) {
+      sql = `SELECT * FROM issues WHERE repo = ? AND updated_at >= ? ORDER BY updated_at DESC LIMIT ?`;
+      params = [repo, since, limit];
+    } else if (since) {
+      sql = `SELECT * FROM issues WHERE repo = ? AND updated_at >= ? ORDER BY updated_at DESC`;
+      params = [repo, since];
+    } else if (limit) {
+      sql = `SELECT * FROM issues WHERE repo = ? ORDER BY updated_at DESC LIMIT ?`;
+      params = [repo, limit];
+    } else {
+      sql = `SELECT * FROM issues WHERE repo = ? ORDER BY updated_at DESC`;
+      params = [repo];
+    }
+
+    const rows = this.db.prepare(sql).all(...params) as IssueRow[];
+    return rows.map((r) => this.rowToRecord(r));
+  }
+
   getSyncCursor(repo: string): string | null {
     const stmt = this.db.prepare(
       `SELECT value FROM meta WHERE key = ?`,

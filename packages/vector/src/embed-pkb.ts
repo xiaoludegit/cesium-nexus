@@ -4,6 +4,7 @@ import { embedBatch } from "./embedding.js";
 import {
   buildProblemPatternPayload,
   buildRenderStagePayload,
+  nodeIdToQdrantId,
   upsertPoints,
   type GenericUpsertPoint,
 } from "./qdrant-client.js";
@@ -41,7 +42,7 @@ export async function embedProblemPatterns(
       if (!embedding || embedding.length === 0) continue;
 
       points.push({
-        id: `pkb:${batch[j].id}`,
+        id: nodeIdToQdrantId(`pkb:${batch[j].id}`),
         embedding,
         payload: buildProblemPatternPayload(batch[j]) as unknown as Record<string, unknown>,
       });
@@ -74,7 +75,7 @@ export async function embedRenderStages(
       if (!embedding || embedding.length === 0) continue;
 
       points.push({
-        id: `stage:${batch[j].id}`,
+        id: nodeIdToQdrantId(`stage:${batch[j].id}`),
         embedding,
         payload: buildRenderStagePayload(batch[j]) as unknown as Record<string, unknown>,
       });

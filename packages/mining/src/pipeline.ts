@@ -44,6 +44,23 @@ export interface PipelineResult {
   stats: MiningRunStats;
 }
 
+/**
+ * Parse a vector payload's logical node_id into its kind and numeric-ish
+ * identifier. Returns null when the id doesn't match a known shape.
+ *
+ * Payloads written by @cesium-nexus/vector use:
+ *   - issues:      node_id = "github-issue/<number>"
+ *   - experiences: node_id = "<uuid>" or "experience/<id>"
+ *   - patterns:    node_id = "<patternId>" (e.g. "z_fighting")
+ *   - stages:      node_id = "<stageId>"
+ */
+function parseNodeId(nodeId: string): { kind: "issue" | "experience" | "other"; numeric: number | null } | null {
+  const m = /^github-issue\/(\d+)$/.exec(nodeId);
+  if (m) return { kind: "issue", numeric: parseInt(m[1]!, 10) };
+  if (nodeId.startsWith("experience/")) return { kind: "experience", numeric: null };
+  return { kind: "other", numeric: null };
+}
+
 export class MiningPipeline {
   private readonly provider: EmbeddingSearchProvider;
   private readonly clustererConfig: ClusterConfig;
@@ -86,6 +103,10 @@ export class MiningPipeline {
       );
     }
 
+    // P2-4: index by id for O(1) member summary lookup
+    const vectorsById = new Map<string, VectorRecord>();
+    for (const v of vectors) vectorsById.set(v.id, v);
+
     // Step 2: Cluster
     const clusterer = new CosineThresholdClusterer({
       provider: this.provider,
@@ -97,13 +118,17 @@ export class MiningPipeline {
     const canonicalProblems = buildCanonicalProblems({
       clusters,
       experienceIdByMemberId: (memberId) => {
-        // Extract numeric ID from memberId like "issue:12345"
-        const m = memberId.match(/^issue:(\d+)$/);
-        return m ? parseInt(m[1], 10) : null;
+        // Read the logical node_id from the vector payload (not the Qdrant point id).
+        const rec = vectorsById.get(memberId);
+        const nodeId = (rec?.payload.node_id as string | undefined) ?? "";
+        const parsed = parseNodeId(nodeId);
+        return parsed?.kind === "experience" ? null : parsed?.numeric ?? null;
       },
       issueIdByMemberId: (memberId) => {
-        const m = memberId.match(/^issue:(\d+)$/);
-        return m ? parseInt(m[1], 10) : null;
+        const rec = vectorsById.get(memberId);
+        const nodeId = (rec?.payload.node_id as string | undefined) ?? "";
+        const parsed = parseNodeId(nodeId);
+        return parsed?.kind === "issue" ? parsed.numeric : null;
       },
     });
 
@@ -116,7 +141,7 @@ export class MiningPipeline {
     for (const cluster of clusters) {
       const summaries: string[] = [];
       for (const memberId of cluster.memberIds) {
-        const vec = vectors.find((v) => v.id === memberId);
+        const vec = vectorsById.get(memberId);
         if (vec?.payload) {
           const title = (vec.payload.title as string) || "";
           const bodyPreview = (vec.payload.body as string) || "";
@@ -126,18 +151,39 @@ export class MiningPipeline {
       memberSummariesByClusterId.set(cluster.id, summaries);
     }
 
-    const draftResults = await this.drafter.draftBatch(
-      clusters.map((c) => ({
-        canonical: canonicalProblems.find((cp) => cp.clusterIds.includes(c.id))!,
+    // P1-2: guard canonical lookup — cluster → canonical is a 1:1 invariant
+    // produced by buildCanonicalProblems, but fail loudly instead of NPE.
+    const canonicalByClusterId = new Map<string, CanonicalProblem>();
+    for (const cp of canonicalProblems) {
+      for (const cid of cp.clusterIds) canonicalByClusterId.set(cid, cp);
+    }
+
+    const draftItems: Array<{
+      canonical: CanonicalProblem;
+      cluster: Cluster;
+      memberSummaries: string[];
+    }> = [];
+    for (const c of clusters) {
+      const canonical = canonicalByClusterId.get(c.id);
+      if (!canonical) {
+        throw new Error(
+          `Pipeline invariant violated: cluster "${c.id}" has no associated CanonicalProblem. ` +
+            "This indicates a bug in buildCanonicalProblems.",
+        );
+      }
+      draftItems.push({
+        canonical,
         cluster: c,
         memberSummaries: memberSummariesByClusterId.get(c.id) ?? [],
-      })),
-    );
+      });
+    }
+
+    const draftResults = await this.drafter.draftBatch(draftItems);
 
     // Step 5: Score candidates (duplicate detection)
     // Load existing patterns for comparison
     const existingPatterns = await this.loadExistingPatternVectors();
-    const scoredResults = this.scorer.scoreBatch(
+    const scoredResults = await this.scorer.scoreBatch(
       draftResults.map((dr) => dr.input),
       existingPatterns,
     );

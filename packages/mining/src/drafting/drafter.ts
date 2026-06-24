@@ -75,8 +75,9 @@ export class Drafter {
     memberSummaries: string[],
   ): Promise<DrafterResult> {
     const userPrompt = DRAFTER_USER_TEMPLATE(canonical, cluster, memberSummaries);
+    const fullPrompt = `${this.systemPrompt}\n\n${userPrompt}`;
 
-    const raw = await this.llm.complete(userPrompt, {
+    const raw = await this.llm.complete(fullPrompt, {
       temperature: 0.2,
       maxTokens: 2048,
     });
@@ -105,15 +106,17 @@ export class Drafter {
       try {
         results.push(await this.draft(item.canonical, item.cluster, item.memberSummaries));
       } catch (err) {
-        // Failed draft — store raw error as llmRaw, empty input
+        // Failed draft — store raw error as llmRaw, empty input, failedDraft flag
         const errMsg = err instanceof Error ? err.message : String(err);
         results.push({
           input: {
             canonicalId: item.canonical.id,
             clusterId: item.cluster.id,
             draftAlias: [],
-            draftSymptoms: [`Drafter error: ${errMsg}`],
+            draftSymptoms: [],
             draftSymbols: [],
+            failedDraft: true,
+            llmRaw: `ERROR: ${errMsg}`,
           },
           llmRaw: `ERROR: ${errMsg}`,
         });
@@ -123,11 +126,10 @@ export class Drafter {
   }
 
   private parseDraft(raw: string): NewCandidateInput {
-    // Try to extract JSON from raw text (handle markdown fences)
-    const jsonStr = raw
-      .replace(/^```(?:json)?\s*/im, "")
-      .replace(/\s*```$/im, "")
-      .trim();
+    // Try to extract JSON from a ```json ... ``` fence anywhere in the output,
+    // tolerating prose before and after the fence.
+    const fenceMatch = /```(?:json)?\s*([\s\S]*?)```/.exec(raw);
+    const jsonStr = (fenceMatch ? fenceMatch[1] : raw).trim();
 
     let obj: {
       draftAlias?: string[];

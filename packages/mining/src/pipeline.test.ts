@@ -16,6 +16,7 @@ import type {
 } from "./types.js";
 import type { NewCandidateInput } from "./drafting/candidate-factory.js";
 import type BetterSqlite3 from "better-sqlite3";
+import Database from "better-sqlite3";
 
 function v(...xs: number[]): Float32Array {
   return Float32Array.from(xs);
@@ -65,7 +66,6 @@ describe("MiningPipeline", () => {
     resetCanonicalSeq(0);
 
     // In-memory SQLite
-    const Database = require("better-sqlite3");
     db = new Database(":memory:");
     store = new MiningStore(db);
 
@@ -76,12 +76,13 @@ describe("MiningPipeline", () => {
 
   it("runs full pipeline and stores results", async () => {
     // Set up vectors: 3 similar (cluster A) + 2 similar (cluster B)
+    // Use realistic vector IDs: Qdrant point id is a hash, payload.node_id is logical id.
     provider.setVectors([
-      { id: "issue:1", vector: v(1, 0, 0), payload: { title: "Z-fighting on terrain" } },
-      { id: "issue:2", vector: v(0.99, 0.1, 0), payload: { title: "Polygon flickering" } },
-      { id: "issue:3", vector: v(0.98, 0.12, 0), payload: { title: "Depth fighting" } },
-      { id: "issue:4", vector: v(0, 1, 0), payload: { title: "Shader compile fail" } },
-      { id: "issue:5", vector: v(0.1, 0.99, 0), payload: { title: "GLSL error" } },
+      { id: "cn-a1", vector: v(1, 0, 0), payload: { node_id: "github-issue/101", title: "Z-fighting on terrain" } },
+      { id: "cn-a2", vector: v(0.99, 0.1, 0), payload: { node_id: "github-issue/102", title: "Polygon flickering" } },
+      { id: "cn-a3", vector: v(0.98, 0.12, 0), payload: { node_id: "github-issue/103", title: "Depth fighting" } },
+      { id: "cn-b1", vector: v(0, 1, 0), payload: { node_id: "github-issue/201", title: "Shader compile fail" } },
+      { id: "cn-b2", vector: v(0.1, 0.99, 0), payload: { node_id: "github-issue/202", title: "GLSL error" } },
     ]);
 
     const pipeline = new MiningPipeline({
@@ -103,6 +104,12 @@ describe("MiningPipeline", () => {
 
     // Canonical problems match clusters
     expect(result.canonicalProblems.length).toBe(2);
+
+    // representativeIssueId is resolved from payload.node_id (P1-4 regression)
+    const repIds = result.canonicalProblems
+      .map((cp) => cp.representativeIssueId)
+      .sort((a, b) => (a ?? 0) - (b ?? 0));
+    expect(repIds.some((id) => id != null)).toBe(true);
 
     // Candidates created from drafts
     expect(result.candidates.length).toBe(2);
@@ -135,8 +142,8 @@ describe("MiningPipeline", () => {
 
   it("handles single cluster with minimal members", async () => {
     provider.setVectors([
-      { id: "issue:1", vector: v(1, 0, 0), payload: { title: "One issue" } },
-      { id: "issue:2", vector: v(1, 0.01, 0), payload: { title: "Another issue" } },
+      { id: "cn-x1", vector: v(1, 0, 0), payload: { node_id: "github-issue/1", title: "One issue" } },
+      { id: "cn-x2", vector: v(1, 0.01, 0), payload: { node_id: "github-issue/2", title: "Another issue" } },
     ]);
 
     const pipeline = new MiningPipeline({
@@ -155,9 +162,9 @@ describe("MiningPipeline", () => {
 
   it("drops noise points below minClusterSize", async () => {
     provider.setVectors([
-      { id: "issue:1", vector: v(1, 0, 0), payload: { title: "A" } },
-      { id: "issue:2", vector: v(0.99, 0.1, 0), payload: { title: "B" } },
-      { id: "issue:3", vector: v(0, 0, 1), payload: { title: "Noise" } },
+      { id: "cn-p1", vector: v(1, 0, 0), payload: { node_id: "github-issue/10", title: "A" } },
+      { id: "cn-p2", vector: v(0.99, 0.1, 0), payload: { node_id: "github-issue/11", title: "B" } },
+      { id: "cn-p3", vector: v(0, 0, 1), payload: { node_id: "github-issue/99", title: "Noise" } },
     ]);
 
     const pipeline = new MiningPipeline({
@@ -189,8 +196,8 @@ describe("MiningPipeline", () => {
     };
 
     provider.setVectors([
-      { id: "issue:42", vector: v(1, 0, 0), payload: { title: "Real issue title" } },
-      { id: "issue:43", vector: v(0.99, 0.1, 0), payload: { title: "Another issue" } },
+      { id: "cn-m42", vector: v(1, 0, 0), payload: { node_id: "github-issue/42", title: "Real issue title" } },
+      { id: "cn-m43", vector: v(0.99, 0.1, 0), payload: { node_id: "github-issue/43", title: "Another issue" } },
     ]);
 
     const trackingDrafter = new Drafter({ llm: trackingLlm });
@@ -208,5 +215,27 @@ describe("MiningPipeline", () => {
 
     expect(capturedPrompts.length).toBe(1);
     expect(capturedPrompts[0]).toContain("Real issue title");
+  });
+
+  it("throws clear error when canonical problem is missing for a cluster (P1-2 regression)", async () => {
+    const canonicalModule = await import("./discovery/canonical-problem.js");
+    const spy = vi.spyOn(canonicalModule, "buildCanonicalProblems").mockReturnValue([]);
+
+    provider.setVectors([
+      { id: "cn-orphan1", vector: v(1, 0, 0), payload: { node_id: "github-issue/700", title: "Orphan A" } },
+      { id: "cn-orphan2", vector: v(0.99, 0.1, 0), payload: { node_id: "github-issue/701", title: "Orphan B" } },
+    ]);
+
+    const pipeline = new MiningPipeline({
+      provider,
+      clustererConfig: { threshold: 0.9, minClusterSize: 2, maxClusterSize: 10 },
+      drafter,
+      scorer,
+      store,
+      db,
+    });
+
+    await expect(pipeline.run()).rejects.toThrow(/Pipeline invariant violated/);
+    spy.mockRestore();
   });
 });

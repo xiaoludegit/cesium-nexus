@@ -115,17 +115,20 @@ export interface OpenAICompatibleConfig {
   baseUrl: string;
   apiKey?: string;
   model?: string;
+  headers?: Record<string, string>;
 }
 
 export class OpenAICompatibleBackend implements LLMBackend {
   private readonly baseUrl: string;
   private readonly apiKey?: string;
   private readonly model: string;
+  private readonly extraHeaders: Record<string, string>;
 
   constructor(config: OpenAICompatibleConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.apiKey = config.apiKey;
     this.model = config.model ?? "gpt-4o-mini";
+    this.extraHeaders = config.headers ?? {};
   }
 
   async complete(
@@ -156,6 +159,7 @@ export class OpenAICompatibleBackend implements LLMBackend {
 
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
+          ...this.extraHeaders,
         };
         if (this.apiKey) {
           headers["Authorization"] = `Bearer ${this.apiKey}`;

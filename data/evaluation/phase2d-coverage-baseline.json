@@ -1,0 +1,2100 @@
+{
+  "label": "phase2d-baseline",
+  "timestamp": "2026-06-24T12:28:15.193Z",
+  "repo": "CesiumGS/cesium",
+  "since": "2025-12-24T12:28:14Z",
+  "evaluated": 338,
+  "hitIssues": 132,
+  "coverage": 0.3905325443786982,
+  "uniquePatternsHit": 10,
+  "totalPatterns": 10,
+  "threshold": "5",
+  "patternHits": {
+    "tiles_jitter": 69,
+    "tiles_loading": 13,
+    "primitive_performance": 23,
+    "shader_compile_error": 32,
+    "terrain_conflict": 30,
+    "label_visibility": 26,
+    "picking_failure": 19,
+    "z_fighting": 5,
+    "depth_precision": 5,
+    "lod_popping": 8
+  },
+  "hits": [
+    {
+      "issue": 13489,
+      "title": "SPZ Gaussian Splat tile loading stalls the main thread during decode and SH packing",
+      "url": "https://github.com/CesiumGS/cesium/issues/13489",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 13
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 6
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12980,
+      "title": "Map vs {} (and AssociativeArray) galore!",
+      "url": "https://github.com/CesiumGS/cesium/issues/12980",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13379,
+      "title": "Octal escape sequences causing NextJS builds to fail",
+      "url": "https://github.com/CesiumGS/cesium/issues/13379",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13559,
+      "title": "Voxel 3D Tiles tileset hit fatal error in rendering",
+      "url": "https://github.com/CesiumGS/cesium/issues/13559",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13573,
+      "title": "Handle skirt visibility with terrain-like 3D Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/13573",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 8
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13572,
+      "title": "WMS/WMTS picking does not work when draped on 3D Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/13572",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13528,
+      "title": "Add support for glTF 2.1 and 3D Tiles 2.0",
+      "url": "https://github.com/CesiumGS/cesium/issues/13528",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13566,
+      "title": "Changing orientation on an entity causes it to flicker and not render for a few frames",
+      "url": "https://github.com/CesiumGS/cesium/issues/13566",
+      "matched": [
+        {
+          "id": "z_fighting",
+          "name": "Z-Fighting / Polygon Flickering",
+          "score": 8
+        },
+        {
+          "id": "depth_precision",
+          "name": "Depth Precision Loss",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13556,
+      "title": "MVTDataProvider decodes & meshes tiles synchronously on the main thread (no Worker) — freezes large layers",
+      "url": "https://github.com/CesiumGS/cesium/issues/13556",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 10
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13558,
+      "title": "Globe translucency not impacting polylines",
+      "url": "https://github.com/CesiumGS/cesium/issues/13558",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13563,
+      "title": "ModelSceneGraph.update calls updateJointMatrices() once per runtime node instead of once per frame — O(nodes × skinned nodes × joints) animation cost",
+      "url": "https://github.com/CesiumGS/cesium/issues/13563",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13035,
+      "title": "Add support for additional terrain encodings TerrainRGB, Terrarium",
+      "url": "https://github.com/CesiumGS/cesium/issues/13035",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 14
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12747,
+      "title": "Gracefully handle errors when maximum number of splats is exceeded",
+      "url": "https://github.com/CesiumGS/cesium/issues/12747",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13048,
+      "title": "Consider removing `RequestType`",
+      "url": "https://github.com/CesiumGS/cesium/issues/13048",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12414,
+      "title": "[Cesium WebGL] Fragment shader compile log: ERROR: 0:430: 'clipPolygons' : no matching overloaded function found",
+      "url": "https://github.com/CesiumGS/cesium/issues/12414",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 19
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12596,
+      "title": "Voxel Spec data uses legacy 3D Tiles 1.1 representation",
+      "url": "https://github.com/CesiumGS/cesium/issues/12596",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13557,
+      "title": "after loading a glb model and enabling the animation, operating the map becomes very slow.",
+      "url": "https://github.com/CesiumGS/cesium/issues/13557",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 9
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13106,
+      "title": "Performance Issue when Google Photorealistic 3D Tiles are added first",
+      "url": "https://github.com/CesiumGS/cesium/issues/13106",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13444,
+      "title": "BufferPrimitiveCollection Improvements",
+      "url": "https://github.com/CesiumGS/cesium/issues/13444",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 13
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 12
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13534,
+      "title": "MVTDataProvider: Subdivide polylines and polygons in 3D space",
+      "url": "https://github.com/CesiumGS/cesium/issues/13534",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13535,
+      "title": "MVTDataProvider: Optimizing tileset traversal",
+      "url": "https://github.com/CesiumGS/cesium/issues/13535",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 12
+        }
+      ]
+    },
+    {
+      "issue": 13536,
+      "title": "MVTDataProvider: Per-layer Styling",
+      "url": "https://github.com/CesiumGS/cesium/issues/13536",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 10
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13544,
+      "title": "Vector Tiles: Point and polyline normal vectors",
+      "url": "https://github.com/CesiumGS/cesium/issues/13544",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 11922,
+      "title": "Regression on Sphere Model rendering between 1.113 and 1.114",
+      "url": "https://github.com/CesiumGS/cesium/issues/11922",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13503,
+      "title": "Title Gaussian Splat memory accounting does not fit existing cacheBytes model",
+      "url": "https://github.com/CesiumGS/cesium/issues/13503",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13483,
+      "title": "Crash when loading large Gaussian Splats Tileset",
+      "url": "https://github.com/CesiumGS/cesium/issues/13483",
+      "matched": [
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12712,
+      "title": "GaussianSplatPrimitive cannot pick up the position",
+      "url": "https://github.com/CesiumGS/cesium/issues/12712",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13312,
+      "title": "Cannot combine splat- and non-splat content in one tileset",
+      "url": "https://github.com/CesiumGS/cesium/issues/13312",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 6
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13304,
+      "title": "Gaussian splats disappear based on distance, rotation, view size, and size",
+      "url": "https://github.com/CesiumGS/cesium/issues/13304",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13541,
+      "title": "Spec failure: validates EdgeVisibility shader code and uniforms",
+      "url": "https://github.com/CesiumGS/cesium/issues/13541",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 10
+        }
+      ]
+    },
+    {
+      "issue": 13326,
+      "title": "Picking for Gaussian splats",
+      "url": "https://github.com/CesiumGS/cesium/issues/13326",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13402,
+      "title": "Gaussian Splatting Loading Exception and Incorrect Bounding Volume",
+      "url": "https://github.com/CesiumGS/cesium/issues/13402",
+      "matched": [
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 6
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13446,
+      "title": "Gaussian Splatting Dynamic Loading Issue – BoundingBox disappears at distance but model remains visible",
+      "url": "https://github.com/CesiumGS/cesium/issues/13446",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13224,
+      "title": "Project panorama images onto 3D assets in scene",
+      "url": "https://github.com/CesiumGS/cesium/issues/13224",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 7937,
+      "title": "Full Panorama export with Cesium",
+      "url": "https://github.com/CesiumGS/cesium/issues/7937",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13003,
+      "title": "ArcGIS rendered tiles mismatch",
+      "url": "https://github.com/CesiumGS/cesium/issues/13003",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 12107,
+      "title": "Irrelevant error message from `PerInstanceColorAppearance`",
+      "url": "https://github.com/CesiumGS/cesium/issues/12107",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 15
+        }
+      ]
+    },
+    {
+      "issue": 12628,
+      "title": "Consider option to show screen space error in inspector",
+      "url": "https://github.com/CesiumGS/cesium/issues/12628",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13073,
+      "title": "Custom shader not applied when glTF has no material",
+      "url": "https://github.com/CesiumGS/cesium/issues/13073",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 13
+        }
+      ]
+    },
+    {
+      "issue": 13502,
+      "title": "GeoJson + BufferPrimitiveCollection loader",
+      "url": "https://github.com/CesiumGS/cesium/issues/13502",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 6
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13512,
+      "title": "Optimize BillboardCollection performance for large, dynamic collections",
+      "url": "https://github.com/CesiumGS/cesium/issues/13512",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 8
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 7926,
+      "title": "Artifact in 3D Tiles Photogrammetry Sandcastle in Internet Explorer",
+      "url": "https://github.com/CesiumGS/cesium/issues/7926",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12589,
+      "title": "3DTiles Gaussian Splat dataset rendering weird",
+      "url": "https://github.com/CesiumGS/cesium/issues/12589",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 14
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 7
+        },
+        {
+          "id": "z_fighting",
+          "name": "Z-Fighting / Polygon Flickering",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13359,
+      "title": "3D Tiles Gaussian model becomes blurry after rotation",
+      "url": "https://github.com/CesiumGS/cesium/issues/13359",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 11
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13474,
+      "title": "Clipping for Gaussian splats",
+      "url": "https://github.com/CesiumGS/cesium/issues/13474",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 12321,
+      "title": "Clipping polygons precision on Terrain and 3D Tiles ",
+      "url": "https://github.com/CesiumGS/cesium/issues/12321",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12258,
+      "title": "Improve Clipping Polygon Performance",
+      "url": "https://github.com/CesiumGS/cesium/issues/12258",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13513,
+      "title": "Crash when loading Ion Imagery Layer: Expected rectangle to be typeof object, actual typeof was undefined",
+      "url": "https://github.com/CesiumGS/cesium/issues/13513",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12683,
+      "title": "Wrong tiles selected for refinement in certain areas",
+      "url": "https://github.com/CesiumGS/cesium/issues/12683",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13180,
+      "title": "Picking returning `undefined` on opposite sides of the antemeridian in CV",
+      "url": "https://github.com/CesiumGS/cesium/issues/13180",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13055,
+      "title": "Globe and sky/background corrupted for 1 frame after loading large 3d tiles point cloud",
+      "url": "https://github.com/CesiumGS/cesium/issues/13055",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12769,
+      "title": "Distorted textures for draped imagery near antimeridian",
+      "url": "https://github.com/CesiumGS/cesium/issues/12769",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13473,
+      "title": "Extensible camera controller architecture",
+      "url": "https://github.com/CesiumGS/cesium/issues/13473",
+      "matched": [
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 8
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 6
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12633,
+      "title": "Model animations are calculated for unavailable entities, impacting FPS",
+      "url": "https://github.com/CesiumGS/cesium/issues/12633",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 8
+        }
+      ]
+    },
+    {
+      "issue": 12829,
+      "title": "Adding a wall to an entity breaks the default \"chase cam\" camera view point",
+      "url": "https://github.com/CesiumGS/cesium/issues/12829",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13493,
+      "title": "ScreenSpaceEventHandler: CSS transform on canvas parent causes mouse interaction offset",
+      "url": "https://github.com/CesiumGS/cesium/issues/13493",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13476,
+      "title": "Reduce mocking in specs",
+      "url": "https://github.com/CesiumGS/cesium/issues/13476",
+      "matched": [
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 6
+        },
+        {
+          "id": "depth_precision",
+          "name": "Depth Precision Loss",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12480,
+      "title": "Fingerprint protection causes pixelated label backgrounds",
+      "url": "https://github.com/CesiumGS/cesium/issues/12480",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13354,
+      "title": "czm_textureCube local spec failure - testing against release",
+      "url": "https://github.com/CesiumGS/cesium/issues/13354",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 16
+        }
+      ]
+    },
+    {
+      "issue": 12782,
+      "title": "Misleading scale/offset defaults in voxel shapes",
+      "url": "https://github.com/CesiumGS/cesium/issues/12782",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 6095,
+      "title": "More Vector Tiles Sandcastle demos",
+      "url": "https://github.com/CesiumGS/cesium/issues/6095",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13156,
+      "title": "BufferPrimitiveMaterial: Proposal for large vector collections in linear memory",
+      "url": "https://github.com/CesiumGS/cesium/issues/13156",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 6
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 11683,
+      "title": "EXT_mesh_features extension ignoring my class/table definitions, always looking up in propertyTable at index 0",
+      "url": "https://github.com/CesiumGS/cesium/issues/11683",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 7
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12826,
+      "title": "DeveloperError: Must define either _workerName or _workerPath for asynchronous geometry.",
+      "url": "https://github.com/CesiumGS/cesium/issues/12826",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13439,
+      "title": "Undo and clear",
+      "url": "https://github.com/CesiumGS/cesium/issues/13439",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 11
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13398,
+      "title": "Editable Meshes",
+      "url": "https://github.com/CesiumGS/cesium/issues/13398",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 10
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 10480,
+      "title": "3D Tiles Next Metadata Compatibility Matrix",
+      "url": "https://github.com/CesiumGS/cesium/issues/10480",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 10
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 3857,
+      "title": "Too many tiles requested by imagery layer leads to poor performance",
+      "url": "https://github.com/CesiumGS/cesium/issues/3857",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13407,
+      "title": "Wrong metadata schema used for external tilesets",
+      "url": "https://github.com/CesiumGS/cesium/issues/13407",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13374,
+      "title": "Simple design model deformation",
+      "url": "https://github.com/CesiumGS/cesium/issues/13374",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 13
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 11
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 11
+        }
+      ]
+    },
+    {
+      "issue": 13367,
+      "title": "Panorama directional light",
+      "url": "https://github.com/CesiumGS/cesium/issues/13367",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13261,
+      "title": "Sandcastle examples fail to load data",
+      "url": "https://github.com/CesiumGS/cesium/issues/13261",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13346,
+      "title": "Regression for 3D Tiles styling in 1.139",
+      "url": "https://github.com/CesiumGS/cesium/issues/13346",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13016,
+      "title": "3d gauss splatting 3dtiles lod render error",
+      "url": "https://github.com/CesiumGS/cesium/issues/13016",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 10014,
+      "title": "terrain requestVertexNormals confilect with imagerlayer dayalpha and nightalpha",
+      "url": "https://github.com/CesiumGS/cesium/issues/10014",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 8
+        }
+      ]
+    },
+    {
+      "issue": 12520,
+      "title": "make Billboard construction asynchronous if needed",
+      "url": "https://github.com/CesiumGS/cesium/issues/12520",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12798,
+      "title": "Tileset flicker when zooming between Gaussian splat tilesets",
+      "url": "https://github.com/CesiumGS/cesium/issues/12798",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 12
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12749,
+      "title": "Jagged rendering for SPZ Gaussian Splats",
+      "url": "https://github.com/CesiumGS/cesium/issues/12749",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12645,
+      "title": "Zoom issue with tracked entities",
+      "url": "https://github.com/CesiumGS/cesium/issues/12645",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 4742,
+      "title": "Camera.flyTo doesn't work right after mophComplete",
+      "url": "https://github.com/CesiumGS/cesium/issues/4742",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13333,
+      "title": "Entity vs Primitive performance doubt",
+      "url": "https://github.com/CesiumGS/cesium/issues/13333",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13319,
+      "title": "Tile height artifacts in sandcastle with Google 3D Photorealistic Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/13319",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 12
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13309,
+      "title": "🐛 Bug: Billboard depth test rendering regression compared to 1.132.0 Description",
+      "url": "https://github.com/CesiumGS/cesium/issues/13309",
+      "matched": [
+        {
+          "id": "depth_precision",
+          "name": "Depth Precision Loss",
+          "score": 10
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 10
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13078,
+      "title": "Terrain picker non-invertible transform",
+      "url": "https://github.com/CesiumGS/cesium/issues/13078",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 12936,
+      "title": "Imagery disappears when zooming out on mobile devices - Chrome on Android",
+      "url": "https://github.com/CesiumGS/cesium/issues/12936",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 5333,
+      "title": "depthFailMaterial for dynamic polylines",
+      "url": "https://github.com/CesiumGS/cesium/issues/5333",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 10451,
+      "title": "\"disableDepthTestDistance: Number.POSITIVE_INFINITY\" give rise to disappear when drag to some place",
+      "url": "https://github.com/CesiumGS/cesium/issues/10451",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13053,
+      "title": "Billboards: Require WebGL 1 + ANGLE_instanced_arrays + vertex texture reads (or WebGL 2)",
+      "url": "https://github.com/CesiumGS/cesium/issues/13053",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 14
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13124,
+      "title": "Support for Property Tables in Custom Shaders",
+      "url": "https://github.com/CesiumGS/cesium/issues/13124",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 13
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13227,
+      "title": "Use contentAvailability to skip empty tiles during voxel raymarching",
+      "url": "https://github.com/CesiumGS/cesium/issues/13227",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13263,
+      "title": "CesiumJS 1.139 Loads All Gaussian Splat LOD Levels into Memory, Causing Slow LOD Switching and Performance Issues",
+      "url": "https://github.com/CesiumGS/cesium/issues/13263",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 7
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 11086,
+      "title": "Voxel rendering performance",
+      "url": "https://github.com/CesiumGS/cesium/issues/11086",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 10
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 13249,
+      "title": "Minor sandcastle bugs and gallery text issues",
+      "url": "https://github.com/CesiumGS/cesium/issues/13249",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 12
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 11
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 10
+        }
+      ]
+    },
+    {
+      "issue": 12965,
+      "title": "WebGL errors occur when rendering Gaussian Splat",
+      "url": "https://github.com/CesiumGS/cesium/issues/12965",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 8
+        },
+        {
+          "id": "depth_precision",
+          "name": "Depth Precision Loss",
+          "score": 7
+        },
+        {
+          "id": "z_fighting",
+          "name": "Z-Fighting / Polygon Flickering",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12966,
+      "title": "Flickering issue caused by poor performance of Gaussian sorting",
+      "url": "https://github.com/CesiumGS/cesium/issues/12966",
+      "matched": [
+        {
+          "id": "z_fighting",
+          "name": "Z-Fighting / Polygon Flickering",
+          "score": 7
+        },
+        {
+          "id": "lod_popping",
+          "name": "LOD Popping / Level of Detail Artifacts",
+          "score": 6
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13262,
+      "title": "Clamp Entities To Ground places model below 3D Tiles surface",
+      "url": "https://github.com/CesiumGS/cesium/issues/13262",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 10
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 8134,
+      "title": "Test failure on Nvidia Quadro card",
+      "url": "https://github.com/CesiumGS/cesium/issues/8134",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 18
+        }
+      ]
+    },
+    {
+      "issue": 12623,
+      "title": "Consider updating to ECMA version 2022",
+      "url": "https://github.com/CesiumGS/cesium/issues/12623",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13226,
+      "title": "Labels don't appear on first show in request render mode",
+      "url": "https://github.com/CesiumGS/cesium/issues/13226",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12643,
+      "title": "Follow-ups for draping imagery on 3D Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/12643",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 9
+        }
+      ]
+    },
+    {
+      "issue": 12503,
+      "title": "make billboardcollection, labelcollection customizable",
+      "url": "https://github.com/CesiumGS/cesium/issues/12503",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 10
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12291,
+      "title": "Allow overriding the final output of custom shaders",
+      "url": "https://github.com/CesiumGS/cesium/issues/12291",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 22
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13200,
+      "title": "Dynamic billboard jittering when using canvas-generated image via callbackProperty",
+      "url": "https://github.com/CesiumGS/cesium/issues/13200",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 7
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13167,
+      "title": "Delayed update to voxel tile selection",
+      "url": "https://github.com/CesiumGS/cesium/issues/13167",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 932,
+      "title": "Dynamic Buffers",
+      "url": "https://github.com/CesiumGS/cesium/issues/932",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 8
+        }
+      ]
+    },
+    {
+      "issue": 13146,
+      "title": "Clamped to ground billboard rendering issues in top-down view",
+      "url": "https://github.com/CesiumGS/cesium/issues/13146",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 10
+        },
+        {
+          "id": "z_fighting",
+          "name": "Z-Fighting / Polygon Flickering",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13150,
+      "title": "Billboard disableDepthTestDistance=0 is not respected from version 1.135",
+      "url": "https://github.com/CesiumGS/cesium/issues/13150",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 6
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13159,
+      "title": "A fatal bug about depth test！",
+      "url": "https://github.com/CesiumGS/cesium/issues/13159",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13199,
+      "title": "3D Tiles Styles and Custom Shaders should not crash on undefined properties",
+      "url": "https://github.com/CesiumGS/cesium/issues/13199",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12472,
+      "title": "Render order of gaussian splats and meshes",
+      "url": "https://github.com/CesiumGS/cesium/issues/12472",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13193,
+      "title": "v1.138.0 scene.pickAsync is not a function, but v1.137 works",
+      "url": "https://github.com/CesiumGS/cesium/issues/13193",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 8
+        },
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12952,
+      "title": "Improvements on Depth Testing for Billboards",
+      "url": "https://github.com/CesiumGS/cesium/issues/12952",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 14
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 10
+        },
+        {
+          "id": "depth_precision",
+          "name": "Depth Precision Loss",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13182,
+      "title": "Billboards at Same Coordinate with CLAMP_TO_GROUND Do Not Maintain Consistent Draw Order / Z-Index",
+      "url": "https://github.com/CesiumGS/cesium/issues/13182",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 10699,
+      "title": "Precision errors when passing integer metadata values to fragment shader",
+      "url": "https://github.com/CesiumGS/cesium/issues/10699",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 20
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 11
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13183,
+      "title": "Billboards at Same Coordinate with CLAMP_TO_GROUND Do Not Maintain Consistent Draw Order / Z-Index",
+      "url": "https://github.com/CesiumGS/cesium/issues/13183",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13065,
+      "title": "Heightmap terrain data visually sinks downwards when upsampled past its limits",
+      "url": "https://github.com/CesiumGS/cesium/issues/13065",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 9846,
+      "title": "scene.pickPosition returning undefined",
+      "url": "https://github.com/CesiumGS/cesium/issues/9846",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13179,
+      "title": "Picking returns `undefined` around poles in 2D/CV",
+      "url": "https://github.com/CesiumGS/cesium/issues/13179",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 3242,
+      "title": "Picking problems in 2D when tracking an entity",
+      "url": "https://github.com/CesiumGS/cesium/issues/3242",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 7
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13092,
+      "title": "Camera jumps when globe translucency is enabled since 1.136",
+      "url": "https://github.com/CesiumGS/cesium/issues/13092",
+      "matched": [
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 6
+        },
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13083,
+      "title": "Undefined terrain picks in 2D/CV mode.",
+      "url": "https://github.com/CesiumGS/cesium/issues/13083",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 5
+        },
+        {
+          "id": "picking_failure",
+          "name": "Picking Failure",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 12570,
+      "title": "Optimize texture allocation for voxels",
+      "url": "https://github.com/CesiumGS/cesium/issues/12570",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13095,
+      "title": "PolylineVolume Occludes billboard/Label Display",
+      "url": "https://github.com/CesiumGS/cesium/issues/13095",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13148,
+      "title": "Drawing points using primitive and Geometry does not display on the page",
+      "url": "https://github.com/CesiumGS/cesium/issues/13148",
+      "matched": [
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 9
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 8
+        },
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 11492,
+      "title": "Style changes (visibility) not applied to point cloud glTF",
+      "url": "https://github.com/CesiumGS/cesium/issues/11492",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13143,
+      "title": "SOG with 3D Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/13143",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13129,
+      "title": "Support for more component types in metadata textures",
+      "url": "https://github.com/CesiumGS/cesium/issues/13129",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "issue": 13139,
+      "title": "Set NaN to `frustumCommandsList.length` cause crash",
+      "url": "https://github.com/CesiumGS/cesium/issues/13139",
+      "matched": [
+        {
+          "id": "primitive_performance",
+          "name": "Primitive Performance Degradation",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "issue": 13062,
+      "title": "EntityCluster BUG",
+      "url": "https://github.com/CesiumGS/cesium/issues/13062",
+      "matched": [
+        {
+          "id": "label_visibility",
+          "name": "Label Disappears or Not Visible",
+          "score": 10
+        },
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 13108,
+      "title": "RuntimeError: Fragment shader failed to compile. Compile log: null",
+      "url": "https://github.com/CesiumGS/cesium/issues/13108",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 16
+        }
+      ]
+    },
+    {
+      "issue": 13025,
+      "title": "Support for borehole geometry (implicit surfaces?)",
+      "url": "https://github.com/CesiumGS/cesium/issues/13025",
+      "matched": [
+        {
+          "id": "shader_compile_error",
+          "name": "Shader Compile Error",
+          "score": 10
+        },
+        {
+          "id": "terrain_conflict",
+          "name": "Terrain and GroundPrimitive Conflict",
+          "score": 7
+        },
+        {
+          "id": "tiles_loading",
+          "name": "3D Tiles Loading Failure",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "issue": 12717,
+      "title": "Add support for time-dynamic 3D Tiles",
+      "url": "https://github.com/CesiumGS/cesium/issues/12717",
+      "matched": [
+        {
+          "id": "tiles_jitter",
+          "name": "3D Tiles Jitter / Oscillation",
+          "score": 5
+        }
+      ]
+    }
+  ]
+}

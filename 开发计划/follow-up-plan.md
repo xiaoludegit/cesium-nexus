@@ -5,7 +5,7 @@
 > v2 修订：吸收 5 个 P1 + 7 个 P2 审核意见（同日晚）
 > v3 修订：2026-06-23，回填已完成工作的 commit hash，标注 W1 完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ 质量与验收
-> 状态：**执行中** — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / 待启动 W2
+> 状态：**执行中** — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / W2 ✅ / W3 ✅ / 待启动 W4
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -22,7 +22,7 @@
 | Phase 2C Experience Graph | ✅ 完成 | `fixes` 确定性边 + BFS |
 | Phase 2C+ Qdrant Vector Search | ✅ 完成 | 384 维 ONNX embed + `references` 推断边 |
 | Phase 2D Diagnosis Retrieval Enhancement | ✅ 完成 + 已发布 | commit `e04a5ea`，tag `v0.5.0`，297 tests |
-| Phase 2E Problem Mining Pipeline | 🟡 W1 已完成 | commit `ae32352`，30 新测试，327 passed |
+| Phase 2E Problem Mining Pipeline | 🟡 W3 已完成 | W1 `ae32352` / W2 + W3 待 commit，374 passed |
 | Phase 3 Can Diagnose | 🔲 未开始 | 待 Phase 2E 完成后**单独**做范围重审 |
 
 ### 0.0 进度日志
@@ -33,7 +33,10 @@
 | 2026-06-23 | Phase 2D Review 通过（无 P1，2 个 P2 环境项） | [`计划审核/Phase2D-review-2026-06-23.md`](../计划审核/Phase2D-review-2026-06-23.md) |
 | 2026-06-23 | P2-1 + P2-2 sharp graceful（dynamic import + CLI friendly error） | `6e81c48` |
 | 2026-06-23 | Phase 2E W1 — `@cesium-nexus/mining` 包脚手架 + 4 层架构 | `ae32352` |
-| 2026-06-23 | **W2 待启动** — LLM backend + Drafter + Scorer + 去重 | — |
+| 2026-06-24 | Phase 2E W2 — LLMBackend + Drafter + Scorer + Pipeline | (待 commit) |
+| 2026-06-24 | Phase 2E W2 Review — 4 P1 + 8 P2 → 全部修复，360 tests pass | (待 commit) |
+| 2026-06-24 | Phase 2E W3 — Promoter + Review CLI + 6 个新子命令，374 tests pass | (待 commit) |
+| 2026-06-24 | **W4 待启动** — 真实数据挖掘 + Coverage 评估 | — |
 
 ### 0.1 W1 已落地的文件清单
 
@@ -58,7 +61,7 @@ pnpm-lock.yaml                          (updated)
 tsconfig.json                           (root references 加 vector + mining)
 ```
 
-测试总计：**327 passed / 11 skipped**（W0 基线 297，+30 mining tests）。
+测试总计：**374 passed / 11 skipped**（W0 基线 297 → W1 327 → W2 360 → W3 374）。
 
 ---
 
@@ -332,8 +335,8 @@ cesium pkb mining-stats
 | 周次 | 状态 | 任务 | 产出 |
 |---|---|---|---|
 | **W1** | ✅ `ae32352` | CanonicalProblem + Clusterer + Candidate Store | 新包脚手架、`canonical_problem` + `problem_candidate` 表、Cosine Threshold Clusterer、`EmbeddingSearchProvider` 抽象 |
-| **W2** | 🔲 | Drafting + Scoring + Duplicate Detection | `Drafter`（Ollama 后端）、`Scorer`（与现有 pattern 的 cosine 去重）、自动生成 PatternCandidate |
-| **W3** | 🔲 | Review CLI + Promotion Flow | `cesium pkb review / promote / reject / diff` 串联、`generated-patterns.json` 写入 |
+| **W2** | ✅ 2026-06-24 | Drafting + Scoring + Duplicate Detection | `LLMBackend`（Ollama + OpenAI-compatible）、`Drafter`（system+user prompt 拼接）、`Scorer`（async + 可注入 384 维 textEmbedder）、`MiningPipeline` 编排器、`cesium pkb mine` CLI、374 tests |
+| **W3** | ✅ 2026-06-24 | Review CLI + Promotion Flow | `Promoter`（generated-patterns.json 幂等写入 + 冲突检测）、`cesium pkb review/promote/approve/reject/diff/mining-stats`、14 个 promoter 测试 |
 | **W4** | 🔲 | 真实数据挖掘 + 覆盖率评估 | 在 CesiumGS/cesium 近 6 个月 issue 上做一轮完整挖掘、产出首批 accepted patterns、跑 Coverage 指标 |
 
 ### 2.11.1 W1 实际产出（commit `ae32352`，2026-06-23）
@@ -356,24 +359,66 @@ cesium pkb mining-stats
 - `MiningStore` 把 `canonical_problem` + `problem_candidate` 合并到一个类，避免 schema init 竞争；如果未来要跨包复用，再拆出独立 repo
 - `QdrantEmbeddingProvider.listVectors` 用 `scroll` 分页 + `next_page_offset` 收窄为 `string|number|undefined`（Qdrant SDK 类型允许 null/Record，需要显式过滤）
 
-### 2.11.2 W2 任务拆解（待启动，预计 1 周）
+### 2.11.2 W2 实际产出（2026-06-24，待 commit）
 
-**目标：** 把 Cluster + CanonicalProblem 推进到 PatternCandidate 草稿，并完成与现有 PKB 的去重打分，让 W3 的 review CLI 有真实数据可审。
+| 模块 | 文件 | 说明 |
+|---|---|---|
+| drafting | `src/drafting/llm-backend.ts` | `LLMBackend` 接口 + `OllamaBackend`（默认 + 指数退避 retry）+ `OpenAICompatibleBackend`，均通过 fetch 调用，不依赖 openai SDK |
+| drafting | `src/drafting/drafter.ts` | system + user prompt 拼接（P1-1 修复）、非贪婪 fence 抽取（P2-5）、失败草稿 `failedDraft: true` 落库（P2-8） |
+| drafting | `src/drafting/scorer.ts` | `score()`/`scoreBatch()` async，可注入 `textEmbedder: TextEmbedder`，384 维真实向量去重 + 维度不匹配保护（P1-3 重写） |
+| pipeline | `src/pipeline.ts` | `parseNodeId()` dispatch（github-issue/N 或 experience/id）、`canonicalByClusterId` 不变量校验（P1-2）、`vectorsById` O(1) 摘要查找（P2-4） |
+| types | `src/types.ts` | `ProblemCandidate.failedDraft: boolean` |
+| review | `src/review/mining-store.ts` | `failed_draft` 列 + `listCandidatesByStatus(limit, offset)` + `countCandidates(status?)`（W3 预留） |
+| CLI | `packages/cli/src/commands/diagnose-cmd.ts` | `cesium pkb mine --since --threshold --min-cluster --llm-backend --openai-*` 全套开关；去除重复 DDL（P2-1）；since ISO 校验（P2-2） |
+| 测试 | 4 个新/重写 `*.test.ts` | 新增 pipeline 不变量回归、scorer 384 维真实 textEmbedder + dim mismatch skip、drafter fence / 失败路径 |
 
-| # | 任务 | 文件 | 测试 |
+**W2 决策记录：**
+- `LLMBackend` 仅暴露 `complete(prompt, opts)`，不使用 function calling，满足"禁止强绑 OpenAI"约束
+- `Drafter` prompt 模板保持 TypeScript 模板字符串，未做 YAML/JSON 配置化
+- `Scorer` 的 textEmbedder 通过依赖注入而非硬绑 `QdrantEmbeddingProvider`，让 scorer 测试可纯函数化
+- `MiningPipeline` 仍强依赖 `QdrantEmbeddingProvider`，无 vector 时直接抛出 sharp 环境修复提示
+- W2 Review 产出 4 P1 + 8 P2，全部在当日晚修复，360 tests pass
+
+### 2.11.3 W3 实际产出（2026-06-24，待 commit）
+
+| 模块 | 文件 | 说明 |
+|---|---|---|
+| promotion | `src/promotion/promoter.ts`（新增，~286 行） | `GeneratedPattern`（extends `ProblemPattern` + 溯源字段）、`PromoteInput`、`promoteCandidate`（幂等 append/replace + id 冲突检测）、`buildGeneratedPattern`（纯函数）、`loadGeneratedPatterns`（ENOENT→[]）、`diffGenerated`（added/updated/unchanged） |
+| promotion | `src/promotion/promoter.test.ts`（新增，~300 行） | 14 个测试覆盖 build/promote/diff 三条路径，含"同 candidateId 幂等"、"不同 candidateId 同 id 冲突抛错"、"pretty-print JSON" 等回归 |
+| review | `src/review/mining-store.ts` | `listCandidatesByStatus(status, limit, offset)` + `countCandidates(status?)`，供 review / mining-stats CLI 使用 |
+| index | `src/index.ts` | 导出 `promoteCandidate / buildGeneratedPattern / loadGeneratedPatterns / diffGenerated / GeneratedPattern / PromoteInput / ScorerConfig / TextEmbedder` |
+| CLI | `packages/cli/src/commands/diagnose-cmd.ts` | 新增 `cesium pkb review` / `promote <id>` / `approve <id>` / `reject <id>` / `diff` / `mining-stats` 六个子命令 + `printCandidateDetail` 结构类型 helper |
+
+**W3 决策记录：**
+- `promoter.ts` 永不写 `problem-patterns.json`（严守 P1-4）；仅写 `generated-patterns.json`
+- `GeneratedPattern` 在 `ProblemPattern` 基础上追加 `candidateId / canonicalId / clusterId / promotedAt / sourceCount`，便于 review 溯源
+- `promoteCandidate` 冲突检测采用"相同 id 但不同 candidateId → 抛错"语义，避免覆盖他人 promote
+- `sanitizeId` 将非 alnum 字符统一替换为 `_`，因此 `candidate/1` 落库为 `candidate_1`（已在测试期望中反映）
+- `normalizeCategory` 把未知 category 归一为 `"debug"`（保守默认，避免 schema 错误）
+- CLI 形态保持 terminal prompt（P2-3），未引入 TUI
+- 本阶段未新增 MCP tool（遵守 §2.10 约束）
+
+### 2.11.4 W4 任务拆解（待启动，预计 1 周）
+
+**目标：** 在 CesiumGS/cesium 近 6 个月 issue 上跑一次完整挖掘，产出首批可 promote 的 candidate，并测量 Phase 2D → Phase 2E 的 Coverage 提升。
+
+| # | 任务 | 文件 | 测试 / 验收 |
 |---|---|---|---|
-| W2.1 | `LLMBackend` 抽象 + `OllamaBackend` 默认实现 + `OpenAICompatibleBackend` fallback | `packages/mining/src/drafting/llm-backend.ts` | 用 fake fetch 覆盖两种 backend；断言 prompt 格式 / retry / 超时 |
-| W2.2 | `Drafter`：把 Cluster + CanonicalProblem → LLM → `NewCandidateInput` | `packages/mining/src/drafting/drafter.ts` | mock LLMBackend，断言草稿字段（alias/symptoms/symbols/category）正确解析 |
-| W2.3 | `Scorer`：计算 candidate 与现有 `problem-patterns.json` 的 cosine，> 0.9 标 `dup_of` | `packages/mining/src/drafting/scorer.ts` | 对照 10 个现有 pattern，构造"z-fighting 换皮"草稿应命中 dup_of |
-| W2.4 | `MiningPipeline` orchestrator：串联 provider → clusterer → canonical → drafter → scorer → store | `packages/mining/src/pipeline.ts` | 用 in-memory `EmbeddingSearchProvider` + 已知向量跑端到端，断言 store 内有 candidate |
-| W2.5 | CLI 骨架 `cesium pkb mine --since <date> [--threshold 0.90] [--min-cluster 5]` | `packages/cli/src/commands/diagnose-cmd.ts`（扩展 `pkb`） | CLI e2e guard 覆盖 mine 命令注册；graceful fallback 到 keyword-only 不适用（mine 强依赖 vector） |
-| W2.6 | 端到端文档 + README for `@cesium-nexus/mining` | `packages/mining/README.md` | — |
+| W4.1 | **Phase 2D Coverage 基线**：在最近 500 条 issue 上用 `matchProblemPatterns`（Hybrid Matcher）跑一遍，记录命中率 | 新增 `packages/diagnosis/src/evaluation.coverage.test.ts` 或 CLI `cesium pkb coverage --baseline` | 基线数字写入 `计划审核/Phase2E-review-*.md` §1 |
+| W4.2 | **真实数据抓取**：`cesium pkb fetch --repo CesiumGS/cesium --since 6m` 把 issue 落库到 `cesium.db` | 扩展 `packages/indexer/src/github/github-issues.ts` 或 CLI 包壳 | e2e guard 覆盖 fetch 命令注册 |
+| W4.3 | **端到端挖掘**：`cesium pkb mine --since 6m --threshold 0.90 --llm-backend ollama`，产出 ≥ 5 个 candidate | CLI 串联 provider → clusterer → canonical → drafter → scorer → store | store 中 candidate 数 ≥ 1；accepted 目标 ≥ 5 |
+| W4.4 | **Review + Promote 实战**：`cesium pkb review` 逐个过，`promote` accepted 到 `generated-patterns.json` | 人工 | `generated-patterns.json` 首批 ≥ 5 条 |
+| W4.5 | **人工 merge**：把 `generated-patterns.json` 合入 `problem-patterns.json`（保留 review 轨迹） | 手工编辑 + git diff 留痕 | PR 描述包含 review 截图 |
+| W4.6 | **Phase 2E Coverage 结果**：在同样 500 条 issue 上重测命中率，对比基线 | 同 W4.1 | 提升 ≥ 15pp（硬指标 §2.12） |
+| W4.7 | **Approved Rate / FP 抽样 / Canonical 去重评估**：填 §2.12 硬指标 | 人工统计 | 写入 review 文档 |
+| W4.8 | **性能基线实测**：`cesium pkb mine --since 6m` 耗时（不含 LLM） | CLI 输出 | < 60s（硬指标 §2.12） |
 
-**W2 决策预设（实施时若偏离需回填 §2.11.1）：**
-- LLMBackend 只暴露 `complete(prompt, opts)`，不引入 function calling（避免 P2-5 禁止的"强绑 OpenAI"）
-- Drafter 的 prompt 模板作为 TypeScript 字符串常量，暂不做 YAML/JSON 配置（避免过早抽象）
-- Scorer 的 cosine 阈值与 Clusterer 解耦，独立配置（默认 0.9）
-- `MiningPipeline` 强依赖 `QdrantEmbeddingProvider`；W2 不做 graceful fallback（没有 vector 就没法 cluster，直接失败并提示 sharp 环境修复）
+**W4 决策预设（实施时若偏离需回填 §2.11.5）：**
+- 目标仓库：`CesiumGS/cesium`（GitHub issue 主库），forum 暂不在本轮范围
+- 时间窗：近 6 个月（`--since` 取值 = today - 180d）
+- LLM 后端：默认 Ollama（`qwen2.5:7b`），若本地不可用则 fallback 到 OpenAI Compatible
+- Coverage 基线测量与 Phase 2E 结果测量必须使用**同一批** 500 条 issue（同 seed），避免抽样偏差
+- W4 结束时**不自动**启动 Phase 3 Scope Review，需用户明确指令
 
 ### 2.12 验收标准（P1-5 + P2-7）
 
@@ -554,6 +599,15 @@ Phase 2E Review 通过后，**另起**一份 `计划审核/Phase3-scope-review-*
 - §2.11 任务排期表加"状态"列，W1 标 ✅；新增 §2.11.1 W1 实际产出 + W1 决策记录；新增 §2.11.2 W2 任务拆解
 - §9 下一步 更新为当前真实状态
 
+### 2026-06-24 v4（W2 + W3 完成回填，无新决策）
+
+- header 状态更新为"执行中 — Phase 2D 收尾 ✅ / Phase 2E W1 ✅ / W2 ✅ / W3 ✅ / 待启动 W4"
+- §0.0 进度日志追加 W2 / W2 Review / W3 三条（commit hash 待回填）
+- §2.11 任务排期表 W2 / W3 状态改 ✅，W4 描述加"待启动"
+- 原 §2.11.2（W2 任务拆解）替换为 §2.11.2 W2 实际产出 + §2.11.3 W3 实际产出 + §2.11.4 W4 任务拆解
+- §9 下一步 表更新：W2 / W3 标 ✅，W4 加粗为当前待启动项
+- 测试基线：W2 完成 360 tests pass → W3 完成 374 tests pass（W0 基线 297）
+
 ---
 
 ## 9. 下一步
@@ -562,10 +616,10 @@ Phase 2E Review 通过后，**另起**一份 `计划审核/Phase3-scope-review-*
 |---|---|---|---|
 | 1 | Phase 2D 收尾 | ✅ 完成 | commits `e04a5ea` / `c69ab03` / `aa050c8`，tag `v0.5.0`，review 通过 |
 | 2 | Phase 2E W1 | ✅ 完成 | commit `ae32352`，mining 包脚手架 + 4 层架构，30 新测试 |
-| 3 | **Phase 2E W2** | 🔲 待启动 | LLM backend + Drafter + Scorer + 去重（见 §2.11.2） |
-| 4 | Phase 2E W3 | 🔲 | pkb mine / review / promote / diff CLI 串联 |
-| 5 | Phase 2E W4 | 🔲 | 真实数据挖掘 + Coverage 评估 |
+| 3 | Phase 2E W2 | ✅ 完成 | LLMBackend + Drafter + Scorer + Pipeline + `cesium pkb mine`；W2 Review 4 P1 + 8 P2 全部修复，360 tests pass |
+| 4 | Phase 2E W3 | ✅ 完成 | Promoter + Review/Promote/Approve/Reject/Diff/Mining-stats CLI，374 tests pass（+14 新测试） |
+| 5 | **Phase 2E W4** | 🔲 待启动 | 真实数据挖掘 + Coverage 评估（见 §2.11.4） |
 | 6 | Phase 2E Review | 🔲 | 独立审核文档（Approved Rate / Coverage Gain / 去重效果） |
 | 7 | Phase 3 Scope Review | 🔲 | Phase 2E 通过后**另起**，不合并 |
 
-**当前阻塞：无。待用户指令启动 W2。**
+**当前阻塞：无。待用户指令启动 W4。**

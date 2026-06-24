@@ -132,6 +132,7 @@ export interface SyncIssuesOptions {
   repo: string;
   token?: string;
   since?: string | null;
+  maxPages?: number;
 }
 
 export interface SyncResult {
@@ -142,7 +143,7 @@ export interface SyncResult {
 }
 
 export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
-  const { owner, repo, token, since } = opts;
+  const { owner, repo, token, since, maxPages } = opts;
   const repoSlug = `${owner}/${repo}`;
 
   const params = new URLSearchParams({
@@ -189,6 +190,11 @@ export async function syncIssues(opts: SyncIssuesOptions): Promise<SyncResult> {
 
     // Parse Link header for next page
     nextUrl = parseNextLink(headers.get("Link"));
+
+    if (nextUrl && maxPages && totalPages >= maxPages) {
+      console.log(`Reached max-pages limit (${maxPages}); stopping gracefully.`);
+      nextUrl = null;
+    }
   }
 
   console.log("Issue sync complete.");

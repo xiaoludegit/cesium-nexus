@@ -35,6 +35,7 @@ export class MiningStore {
         llm_raw            TEXT,
         quality_score      REAL,
         dup_of             TEXT,
+        failed_draft       INTEGER NOT NULL DEFAULT 0,
         status             TEXT DEFAULT 'pending',
         reviewed_at        INTEGER,
         created_at         INTEGER NOT NULL,
@@ -103,9 +104,9 @@ export class MiningStore {
       .prepare(
         `INSERT OR REPLACE INTO problem_candidate
           (id, canonical_id, cluster_id, draft_alias, draft_symptoms, draft_symbols,
-           draft_category, llm_raw, quality_score, dup_of, status, reviewed_at,
+           draft_category, llm_raw, quality_score, dup_of, failed_draft, status, reviewed_at,
            created_at, source_count, issue_count, forum_count, experience_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         c.id,
@@ -118,6 +119,7 @@ export class MiningStore {
         c.llmRaw,
         c.qualityScore,
         c.dupOf,
+        c.failedDraft ? 1 : 0,
         c.status,
         c.reviewedAt,
         c.createdAt,
@@ -143,6 +145,35 @@ export class MiningStore {
       ? this.db.prepare(sql).all(status)
       : this.db.prepare(sql).all()) as CandidateRow[];
     return rows.map(fromCandidateRow);
+  }
+
+  listCandidatesByStatus(
+    status: CandidateStatus,
+    limit: number,
+    offset = 0,
+  ): ProblemCandidate[] {
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM problem_candidate
+         WHERE status = ?
+         ORDER BY created_at DESC
+         LIMIT ? OFFSET ?`,
+      )
+      .all(status, limit, offset) as CandidateRow[];
+    return rows.map(fromCandidateRow);
+  }
+
+  countCandidates(status?: CandidateStatus): number {
+    const row = status
+      ? (this.db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM problem_candidate WHERE status = ?`,
+          )
+          .get(status) as { n: number } | undefined)
+      : (this.db
+          .prepare(`SELECT COUNT(*) AS n FROM problem_candidate`)
+          .get() as { n: number } | undefined);
+    return row?.n ?? 0;
   }
 
   getCandidate(id: string): ProblemCandidate | null {
@@ -225,6 +256,7 @@ interface CandidateRow {
   llm_raw: string | null;
   quality_score: number | null;
   dup_of: string | null;
+  failed_draft: number;
   status: CandidateStatus;
   reviewed_at: number | null;
   created_at: number;
@@ -261,6 +293,7 @@ function fromCandidateRow(r: CandidateRow): ProblemCandidate {
     llmRaw: r.llm_raw,
     qualityScore: r.quality_score,
     dupOf: r.dup_of,
+    failedDraft: r.failed_draft !== 0,
     status: r.status,
     reviewedAt: r.reviewed_at,
     createdAt: r.created_at,

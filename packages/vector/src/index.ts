@@ -32,6 +32,12 @@ export {
 } from "./embed-pkb.js";
 
 export {
+  embedIssues,
+  buildIssueEmbedText,
+  buildIssuePayload,
+} from "./embed-issues.js";
+
+export {
   searchExperienceSemantic,
   searchKnowledgeBase,
   buildReferencesEdges,
@@ -45,4 +51,5 @@ export type {
   QdrantExperiencePayload,
   QdrantProblemPatternPayload,
   QdrantRenderStagePayload,
+  QdrantIssuePayload,
 } from "./types.js";

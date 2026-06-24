@@ -136,7 +136,7 @@ interface ProblemCandidate {
 pnpm test -- packages/mining
 ```
 
-**59 tests** covering:
+**65 tests in this package** (`@cesium-nexus/mining`) covering:
 - `CosineThresholdClusterer` — greedy seed clustering, threshold enforcement, size limits
 - `CanonicalProblem` factory — sequential IDs, experience/issue ID mapping
 - `CandidateFactory` — build, source count aggregation, llmRaw/dupOf preservation

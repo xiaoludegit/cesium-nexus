@@ -28,6 +28,8 @@ export interface ProblemCandidate {
   llmRaw: string | null;
   qualityScore: number | null;
   dupOf: string | null;
+  /** True if the LLM draft failed — review CLI should filter these out. */
+  failedDraft: boolean;
 
   status: CandidateStatus;
   reviewedAt: number | null;

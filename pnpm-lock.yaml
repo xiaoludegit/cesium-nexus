@@ -47,6 +47,9 @@ importers:
       '@cesium-nexus/mcp':
         specifier: workspace:*
         version: link:../mcp
+      '@cesium-nexus/mining':
+        specifier: workspace:*
+        version: link:../mining
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
