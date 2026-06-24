@@ -22,7 +22,7 @@
 | Phase 2C Experience Graph | ✅ 完成 | `fixes` 确定性边 + BFS |
 | Phase 2C+ Qdrant Vector Search | ✅ 完成 | 384 维 ONNX embed + `references` 推断边 |
 | Phase 2D Diagnosis Retrieval Enhancement | ✅ 完成 + 已发布 | commit `e04a5ea`，tag `v0.5.0`，297 tests |
-| Phase 2E Problem Mining Pipeline | 🟡 W3 已完成 | W1 `ae32352` / W2 + W3 待 commit，374 passed |
+| Phase 2E Problem Mining Pipeline | 🟡 W3 已完成（commit ddb3bbd） | W1 `ae32352` / W2 + W3 待 commit，374 passed |
 | Phase 3 Can Diagnose | 🔲 未开始 | 待 Phase 2E 完成后**单独**做范围重审 |
 
 ### 0.0 进度日志
