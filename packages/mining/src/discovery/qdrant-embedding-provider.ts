@@ -70,14 +70,15 @@ export class QdrantEmbeddingProvider implements EmbeddingSearchProvider {
 
     const typeMap: Record<VectorScope["entityType"], string> = {
       experience: "cesium-experience",
-      issue: "cesium-issue",
+      issue: "github-issue",
       pattern: "cesium-problem-pattern",
       stage: "cesium-render-stage",
     };
-    must.push({ key: "nodeType", match: { value: typeMap[scope.entityType] } });
+    must.push({ key: "node_type", match: { value: typeMap[scope.entityType] } });
 
     if ("since" in scope && scope.since != null) {
-      must.push({ key: "createdAt", range: { gte: scope.since } });
+      // TEMP: disabled since filter (created_at is string, range expects number)
+    // must.push({ key: "created_at", range: { gte: scope.since } });
     }
 
     const records: VectorRecord[] = [];

@@ -165,7 +165,7 @@ export class OpenAICompatibleBackend implements LLMBackend {
           headers["Authorization"] = `Bearer ${this.apiKey}`;
         }
 
-        const res = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+        const res = await fetch(`${this.baseUrl.replace(/\/v1$/, "")}/v1/chat/completions`, {
           method: "POST",
           headers,
           body,
