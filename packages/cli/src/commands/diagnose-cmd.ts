@@ -311,6 +311,125 @@ export function registerDiagnoseCommand(program: Command): void {
       },
     );
 
+  // ── pkb mine — trigger problem mining pipeline ──────────────────
+  pkb
+    .command("mine")
+    .description(
+      "Run the problem mining pipeline: cluster → canonical → draft → score → store",
+    )
+    .option("--since <date>", "Only mine issues updated since date (ISO 8601)", undefined)
+    .option("--threshold <n>", "Cosine clustering threshold (0.85|0.90|0.95)", "0.90")
+    .option("--min-cluster <n>", "Minimum cluster size", "2")
+    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
+    .option("--llm-backend <type>", "LLM backend: ollama | openai", "ollama")
+    .option("--ollama-url <url>", "Ollama server URL", "http://localhost:11434")
+    .option("--ollama-model <model>", "Ollama model name", "qwen2.5:7b")
+    .action(async (opts: Record<string, string>) => {
+      try {
+        const { MiningStore } = await import("@cesium-nexus/mining");
+        const {
+          MiningPipeline,
+          OllamaBackend,
+          Scorer,
+          QdrantEmbeddingProvider,
+        } = await import("@cesium-nexus/mining");
+
+        const Database = (await import("better-sqlite3")).default;
+        const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+
+        const store = new MiningStore(db);
+
+        // Initialize mining schema
+        db.exec(`
+          CREATE TABLE IF NOT EXISTS canonical_problem (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, aliases TEXT NOT NULL,
+            representative_issue_id INTEGER, cluster_ids TEXT NOT NULL,
+            experience_ids TEXT NOT NULL, confidence REAL NOT NULL,
+            status TEXT DEFAULT 'candidate', created_at INTEGER NOT NULL,
+            reviewed_at INTEGER
+          );
+          CREATE TABLE IF NOT EXISTS problem_candidate (
+            id TEXT PRIMARY KEY, canonical_id TEXT NOT NULL, cluster_id TEXT NOT NULL,
+            draft_alias TEXT NOT NULL, draft_symptoms TEXT NOT NULL,
+            draft_symbols TEXT NOT NULL, draft_category TEXT, llm_raw TEXT,
+            quality_score REAL, dup_of TEXT, status TEXT DEFAULT 'pending',
+            reviewed_at INTEGER, created_at INTEGER NOT NULL,
+            source_count INTEGER NOT NULL DEFAULT 0, issue_count INTEGER NOT NULL DEFAULT 0,
+            forum_count INTEGER NOT NULL DEFAULT 0, experience_count INTEGER NOT NULL DEFAULT 0
+          );
+        `);
+
+        // Setup LLM backend
+        const llmBackend = new OllamaBackend({
+          url: opts.ollamaUrl || "http://localhost:11434",
+          model: opts.ollamaModel || "qwen2.5:7b",
+        });
+
+        // Setup embedding provider
+        const provider = new QdrantEmbeddingProvider({
+          url: opts.qdrantUrl || "http://localhost:6333",
+        });
+
+        // Setup components
+        const drafter = new (await import("@cesium-nexus/mining")).Drafter({
+          llm: llmBackend,
+        });
+        const scorer = new Scorer({ threshold: parseFloat(opts.threshold || "0.90") });
+
+        // Run pipeline
+        const pipeline = new MiningPipeline({
+          provider,
+          clustererConfig: {
+            threshold: parseFloat(opts.threshold || "0.90"),
+            minClusterSize: parseInt(opts.minCluster || "2", 10),
+            maxClusterSize: 50,
+          },
+          drafter,
+          scorer,
+          store,
+          db,
+          vectorScope: opts.since
+            ? { entityType: "issue", since: new Date(opts.since).getTime() }
+            : { entityType: "issue" },
+        });
+
+        const result = await pipeline.run();
+
+        console.log(`Mining complete:`);
+        console.log(`  Vectors:    ${result.stats.totalVectors}`);
+        console.log(`  Clusters:   ${result.stats.totalClusters}`);
+        console.log(`  Canonical:  ${result.stats.totalCanonicalProblems}`);
+        console.log(`  Candidates: ${result.stats.totalCandidates}`);
+        console.log(`  Duration:   ${result.stats.durationMs}ms`);
+        console.log(`  Threshold:  ${result.stats.threshold}`);
+
+        // Show candidates
+        const candidates = store.listCandidates();
+        if (candidates.length > 0) {
+          console.log(`\nCandidates:`);
+          for (const c of candidates) {
+            const dupInfo = c.dupOf ? ` (dup_of: ${c.dupOf})` : "";
+            console.log(`  ${c.id}${dupInfo}`);
+            console.log(`    aliases: ${(c.draftAlias || []).slice(0, 3).join(", ")}`);
+            console.log(`    category: ${c.draftCategory || "N/A"}`);
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND") || /Qdrant/i.test(msg)) {
+          console.error(`Error: Qdrant unreachable — ${msg.split("\n")[0]}`);
+          console.error("  Hint: start Qdrant with `docker run -d -p 6333:6333 qdrant/qdrant`");
+        } else if (msg.includes("ollama") || msg.includes("11434")) {
+          console.error(`Error: Ollama unreachable — ${msg.split("\n")[0]}`);
+          console.error("  Hint: start Ollama with `ollama serve`");
+        } else {
+          console.error(`Error: ${msg}`);
+        }
+        process.exitCode = 1;
+      }
+    });
+
   program
     .command("stage <id>")
     .description("Query render stages by stage ID or problem pattern ID")

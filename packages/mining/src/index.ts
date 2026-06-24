@@ -13,6 +13,15 @@ export {
   buildCandidate,
   resetCandidateSeq,
 } from "./drafting/candidate-factory.js";
+export { Drafter } from "./drafting/drafter.js";
+export type { DrafterOptions } from "./drafting/drafter.js";
+export { Scorer } from "./drafting/scorer.js";
+export { OllamaBackend, OpenAICompatibleBackend } from "./drafting/llm-backend.js";
+export type { LLMBackend, LLMOptions } from "./drafting/llm-backend.js";
 
 // review
 export { MiningStore } from "./review/mining-store.js";
+
+// pipeline
+export { MiningPipeline } from "./pipeline.js";
+export type { MiningPipelineOptions, PipelineResult } from "./pipeline.js";
