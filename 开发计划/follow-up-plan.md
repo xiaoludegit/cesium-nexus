@@ -9,8 +9,9 @@
 > v6 修订：2026-06-25，Phase 3A1 集成测试完成
 > v7 修订：2026-06-25，Phase 3A2 Shader Intelligence 完成
 > v8 修订：2026-06-25，Phase 3B Evidence Fusion Engine 完成
+> v9 修订：2026-06-25，Phase 3C 完成 + Code Review 修复 + E2E 验收通过
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ Phase 3（Code Intelligence）
-> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 ✅ / Phase 3B ✅ / Phase 3C 待启动
+> 状态：**Phase 3 全部完成** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 ✅ / Phase 3B ✅ / Phase 3C ✅
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -31,7 +32,7 @@
 | Phase 3A1 Version Intelligence | ✅ 集成测试完成 | commit `c93dd21`，426 tests |
 | Phase 3A2 Shader Intelligence | ✅ 完成 | commit `0ac02ce`，434 tests |
 | Phase 3B Evidence Fusion Engine | ✅ 完成 | 442 tests |
-| Phase 3C MCP Tools + Service Layer | 🔲 待启动 | — |
+|| Phase 3C MCP Tools + Service Layer | ✅ 完成 | 455 tests |
 
 ### 0.0 进度日志
 
@@ -51,7 +52,10 @@
 | 2026-06-25 | Phase 3A1 — Version Intelligence foundation | `d565861` |
 | 2026-06-25 | Phase 3A1 — Integration tests (18 tests) | `c93dd21` |
 | 2026-06-25 | Phase 3A2 — Shader Intelligence | `0ac02ce` |
-| 2026-06-25 | Phase 3B — Evidence Fusion Engine | (待提交) |
+|| 2026-06-25 | Phase 3B — Evidence Fusion Engine | (待提交) |
+|| 2026-06-25 | Phase 3C — MCP Tools + Service Layer | `8410370` |
+|| 2026-06-25 | Phase 3C — Code Review 修复 | `a7d53b6` |
+|| 2026-06-25 | Phase 3 — E2E 验收通过（10/10，455 tests） | (待提交) |
 
 ---
 
@@ -83,7 +87,7 @@
 | Phase 3A1 | W1-W2 | Version Intelligence | ✅ 完成 |
 | Phase 3A2 | W3 | Shader Intelligence | ✅ 完成 |
 | Phase 3B | W4-W5 | Evidence Fusion Engine | ✅ 完成 |
-| Phase 3C | W6 | MCP Tools + Service Layer | 🔲 待启动 |
+|| Phase 3C MCP Tools + Service Layer | ✅ 完成 | 455 tests |
 
 ### 2.3 Phase 3B 完成内容
 
@@ -130,9 +134,27 @@ Suggested Actions:
 ### 2.4 测试状态
 
 ```
-Test Files  35 passed | 1 skipped (36)
-Tests       442 passed | 11 skipped (453)
+Test Files  36 passed | 1 skipped (37)
+Tests       455 passed | 11 skipped (466)
 ```
+
+### 2.5 E2E 验收结果（10 个问题）
+
+| # | 查询 | 期望 Pattern | 结果 |
+|---|------|-------------|------|
+| 1 | polygon flickering when overlapping | z_fighting | ✅ |
+| 2 | z-fighting on overlapping geometry | z_fighting | ✅ |
+| 3 | depth buffer precision loss at far distances | depth_precision | ✅ |
+| 4 | terrain and ground primitive conflict | terrain_conflict | ✅ |
+| 5 | too many primitives causing frame drop | primitive_performance | ✅ |
+| 6 | label disappears or not visible | label_visibility | ✅ |
+| 7 | 3D Tiles jitter or oscillation | tiles_jitter | ✅ |
+| 8 | tiles loading problem with blank area | tiles_loading | ✅ |
+| 9 | shader compile error in GLSL | shader_compile_error | ✅ |
+| 10 | LOD popping level of detail artifacts | lod_popping | ✅ |
+
+**通过率：10/10 (100%)**
+**性能：全部 < 10ms（目标 < 3s）**
 
 ---
 
@@ -140,10 +162,10 @@ Tests       442 passed | 11 skipped (453)
 
 | # | 任务 | 状态 | 备注 |
 |---|------|------|------|
-| 1 | Phase 3C MCP Tools + Service Layer | 🔲 待启动 | 待用户指令 |
-| 2 | 端到端验收（10 个问题） | 🔲 | 待 Phase 3C 完成 |
+|| Phase 3C MCP Tools + Service Layer | ✅ 完成 | 455 tests |
+| 2 | 端到端验收（10 个问题） | ✅ | 10/10 正确，455 tests |
 
-**当前阻塞：无。待用户指令进入 Phase 3C。**
+**Phase 3 全部完成。无阻塞。**
 
 ### 2.5 Phase 3C 完成内容
 
@@ -180,6 +202,6 @@ Tests       442 passed | 11 skipped (453)
 | Phase 3A1 Version Intelligence | ✅ | +18 |
 | Phase 3A2 Shader Intelligence | ✅ | +8 |
 | Phase 3B Evidence Fusion Engine | ✅ | +8 |
-| Phase 3C MCP Tools + Service Layer | ✅ | 442 total |
+|| Phase 3C MCP Tools + Service Layer | ✅ 完成 | 455 tests |
 
 **Phase 3 全部完成！**

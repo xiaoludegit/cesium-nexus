@@ -2,7 +2,7 @@
 
 > **Cesium AI Expert** — A knowledge-base CLI and MCP server that turns Cesium's source code, API docs, issues, and community data into structured context for AI agents.
 
-**当前阶段：v0.5.0（Phase 2D — Diagnosis Retrieval Enhancement）**
+**当前阶段：Phase 3 完成（Code Intelligence — Version/Shader/Evidence Fusion/Service Layer）**
 
 本文档描述当前 MVP 的实现范围。完整设计蓝图和延后功能见 [future-roadmap.md](./future-roadmap.md)。
 
@@ -22,7 +22,7 @@ Cesium is a large, fast-moving codebase. Understanding why `Primitive.update` cr
 Agent (Claude / Codex / Hermes)
         │
         ▼
-  MCP Server (stdio) — 13 tools
+  MCP Server (stdio) — 17 tools
         │
   ┌─────┴──────────────────────────────────┐
   │          Skill Dispatch                │
@@ -276,6 +276,32 @@ The server starts on stdio and exposes all MCP tools automatically.
 |---|---|
 | `cesium mcp` | Start MCP server on stdio transport (for AI agents). `--db <path>` for custom DB |
 
+### Version Intelligence (Phase 3A1)
+
+| Command | Description |
+|---|---|
+| `cesium snapshot <version>` | Generate version snapshot for a Cesium version |
+| `cesium snapshot --list` | List all snapshot versions |
+| `cesium diff <from> <to>` | Compare symbols between two versions. `--symbol <name>` to filter |
+| `cesium diff --breaking <from> <to>` | Show only breaking changes between versions |
+
+### Shader Intelligence (Phase 3A2)
+
+| Command | Description |
+|---|---|
+| `cesium shader <name>` | Search shader symbols by name pattern |
+| `cesium shader --type uniform` | Filter by shader type (uniform/varying/function/struct/define/const) |
+| `cesium shader --file ModelVS.glsl` | Filter by file path |
+| `cesium shader --rebuild` | Rebuild shader index |
+
+### Root Cause Diagnosis (Phase 3B)
+
+| Command | Description |
+|---|---|
+| `cesium diagnose-reason <query>` | Root cause diagnosis using Evidence Fusion Engine |
+| `cesium diagnose-reason <query> --verbose` | Show full evidence chain |
+| `cesium diagnose-reason <query> --min-confidence 0.5` | Filter by confidence threshold |
+
 ---
 
 ## MCP Tools Reference
@@ -297,6 +323,10 @@ When running as an MCP server (`cesium mcp`), the following tools are available 
 | `build_skill_pack` | `{ query, budget? }` | Skill-aware Context Pack v2 with diagnosis, render stages, forum, and experience data |
 | `get_experience_chain` | `{ nodeId, maxDepth? }` | Experience graph traversal: connected nodes and edges (fix chains linking PRs to issues) |
 | `semantic_search_experience` | `{ query, limit?, minScore?, type? }` | Semantic search over experience nodes using Qdrant vector similarity (cosine) |
+| `search_migration` | `{ from_version, to_version, symbol? }` | Search for breaking changes between Cesium versions |
+| `search_shader` | `{ query, type?, related_js_symbol?, render_stage?, file? }` | Search shader symbols and diagnose shader issues |
+| `compare_version` | `{ from_version, to_version, symbol?, breaking_only? }` | Compare symbols between two Cesium versions |
+| `diagnose_root_cause` | `{ query, verbose?, min_confidence? }` | Diagnose root cause using Evidence Fusion Engine |
 
 All tools return JSON with a standard envelope:
 
@@ -307,7 +337,7 @@ All tools return JSON with a standard envelope:
 }
 ```
 
-**延后到后续 Phase 的 MCP tools：** `compare_version`, `search_source`（详见 [future-roadmap.md](./future-roadmap.md)）。
+**Phase 3 新增 MCP tools：** `search_migration`, `search_shader`, `compare_version`, `diagnose_root_cause`（详见 MCP Tools Reference 表格）。
 
 ---
 
@@ -419,7 +449,31 @@ cesium-nexus/
 │   ├── mcp/                 # MCP server (stdio transport)
 │   │   └── src/
 │   │       ├── handlers.ts          # Pure handler functions (13 tools)
-│   │       └── server.ts            # MCP server setup + tool registration
+│   │       ├── intelligence-handlers.ts # Phase 3C intelligence tool handlers (4 tools)
+│   │       └── server.ts            # MCP server setup + tool registration (17 tools)
+│   │
+│   ├── intelligence/        # Code Intelligence: Version + Shader indexing
+│   │   └── src/
+│   │       ├── snapshot-builder.ts    # Version snapshot creation
+│   │       ├── symbol-diff-engine.ts  # Cross-version symbol diff
+│   │       ├── breaking-change-detector.ts # Breaking change detection
+│   │       ├── shader-index-builder.ts # GLSL shader indexing
+│   │       └── identity.ts           # Stable symbol ID generation (SHA1)
+│   │
+│   ├── reasoner/            # Evidence Fusion Engine: root cause diagnosis
+│   │   └── src/
+│   │       ├── evidence-collector.ts  # Multi-source evidence collection
+│   │       ├── evidence-ranker.ts     # Rule-based evidence ranking
+│   │       ├── explanation-generator.ts # Human-readable explanations
+│   │       └── diagnosis-reasoner.ts  # Integrated root cause diagnosis
+│   │
+│   ├── service/             # Service Layer: MCP/CLI → Service → Intelligence/Reasoner
+│   │   └── src/
+│   │       ├── migration-service.ts   # Breaking changes + migration guides
+│   │       ├── shader-service.ts      # Shader search + filtering
+│   │       ├── version-service.ts     # Version snapshots + diffs
+│   │       ├── diagnosis-service.ts   # Root cause diagnosis
+│   │       └── factory.ts            # Dependency injection
 │   │
 │   ├── context-pack/        # Context Pack v1 builder
 │   │   └── src/
