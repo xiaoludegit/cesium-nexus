@@ -7,8 +7,9 @@
 > v4 修订：2026-06-24，W2 + W3 完成回填
 > v5 修订：2026-06-25，Phase 2E 完成 + Phase 3 启动
 > v6 修订：2026-06-25，Phase 3A1 集成测试完成
+> v7 修订：2026-06-25，Phase 3A2 Shader Intelligence 完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ Phase 3（Code Intelligence）
-> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 待启动
+> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 ✅ / Phase 3B 待启动
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -27,7 +28,7 @@
 | Phase 2D Diagnosis Retrieval Enhancement | ✅ 完成 + 已发布 | commit `e04a5ea`，tag `v0.5.0`，297 tests |
 | Phase 2E Problem Mining Pipeline | ✅ 验收通过 | commit `2f09eae`，408 tests |
 | Phase 3A1 Version Intelligence | ✅ 集成测试完成 | commit `c93dd21`，426 tests |
-| Phase 3A2 Shader Intelligence | 🔲 待启动 | — |
+| Phase 3A2 Shader Intelligence | ✅ 完成 | commit `0ac02ce`，434 tests |
 | Phase 3B Evidence Fusion Engine | 🔲 待启动 | — |
 | Phase 3C MCP Tools + Service Layer | 🔲 待启动 | — |
 
@@ -48,6 +49,7 @@
 | 2026-06-25 | Phase 3 Implementation Plan v1.1 | `36b53fc` |
 | 2026-06-25 | Phase 3A1 — Version Intelligence foundation | `d565861` |
 | 2026-06-25 | Phase 3A1 — Integration tests (18 tests) | `c93dd21` |
+| 2026-06-25 | Phase 3A2 — Shader Intelligence | `0ac02ce` |
 
 ---
 
@@ -62,24 +64,6 @@
 | Coverage ≥ 39.05% | ≥ 39.05% | **39.05%** | ✅ |
 | 无 Diagnosis Recall 下降 | — | Coverage 相同 | ✅ |
 
-### 1.2 关键数据
-
-```
-=== Mining Pipeline ===
-Vectors:    339 (total issues)
-Classified: 339
-Filtered:   238 (non-bug)
-Bug Issues: 101 → Clustering
-Clusters:   1 (threshold=0.80)
-Candidates: 1
-
-=== Coverage Report ===
-Evaluated: 338 issues
-Hit:       132 issues
-Coverage:  39.05%
-Patterns:  10/10 hit
-```
-
 ---
 
 ## 2. Phase 3 — Code Intelligence
@@ -88,22 +72,6 @@ Patterns:  10/10 hit
 
 详见 [`docs/architecture/phase3-architecture.md`](../docs/architecture/phase3-architecture.md)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Phase 3C: User Skills                   │
-│         Migration / Shader / Diff (Reasoner 消费者)         │
-├─────────────────────────────────────────────────────────────┤
-│              Phase 3B: Evidence Fusion Engine                │
-│     Evidence Collector → Evidence Ranker → Explanation       │
-├─────────────────────────────────────────────────────────────┤
-│               Phase 3A: Code Intelligence                   │
-│   Phase 3A1: Version Index  │  Phase 3A2: Shader Index      │
-├─────────────────────────────────────────────────────────────┤
-│                    Existing Knowledge Layer                  │
-│   Symbol Index / Call Graph / Render Graph / Experience      │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ### 2.2 实施计划
 
 详见 [`开发计划/Phase3-implementation-plan.md`](./Phase3-implementation-plan.md)
@@ -111,7 +79,7 @@ Patterns:  10/10 hit
 | 阶段 | 周次 | 任务 | 状态 |
 |------|------|------|------|
 | Phase 3A1 | W1-W2 | Version Intelligence | ✅ 完成 |
-| Phase 3A2 | W3 | Shader Intelligence | 🔲 待启动 |
+| Phase 3A2 | W3 | Shader Intelligence | ✅ 完成 |
 | Phase 3B | W4-W5 | Evidence Fusion Engine | 🔲 待启动 |
 | Phase 3C | W6 | MCP Tools + Service Layer | 🔲 待启动 |
 
@@ -130,42 +98,34 @@ Patterns:  10/10 hit
 | CLI | `version-cmd.ts` | `cesium snapshot` / `cesium diff` 命令 |
 | 集成测试 | `intelligence.test.ts` | 18 个测试覆盖全链路 |
 
-**测试覆盖：**
+### 2.4 Phase 3A2 完成内容
 
-| 测试类别 | 数量 | 覆盖内容 |
-|----------|------|----------|
-| Identity (RC-002) | 4 | 稳定 ID 生成、不同符号 ID、FQN 构建、身份解析 |
-| Snapshot Builder | 3 | Mock 源码扫描、缓存、版本列表 |
-| Symbol Diff Engine | 4 | 增删检测、修改检测、过滤、稳定性计算 |
-| Breaking Change Detector | 2 | 删除符号检测、迁移指南生成 |
-| Snapshot Repository | 4 | CRUD、版本列表、统计、搜索 |
-| End-to-End Flow | 1 | 完整 snapshot → diff → breaking changes 流程 |
-| **总计** | **18** | |
+**commit `0ac02ce`：**
+
+| 模块 | 文件 | 说明 |
+|------|------|------|
+| Shader Types | `shader-types.ts` | ShaderSymbol / ShaderIndex / ShaderFilters 类型 |
+| Shader Repository | `shader-repo.ts` | shader_symbol 表 CRUD + 搜索 + 统计 |
+| GLSL Scanner | `glsl-scanner.ts` | 扫描 GLSL 文件提取 shader symbols |
+| Shader Index Builder | `shader-index-builder.ts` | 构建和管理 shader 索引 |
+| Shader-JS Linker | `shader-js-linker.ts` | 将 shader 关联到 JS symbols |
+| CLI | `shader-cmd.ts` | `cesium shader` 命令 |
+| 集成测试 | `shader.test.ts` | 8 个测试 |
 
 **新增 CLI 命令：**
 
 ```bash
-# 版本快照
-cesium snapshot --version 1.118
-cesium snapshot --list
-cesium snapshot --version 1.118 --stats
+# Shader 查询
+cesium shader --name czm_model
+cesium shader --type uniform
+cesium shader --file ModelVS.glsl
+cesium shader --related Model
+cesium shader --stage model
 
-# 版本 Diff
-cesium diff --from 1.118 --to 1.130
-cesium diff --from 1.118 --to 1.130 --symbol Camera
-cesium diff --from 1.118 --to 1.130 --breaking
-cesium diff --from 1.118 --to 1.130 --format markdown
+# 索引管理
+cesium shader --rebuild
+cesium shader --stats
 ```
-
-### 2.4 Phase 3A1 验收指标
-
-| 指标 | 目标 | 实际 | 状态 |
-|------|------|------|------|
-| 测试数量 | ≥ 15 | 18 | ✅ |
-| Identity Stability | ≥ 95% | 待真实数据验证 | 🟡 |
-| Snapshot 构建 | 正常 | Mock 测试通过 | ✅ |
-| Diff 检测 | 正常 | 增删改检测通过 | ✅ |
-| Breaking Change 检测 | 正常 | removed/signature_changed 通过 | ✅ |
 
 ---
 
@@ -173,8 +133,7 @@ cesium diff --from 1.118 --to 1.130 --format markdown
 
 | # | 任务 | 状态 | 备注 |
 |---|------|------|------|
-| 1 | Phase 3A2 Shader Intelligence | 🔲 待启动 | 待用户指令 |
-| 2 | Phase 3B Evidence Fusion Engine | 🔲 | 待 Phase 3A 完成 |
-| 3 | Phase 3C MCP Tools + Service Layer | 🔲 | 待 Phase 3B 完成 |
+| 1 | Phase 3B Evidence Fusion Engine | 🔲 待启动 | 待用户指令 |
+| 2 | Phase 3C MCP Tools + Service Layer | 🔲 | 待 Phase 3B 完成 |
 
-**当前阻塞：无。待用户指令进入 Phase 3A2。**
+**当前阻塞：无。待用户指令进入 Phase 3B。**
