@@ -92,6 +92,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown", // skip classification for pipeline tests
     });
 
     const result = await pipeline.run();
@@ -135,6 +136,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown",
     });
 
     await expect(pipeline.run()).rejects.toThrow("No vectors found");
@@ -153,6 +155,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown",
     });
 
     const result = await pipeline.run();
@@ -174,6 +177,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown",
     });
 
     const result = await pipeline.run();
@@ -209,6 +213,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown",
     });
 
     await pipeline.run();
@@ -233,6 +238,7 @@ describe("MiningPipeline", () => {
       scorer,
       store,
       db,
+      intentFilter: "unknown",
     });
 
     await expect(pipeline.run()).rejects.toThrow(/Pipeline invariant violated/);

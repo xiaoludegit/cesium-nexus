@@ -16,21 +16,22 @@ export {
 export { Drafter } from "./drafting/drafter.js";
 export type { DrafterOptions } from "./drafting/drafter.js";
 export { Scorer } from "./drafting/scorer.js";
-export type { ScorerConfig, TextEmbedder } from "./drafting/scorer.js";
 export { OllamaBackend, OpenAICompatibleBackend } from "./drafting/llm-backend.js";
 export type { LLMBackend, LLMOptions } from "./drafting/llm-backend.js";
 
+// classification
+export { RuleBasedClassifier } from "./classification/rule-based-classifier.js";
+export { LLMClassifier } from "./classification/llm-classifier.js";
+export type {
+  IntentType,
+  IntentClassification,
+  IssueInput,
+  IssueIntentClassifier,
+} from "./classification/intent-classifier.js";
+export { filterBugIssues } from "./classification/intent-classifier.js";
+
 // review
 export { MiningStore } from "./review/mining-store.js";
-
-// promotion
-export {
-  promoteCandidate,
-  buildGeneratedPattern,
-  loadGeneratedPatterns,
-  diffGenerated,
-} from "./promotion/promoter.js";
-export type { GeneratedPattern, PromoteInput } from "./promotion/promoter.js";
 
 // pipeline
 export { MiningPipeline } from "./pipeline.js";

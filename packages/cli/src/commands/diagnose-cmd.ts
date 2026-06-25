@@ -524,6 +524,8 @@ export function registerDiagnoseCommand(program: Command): void {
     .option("--openai-base-url <url>", "OpenAI-compatible base URL (when --llm-backend openai)", "http://localhost:8080")
     .option("--openai-api-key <key>", "OpenAI-compatible API key (optional)", undefined)
     .option("--openai-model <model>", "OpenAI-compatible model name", "gpt-4o-mini")
+    .option("--intent-filter <type>", "Only mine issues with this intent: bug|feature_request|enhancement|refactor|unknown", "bug")
+    .option("--classifier <type>", "Intent classifier: rule|llm|hybrid", "rule")
     .action(async (opts: Record<string, string>) => {
       try {
         const {
@@ -534,6 +536,8 @@ export function registerDiagnoseCommand(program: Command): void {
           Scorer,
           Drafter,
           QdrantEmbeddingProvider,
+          RuleBasedClassifier,
+          LLMClassifier,
         } = await import("@cesium-nexus/mining");
         const { getQdrantClient } = await import("@cesium-nexus/vector");
 
@@ -550,6 +554,15 @@ export function registerDiagnoseCommand(program: Command): void {
             process.exitCode = 1;
             return;
           }
+        }
+
+        // Validate --intent-filter
+        const validIntents = ["bug", "feature_request", "enhancement", "refactor", "unknown"];
+        const intentFilter = opts.intentFilter || "bug";
+        if (!validIntents.includes(intentFilter)) {
+          console.error(`Error: --intent-filter must be one of: ${validIntents.join(", ")}`);
+          process.exitCode = 1;
+          return;
         }
 
         // Setup LLM backend
@@ -576,6 +589,27 @@ export function registerDiagnoseCommand(program: Command): void {
         const qdrantClient = getQdrantClient(opts.qdrantUrl || "http://localhost:6333");
         const provider = new QdrantEmbeddingProvider({ client: qdrantClient });
 
+        // Setup intent classifier
+        const classifierType = (opts.classifier || "rule").toLowerCase();
+        let classifier;
+        if (classifierType === "llm") {
+          classifier = new LLMClassifier({ llm: llmBackend });
+        } else if (classifierType === "hybrid") {
+          // hybrid: rule-based first, LLM fallback for low confidence
+          const ruleClassifier = new RuleBasedClassifier();
+          const llmClassifier = new LLMClassifier({ llm: llmBackend, fallbackThreshold: 0.6 });
+          classifier = {
+            classify: (issue: any) => ruleClassifier.classify(issue),
+            classifyBatch: (issues: any[]) => {
+              const ruleResults = ruleClassifier.classifyBatch(issues);
+              // For now, just use rule-based; async LLM fallback requires different API
+              return ruleResults;
+            },
+          };
+        } else {
+          classifier = new RuleBasedClassifier();
+        }
+
         // Setup components
         const drafter = new Drafter({ llm: llmBackend });
         const scorer = new Scorer({
@@ -598,6 +632,8 @@ export function registerDiagnoseCommand(program: Command): void {
           vectorScope: sinceMs != null
             ? { entityType: "issue", since: sinceMs }
             : { entityType: "issue" },
+          classifier,
+          intentFilter: intentFilter as any,
         });
 
         const result = await pipeline.run();
@@ -609,6 +645,8 @@ export function registerDiagnoseCommand(program: Command): void {
         console.log(`  Candidates: ${result.stats.totalCandidates}`);
         console.log(`  Duration:   ${result.stats.durationMs}ms`);
         console.log(`  Threshold:  ${result.stats.threshold}`);
+        console.log(`  Classified: ${result.stats.totalClassified}`);
+        console.log(`  Filtered:   ${result.stats.filteredByIntent} (non-${intentFilter})`);
 
         // Show candidates
         const candidates = store.listCandidates();

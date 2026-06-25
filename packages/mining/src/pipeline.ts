@@ -25,6 +25,12 @@ import { Scorer } from "./drafting/scorer.js";
 import { MiningStore } from "./review/mining-store.js";
 import type BetterSqlite3 from "better-sqlite3";
 import { buildCandidate } from "./drafting/candidate-factory.js";
+import type {
+  IssueIntentClassifier,
+  IntentType,
+  IntentClassification,
+} from "./classification/intent-classifier.js";
+import { RuleBasedClassifier } from "./classification/rule-based-classifier.js";
 
 export interface MiningPipelineOptions {
   provider: EmbeddingSearchProvider;
@@ -35,13 +41,20 @@ export interface MiningPipelineOptions {
   db: BetterSqlite3.Database;
   /** Vector scope to fetch (default: { entityType: "issue" }) */
   vectorScope?: { entityType: "issue" | "experience" | "pattern" | "stage"; since?: number };
+  /** Intent classifier (default: RuleBasedClassifier) */
+  classifier?: IssueIntentClassifier;
+  /** Only mine issues with this intent (default: "bug") */
+  intentFilter?: IntentType;
 }
 
 export interface PipelineResult {
   clusters: Cluster[];
   canonicalProblems: CanonicalProblem[];
   candidates: ProblemCandidate[];
-  stats: MiningRunStats;
+  stats: MiningRunStats & {
+    totalClassified: number;
+    filteredByIntent: number;
+  };
 }
 
 /**
@@ -69,6 +82,8 @@ export class MiningPipeline {
   private readonly store: MiningStore;
   private readonly db: BetterSqlite3.Database;
   private readonly vectorScope: { entityType: "issue" | "experience" | "pattern" | "stage"; since?: number };
+  private readonly classifier: IssueIntentClassifier;
+  private readonly intentFilter: IntentType;
 
   constructor(opts: MiningPipelineOptions) {
     this.provider = opts.provider;
@@ -78,6 +93,8 @@ export class MiningPipeline {
     this.store = opts.store;
     this.db = opts.db;
     this.vectorScope = opts.vectorScope ?? { entityType: "issue" };
+    this.classifier = opts.classifier ?? new RuleBasedClassifier();
+    this.intentFilter = opts.intentFilter ?? "bug";
   }
 
   /**
@@ -95,12 +112,48 @@ export class MiningPipeline {
     const startTime = Date.now();
 
     // Step 1: Fetch vectors
-    const vectors = await this.provider.listVectors(this.vectorScope);
-    if (vectors.length === 0) {
+    const allVectors = await this.provider.listVectors(this.vectorScope);
+    if (allVectors.length === 0) {
       throw new Error(
         `No vectors found for scope ${JSON.stringify(this.vectorScope)}. ` +
           "Ensure Qdrant is running and data has been synced.",
       );
+    }
+
+    // Step 1.5: Intent classification — filter to only target intent
+    let vectors = allVectors;
+    let totalClassified = 0;
+    let filteredByIntent = 0;
+
+    if (this.intentFilter !== "unknown") {
+      // Classify each vector's payload as an issue
+      const issues = allVectors.map((v) => ({
+        title: (v.payload.title as string) || "",
+        body: (v.payload.body as string) || "",
+        labels: (v.payload.labels as string[]) || [],
+      }));
+
+      const classifications = this.classifier.classifyBatch(issues);
+      totalClassified = classifications.length;
+
+      // Filter to only matching intent
+      const filteredIndices: number[] = [];
+      for (let i = 0; i < classifications.length; i++) {
+        if (classifications[i]!.intent === this.intentFilter) {
+          filteredIndices.push(i);
+        }
+      }
+
+      filteredByIntent = allVectors.length - filteredIndices.length;
+      vectors = filteredIndices.map((i) => allVectors[i]!);
+
+      if (vectors.length === 0) {
+        throw new Error(
+          `No issues matched intent filter "${this.intentFilter}" ` +
+            `out of ${allVectors.length} total issues. ` +
+            "Try a different filter or disable with --intent-filter unknown.",
+        );
+      }
     }
 
     // P2-4: index by id for O(1) member summary lookup
@@ -208,13 +261,15 @@ export class MiningPipeline {
 
     const durationMs = Date.now() - startTime;
 
-    const stats: MiningRunStats = {
-      totalVectors: vectors.length,
+    const stats: MiningRunStats & { totalClassified: number; filteredByIntent: number } = {
+      totalVectors: allVectors.length,
       totalClusters: clusters.length,
       totalCanonicalProblems: canonicalProblems.length,
       totalCandidates: candidates.length,
       durationMs,
       threshold: this.clustererConfig.threshold,
+      totalClassified,
+      filteredByIntent,
     };
 
     return {
