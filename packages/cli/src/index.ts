@@ -11,6 +11,7 @@ import { registerSkillCommands } from "./commands/skill-cmd.js";
 import { registerPipelineCommand } from "./commands/pipeline-cmd.js";
 import { registerExperienceCommands } from "./commands/experience-cmd.js";
 import { registerVersionCommands } from "./commands/version-cmd.js";
+import { registerShaderCommand } from "./commands/shader-cmd.js";
 
 const program = new Command();
 
@@ -31,5 +32,6 @@ registerSkillCommands(program);
 registerPipelineCommand(program);
 registerExperienceCommands(program);
 registerVersionCommands(program);
+registerShaderCommand(program);
 
 program.parse();
