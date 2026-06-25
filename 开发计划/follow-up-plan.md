@@ -144,3 +144,42 @@ Tests       442 passed | 11 skipped (453)
 | 2 | 端到端验收（10 个问题） | 🔲 | 待 Phase 3C 完成 |
 
 **当前阻塞：无。待用户指令进入 Phase 3C。**
+
+### 2.5 Phase 3C 完成内容
+
+**commit `8410370`：**
+
+**新包 `@cesium-nexus/service`（RC-005 Service Layer）：**
+
+| 模块 | 文件 | 说明 |
+|------|------|------|
+| 类型 | `types.ts` | MigrationService / ShaderService / VersionService / DiagnosisService |
+| Migration Service | `migration-service.ts` | Breaking changes + migration guides |
+| Shader Service | `shader-service.ts` | Shader search + filtering |
+| Version Service | `version-service.ts` | Version snapshots + diffs |
+| Diagnosis Service | `diagnosis-service.ts` | Root cause diagnosis |
+| Service Factory | `factory.ts` | Dependency injection |
+
+**新增 MCP Tools（4 个，总计 17 个）：**
+
+| Tool | 说明 |
+|------|------|
+| `search_migration` | 搜索版本间 Breaking Changes |
+| `search_shader` | 搜索 Shader symbols |
+| `compare_version` | 比较两版本 Symbol 差异 |
+| `diagnose_root_cause` | 根因诊断（Evidence Fusion Engine） |
+
+**架构：** MCP/CLI → Service → Intelligence/Reasoner（RC-005 合规）
+
+---
+
+## 3. Phase 3 完成总结
+
+| 阶段 | 状态 | 测试 |
+|------|------|------|
+| Phase 3A1 Version Intelligence | ✅ | +18 |
+| Phase 3A2 Shader Intelligence | ✅ | +8 |
+| Phase 3B Evidence Fusion Engine | ✅ | +8 |
+| Phase 3C MCP Tools + Service Layer | ✅ | 442 total |
+
+**Phase 3 全部完成！**
