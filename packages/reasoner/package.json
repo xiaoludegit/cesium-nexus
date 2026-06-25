@@ -1,0 +1,25 @@
+{
+  "name": "@cesium-nexus/reasoner",
+  "version": "0.1.0",
+  "description": "Diagnosis Reasoner: Evidence Collection, Ranking, Explanation",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/storage": "workspace:*",
+    "@cesium-nexus/shared": "workspace:*",
+    "@cesium-nexus/intelligence": "workspace:*",
+    "@cesium-nexus/diagnosis": "workspace:*",
+    "better-sqlite3": "^11.9.0"
+  }
+}

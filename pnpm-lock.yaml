@@ -53,6 +53,9 @@ importers:
       '@cesium-nexus/mining':
         specifier: workspace:*
         version: link:../mining
+      '@cesium-nexus/reasoner':
+        specifier: workspace:*
+        version: link:../reasoner
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
@@ -177,6 +180,24 @@ importers:
       ts-morph:
         specifier: ^25.0.0
         version: 25.0.1
+
+  packages/reasoner:
+    dependencies:
+      '@cesium-nexus/diagnosis':
+        specifier: workspace:*
+        version: link:../diagnosis
+      '@cesium-nexus/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
+      better-sqlite3:
+        specifier: ^11.9.0
+        version: 11.10.0
 
   packages/shared: {}
 

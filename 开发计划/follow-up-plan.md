@@ -8,8 +8,9 @@
 > v5 修订：2026-06-25，Phase 2E 完成 + Phase 3 启动
 > v6 修订：2026-06-25，Phase 3A1 集成测试完成
 > v7 修订：2026-06-25，Phase 3A2 Shader Intelligence 完成
+> v8 修订：2026-06-25，Phase 3B Evidence Fusion Engine 完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ Phase 3（Code Intelligence）
-> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 ✅ / Phase 3B 待启动
+> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 ✅ / Phase 3B ✅ / Phase 3C 待启动
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -29,7 +30,7 @@
 | Phase 2E Problem Mining Pipeline | ✅ 验收通过 | commit `2f09eae`，408 tests |
 | Phase 3A1 Version Intelligence | ✅ 集成测试完成 | commit `c93dd21`，426 tests |
 | Phase 3A2 Shader Intelligence | ✅ 完成 | commit `0ac02ce`，434 tests |
-| Phase 3B Evidence Fusion Engine | 🔲 待启动 | — |
+| Phase 3B Evidence Fusion Engine | ✅ 完成 | 442 tests |
 | Phase 3C MCP Tools + Service Layer | 🔲 待启动 | — |
 
 ### 0.0 进度日志
@@ -50,6 +51,7 @@
 | 2026-06-25 | Phase 3A1 — Version Intelligence foundation | `d565861` |
 | 2026-06-25 | Phase 3A1 — Integration tests (18 tests) | `c93dd21` |
 | 2026-06-25 | Phase 3A2 — Shader Intelligence | `0ac02ce` |
+| 2026-06-25 | Phase 3B — Evidence Fusion Engine | (待提交) |
 
 ---
 
@@ -80,51 +82,56 @@
 |------|------|------|------|
 | Phase 3A1 | W1-W2 | Version Intelligence | ✅ 完成 |
 | Phase 3A2 | W3 | Shader Intelligence | ✅ 完成 |
-| Phase 3B | W4-W5 | Evidence Fusion Engine | 🔲 待启动 |
+| Phase 3B | W4-W5 | Evidence Fusion Engine | ✅ 完成 |
 | Phase 3C | W6 | MCP Tools + Service Layer | 🔲 待启动 |
 
-### 2.3 Phase 3A1 完成内容
+### 2.3 Phase 3B 完成内容
 
-**commit `d565861` + `c93dd21`：**
-
-| 模块 | 文件 | 说明 |
-|------|------|------|
-| 包脚手架 | `packages/intelligence/` | 新包 @cesium-nexus/intelligence |
-| Identity (RC-002) | `identity.ts` | SHA1(kind + fullyQualifiedName) 生成稳定 symbol_id |
-| Snapshot Repository | `snapshot-repo.ts` | symbol_snapshot + breaking_change 表 |
-| Snapshot Builder | `snapshot-builder.ts` | 扫描 Cesium 源码生成版本快照 |
-| Symbol Diff Engine | `symbol-diff-engine.ts` | 两版本 Symbol Diff + Identity Stability 计算 |
-| Breaking Change Detector | `breaking-change-detector.ts` | 检测 removed/renamed/signature_changed |
-| CLI | `version-cmd.ts` | `cesium snapshot` / `cesium diff` 命令 |
-| 集成测试 | `intelligence.test.ts` | 18 个测试覆盖全链路 |
-
-### 2.4 Phase 3A2 完成内容
-
-**commit `0ac02ce`：**
+**新包 `@cesium-nexus/reasoner`：**
 
 | 模块 | 文件 | 说明 |
 |------|------|------|
-| Shader Types | `shader-types.ts` | ShaderSymbol / ShaderIndex / ShaderFilters 类型 |
-| Shader Repository | `shader-repo.ts` | shader_symbol 表 CRUD + 搜索 + 统计 |
-| GLSL Scanner | `glsl-scanner.ts` | 扫描 GLSL 文件提取 shader symbols |
-| Shader Index Builder | `shader-index-builder.ts` | 构建和管理 shader 索引 |
-| Shader-JS Linker | `shader-js-linker.ts` | 将 shader 关联到 JS symbols |
-| CLI | `shader-cmd.ts` | `cesium shader` 命令 |
-| 集成测试 | `shader.test.ts` | 8 个测试 |
+| 类型 | `types.ts` | Evidence / RankedEvidence / DiagnosisExplanation / DiagnosisResult |
+| Evidence Collector | `evidence-collector.ts` | 从 Patterns/Shaders/Symbols/Stages/Experiences 收集证据 |
+| Evidence Ranker | `evidence-ranker.ts` | 基于规则的证据排序（type weight × distance × time decay） |
+| Explanation Generator | `explanation-generator.ts` | 生成人类可读的根因解释 |
+| Diagnosis Reasoner | `diagnosis-reasoner.ts` | 整合三个组件的根因诊断器 |
+| 集成测试 | `reasoner.test.ts` | 8 个测试 |
 
 **新增 CLI 命令：**
 
 ```bash
-# Shader 查询
-cesium shader --name czm_model
-cesium shader --type uniform
-cesium shader --file ModelVS.glsl
-cesium shader --related Model
-cesium shader --stage model
+# 根因诊断（Evidence Fusion Engine）
+cesium diagnose-reason "billboard flickering"
+cesium diagnose-reason "z-fighting" --verbose
+cesium diagnose-reason "shader compile fail" --evidence-only
+cesium diagnose-reason "depth issues" --min-confidence 0.5
+```
 
-# 索引管理
-cesium shader --rebuild
-cesium shader --stats
+**输出格式：**
+
+```
+PONYTAIL REPORT
+──────────────────────────────────────────────────
+Score: 85%
+Grade: B
+
+Summary: 根据问题模式 z-fighting 的分析
+
+Primary Cause: Problem Pattern: z-fighting - Score: 0.85
+
+Evidence: 共 2 条证据 (pattern, shader)
+
+Suggested Actions:
+  - 检查问题模式 "z-fighting" 的解决方案
+  - 验证相关符号的配置
+```
+
+### 2.4 测试状态
+
+```
+Test Files  35 passed | 1 skipped (36)
+Tests       442 passed | 11 skipped (453)
 ```
 
 ---
@@ -133,7 +140,7 @@ cesium shader --stats
 
 | # | 任务 | 状态 | 备注 |
 |---|------|------|------|
-| 1 | Phase 3B Evidence Fusion Engine | 🔲 待启动 | 待用户指令 |
-| 2 | Phase 3C MCP Tools + Service Layer | 🔲 | 待 Phase 3B 完成 |
+| 1 | Phase 3C MCP Tools + Service Layer | 🔲 待启动 | 待用户指令 |
+| 2 | 端到端验收（10 个问题） | 🔲 | 待 Phase 3C 完成 |
 
-**当前阻塞：无。待用户指令进入 Phase 3B。**
+**当前阻塞：无。待用户指令进入 Phase 3C。**

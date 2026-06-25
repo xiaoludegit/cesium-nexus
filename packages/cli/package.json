@@ -22,6 +22,7 @@
     "@cesium-nexus/intelligence": "workspace:*",
     "@cesium-nexus/mcp": "workspace:*",
     "@cesium-nexus/mining": "workspace:*",
+    "@cesium-nexus/reasoner": "workspace:*",
     "@cesium-nexus/skills": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",
     "@cesium-nexus/vector": "workspace:*",

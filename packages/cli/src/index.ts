@@ -12,6 +12,7 @@ import { registerPipelineCommand } from "./commands/pipeline-cmd.js";
 import { registerExperienceCommands } from "./commands/experience-cmd.js";
 import { registerVersionCommands } from "./commands/version-cmd.js";
 import { registerShaderCommand } from "./commands/shader-cmd.js";
+import { registerDiagnoseReasonCommand } from "./commands/diagnose-reason-cmd.js";
 
 const program = new Command();
 
@@ -33,5 +34,6 @@ registerPipelineCommand(program);
 registerExperienceCommands(program);
 registerVersionCommands(program);
 registerShaderCommand(program);
+registerDiagnoseReasonCommand(program);
 
 program.parse();
