@@ -44,6 +44,9 @@ importers:
       '@cesium-nexus/indexer':
         specifier: workspace:*
         version: link:../indexer
+      '@cesium-nexus/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
       '@cesium-nexus/mcp':
         specifier: workspace:*
         version: link:../mcp
@@ -104,6 +107,18 @@ importers:
     devDependencies:
       better-sqlite3:
         specifier: ^11.9.1
+        version: 11.10.0
+
+  packages/intelligence:
+    dependencies:
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
+      better-sqlite3:
+        specifier: ^11.9.0
         version: 11.10.0
 
   packages/mcp:

@@ -1,0 +1,23 @@
+{
+  "name": "@cesium-nexus/intelligence",
+  "version": "0.1.0",
+  "description": "Code Intelligence: Version Index, Shader Index, Symbol Identity",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cesium-nexus/storage": "workspace:*",
+    "@cesium-nexus/shared": "workspace:*",
+    "better-sqlite3": "^11.9.0"
+  }
+}

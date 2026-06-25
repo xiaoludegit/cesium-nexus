@@ -19,6 +19,7 @@
     "@cesium-nexus/diagnosis": "workspace:*",
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/indexer": "workspace:*",
+    "@cesium-nexus/intelligence": "workspace:*",
     "@cesium-nexus/mcp": "workspace:*",
     "@cesium-nexus/mining": "workspace:*",
     "@cesium-nexus/skills": "workspace:*",

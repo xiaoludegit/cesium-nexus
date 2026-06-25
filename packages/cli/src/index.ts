@@ -10,6 +10,7 @@ import { registerForumCommands } from "./commands/forum-cmd.js";
 import { registerSkillCommands } from "./commands/skill-cmd.js";
 import { registerPipelineCommand } from "./commands/pipeline-cmd.js";
 import { registerExperienceCommands } from "./commands/experience-cmd.js";
+import { registerVersionCommands } from "./commands/version-cmd.js";
 
 const program = new Command();
 
@@ -29,5 +30,6 @@ registerForumCommands(program);
 registerSkillCommands(program);
 registerPipelineCommand(program);
 registerExperienceCommands(program);
+registerVersionCommands(program);
 
 program.parse();

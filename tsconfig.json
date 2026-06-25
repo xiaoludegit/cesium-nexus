@@ -11,6 +11,7 @@
     { "path": "packages/diagnosis" },
     { "path": "packages/skills" },
     { "path": "packages/vector" },
-    { "path": "packages/mining" }
+    { "path": "packages/mining" },
+    { "path": "packages/intelligence" }
   ]
 }
