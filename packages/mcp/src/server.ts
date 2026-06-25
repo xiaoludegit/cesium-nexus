@@ -27,6 +27,13 @@ import {
   handleGetExperienceChain,
   handleSemanticSearchExperience,
 } from "./handlers.js";
+import {
+  handleSearchMigration,
+  handleSearchShader,
+  handleCompareVersion,
+  handleDiagnoseRootCause,
+} from "./intelligence-handlers.js";
+import type { Database } from "@cesium-nexus/storage";
 
 /**
  * Register the 13 Cesium knowledge-base tools on an existing McpServer.
@@ -309,10 +316,115 @@ export function registerTools(
       };
     },
   );
+
+  // ─── search_migration ──────────────────────────────────────
+  server.tool(
+    "search_migration",
+    "Search for breaking changes between Cesium versions",
+    {
+      from_version: z.string().min(1),
+      to_version: z.string().min(1),
+      symbol: z.string().optional(),
+    },
+    async (input) => {
+      const db = symbolRepo.constructor.prototype.constructor.name === 'SymbolRepo'
+        ? (symbolRepo as any).db
+        : undefined;
+      if (!db) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          isError: true,
+        };
+      }
+      const result = await handleSearchMigration(db, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ─── search_shader ─────────────────────────────────────────
+  server.tool(
+    "search_shader",
+    "Search shader symbols and diagnose shader issues",
+    {
+      query: z.string().min(1),
+      type: z.enum(["uniform", "varying", "function", "struct", "define", "const"]).optional(),
+      related_js_symbol: z.string().optional(),
+      render_stage: z.string().optional(),
+      file: z.string().optional(),
+    },
+    async (input) => {
+      const db = (symbolRepo as any).db;
+      if (!db) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          isError: true,
+        };
+      }
+      const result = await handleSearchShader(db, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ─── compare_version ───────────────────────────────────────
+  server.tool(
+    "compare_version",
+    "Compare symbols between two Cesium versions",
+    {
+      from_version: z.string().min(1),
+      to_version: z.string().min(1),
+      symbol: z.string().optional(),
+      breaking_only: z.boolean().default(false),
+    },
+    async (input) => {
+      const db = (symbolRepo as any).db;
+      if (!db) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          isError: true,
+        };
+      }
+      const result = await handleCompareVersion(db, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
+
+  // ─── diagnose_root_cause ───────────────────────────────────
+  server.tool(
+    "diagnose_root_cause",
+    "Diagnose root cause of a Cesium issue using Evidence Fusion Engine",
+    {
+      query: z.string().min(1),
+      verbose: z.boolean().default(false),
+      min_confidence: z.number().min(0).max(1).default(0.3),
+    },
+    async (input) => {
+      const db = (symbolRepo as any).db;
+      if (!db) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          isError: true,
+        };
+      }
+      const result = await handleDiagnoseRootCause(db, input);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result) }],
+        isError: !result.success,
+      };
+    },
+  );
 }
 
 /**
- * Create an MCP server with 13 Cesium knowledge-base tools.
+ * Create an MCP server with Cesium knowledge-base tools.
  *
  * No console.log during server lifetime — stdout is the JSON-RPC channel.
  */

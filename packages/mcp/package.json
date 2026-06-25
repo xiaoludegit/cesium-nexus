@@ -1,7 +1,7 @@
 {
   "name": "@cesium-nexus/mcp",
   "version": "0.1.0",
-  "description": "MCP server — 7 Cesium knowledge-base tools via stdio transport",
+  "description": "MCP server — Cesium knowledge-base tools via stdio transport",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -19,6 +19,9 @@
     "@cesium-nexus/context-pack": "workspace:*",
     "@cesium-nexus/diagnosis": "workspace:*",
     "@cesium-nexus/indexer": "workspace:*",
+    "@cesium-nexus/intelligence": "workspace:*",
+    "@cesium-nexus/reasoner": "workspace:*",
+    "@cesium-nexus/service": "workspace:*",
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/skills": "workspace:*",
     "@cesium-nexus/storage": "workspace:*",

@@ -138,9 +138,9 @@ describe("MCP Protocol Integration", () => {
     expect(client).toBeDefined();
   });
 
-  it("tools/list returns 13 tools", async () => {
+  it("tools/list returns 17 tools", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(13);
+    expect(tools).toHaveLength(17);
   });
 
   it("tools/list contains correct tool names", async () => {
@@ -149,7 +149,9 @@ describe("MCP Protocol Integration", () => {
     expect(names).toEqual([
       "build_context_pack",
       "build_skill_pack",
+      "compare_version",
       "diagnose_problem",
+      "diagnose_root_cause",
       "dispatch_skill",
       "get_experience_chain",
       "get_source",
@@ -157,10 +159,28 @@ describe("MCP Protocol Integration", () => {
       "search_experience",
       "search_forum",
       "search_issue",
+      "search_migration",
+      "search_shader",
       "search_symbol",
       "semantic_search_experience",
       "trace_callgraph",
     ]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   });
 
   it("tools/call search_symbol returns results", async () => {

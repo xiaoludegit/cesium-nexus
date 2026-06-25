@@ -148,7 +148,7 @@ describe("MCP Server E2E (stdio)", () => {
   );
 
   it(
-    "tools/list returns 13 tools",
+    "tools/list returns 17 tools",
     async () => {
       // Send initialized notification first (required by MCP protocol)
       server.stdin!.write(
@@ -160,13 +160,15 @@ describe("MCP Server E2E (stdio)", () => {
       expect(result).toBeDefined();
       const r = result as { tools?: { name: string }[] };
       expect(r.tools).toBeDefined();
-      expect(r.tools!.length).toBe(13);
+      expect(r.tools!.length).toBe(17);
 
       const names = r.tools!.map((t) => t.name).sort();
       expect(names).toEqual([
         "build_context_pack",
         "build_skill_pack",
+        "compare_version",
         "diagnose_problem",
+        "diagnose_root_cause",
         "dispatch_skill",
         "get_experience_chain",
         "get_source",
@@ -174,6 +176,8 @@ describe("MCP Server E2E (stdio)", () => {
         "search_experience",
         "search_forum",
         "search_issue",
+        "search_migration",
+        "search_shader",
         "search_symbol",
         "semantic_search_experience",
         "trace_callgraph",
