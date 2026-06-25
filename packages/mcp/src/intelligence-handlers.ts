@@ -4,40 +4,27 @@
  * MCP/CLI → Service → Intelligence/Reasoner
  */
 
-import type { Database } from "@cesium-nexus/storage";
-import { createServices } from "@cesium-nexus/service";
 import type { Services } from "@cesium-nexus/service";
 import type { ToolResponse } from "./handlers.js";
-
-// Initialize services lazily
-let services: Services | null = null;
-
-function getServices(db: Database): Services {
-  if (!services) {
-    services = createServices(db);
-  }
-  return services;
-}
 
 // ─── search_migration ──────────────────────────────────────
 
 export async function handleSearchMigration(
-  db: Database,
+  services: Services,
   input: {
     from_version: string;
     to_version: string;
     symbol?: string;
-  }
+  },
 ): Promise<ToolResponse> {
   try {
-    const svc = getServices(db);
     const { from_version, to_version, symbol } = input;
 
     if (symbol) {
-      const changes = await svc.migration.searchBySymbol(
+      const changes = await services.migration.searchBySymbol(
         symbol,
         from_version,
-        to_version
+        to_version,
       );
       return {
         success: true,
@@ -49,9 +36,9 @@ export async function handleSearchMigration(
       };
     }
 
-    const changes = await svc.migration.getBreakingChanges(
+    const changes = await services.migration.getBreakingChanges(
       from_version,
-      to_version
+      to_version,
     );
 
     return {
@@ -74,20 +61,19 @@ export async function handleSearchMigration(
 // ─── search_shader ─────────────────────────────────────────
 
 export async function handleSearchShader(
-  db: Database,
+  services: Services,
   input: {
     query: string;
-    type?: string;
+    type?: "uniform" | "varying" | "function" | "struct" | "define" | "const";
     related_js_symbol?: string;
     render_stage?: string;
     file?: string;
-  }
+  },
 ): Promise<ToolResponse> {
   try {
-    const svc = getServices(db);
     const { query, type, related_js_symbol, render_stage, file } = input;
 
-    const results = await svc.shader.search(query, {
+    const results = await services.shader.search(query, {
       type,
       relatedJsSymbol: related_js_symbol,
       renderStage: render_stage,
@@ -113,19 +99,18 @@ export async function handleSearchShader(
 // ─── compare_version ───────────────────────────────────────
 
 export async function handleCompareVersion(
-  db: Database,
+  services: Services,
   input: {
     from_version: string;
     to_version: string;
     symbol?: string;
     breaking_only?: boolean;
-  }
+  },
 ): Promise<ToolResponse> {
   try {
-    const svc = getServices(db);
     const { from_version, to_version, symbol, breaking_only } = input;
 
-    const diff = await svc.version.diff(from_version, to_version, symbol);
+    const diff = await services.version.diff(from_version, to_version, symbol);
 
     if (breaking_only) {
       return {
@@ -161,18 +146,17 @@ export async function handleCompareVersion(
 // ─── diagnose_root_cause ───────────────────────────────────
 
 export async function handleDiagnoseRootCause(
-  db: Database,
+  services: Services,
   input: {
     query: string;
     verbose?: boolean;
     min_confidence?: number;
-  }
+  },
 ): Promise<ToolResponse> {
   try {
-    const svc = getServices(db);
     const { query, verbose, min_confidence } = input;
 
-    const result = await svc.diagnosis.diagnose(query, {
+    const result = await services.diagnosis.diagnose(query, {
       verbose,
       minConfidence: min_confidence,
     });
@@ -212,7 +196,9 @@ export async function handleDiagnoseRootCause(
 
 // ─── Helper Functions ──────────────────────────────────────
 
-function formatBreakingChange(bc: any) {
+import type { BreakingChange, ShaderSymbol } from "@cesium-nexus/intelligence";
+
+function formatBreakingChange(bc: BreakingChange) {
   return {
     symbol: bc.symbolName,
     change_type: bc.changeType,
@@ -221,7 +207,7 @@ function formatBreakingChange(bc: any) {
   };
 }
 
-function formatShaderSymbol(s: any) {
+function formatShaderSymbol(s: ShaderSymbol) {
   return {
     id: s.id,
     name: s.name,

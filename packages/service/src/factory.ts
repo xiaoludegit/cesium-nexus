@@ -18,7 +18,6 @@ import type {
   ShaderService,
   VersionService,
   DiagnosisService,
-  ServiceDependencies,
 } from "./types.js";
 import { MigrationServiceImpl } from "./migration-service.js";
 import { ShaderServiceImpl } from "./shader-service.js";

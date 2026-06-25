@@ -110,7 +110,7 @@ describe("MCP Protocol Integration", () => {
       name: "cesium-nexus-test",
       version: "0.1.0",
     });
-    registerTools(server, { symbolRepo, issueRepo, callGraphRepo, prRepo, forumRepo, experienceRepo, experienceEdgeRepo });
+    registerTools(server, { symbolRepo, issueRepo, callGraphRepo, prRepo, forumRepo, experienceRepo, experienceEdgeRepo }, db);
 
     // Create linked transport pair and connect
     const [clientTransport, serverTransport] =

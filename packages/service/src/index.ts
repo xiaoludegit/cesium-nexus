@@ -10,7 +10,6 @@ export type {
   VersionService,
   DiagnosisService,
   ShaderFilters,
-  ServiceDependencies,
 } from "./types.js";
 
 export { createServices } from "./factory.js";

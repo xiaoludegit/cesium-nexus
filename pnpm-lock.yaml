@@ -135,6 +135,15 @@ importers:
       '@cesium-nexus/indexer':
         specifier: workspace:*
         version: link:../indexer
+      '@cesium-nexus/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
+      '@cesium-nexus/reasoner':
+        specifier: workspace:*
+        version: link:../reasoner
+      '@cesium-nexus/service':
+        specifier: workspace:*
+        version: link:../service
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared
@@ -189,6 +198,27 @@ importers:
       '@cesium-nexus/intelligence':
         specifier: workspace:*
         version: link:../intelligence
+      '@cesium-nexus/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cesium-nexus/storage':
+        specifier: workspace:*
+        version: link:../storage
+      better-sqlite3:
+        specifier: ^11.9.0
+        version: 11.10.0
+
+  packages/service:
+    dependencies:
+      '@cesium-nexus/diagnosis':
+        specifier: workspace:*
+        version: link:../diagnosis
+      '@cesium-nexus/intelligence':
+        specifier: workspace:*
+        version: link:../intelligence
+      '@cesium-nexus/reasoner':
+        specifier: workspace:*
+        version: link:../reasoner
       '@cesium-nexus/shared':
         specifier: workspace:*
         version: link:../shared

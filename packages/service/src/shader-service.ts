@@ -22,7 +22,7 @@ export class ShaderServiceImpl implements ShaderService {
     // If we have specific filters, use them
     if (filters) {
       return this.shaderIndexBuilder.search({
-        type: filters.type as any,
+        type: filters.type,
         relatedJsSymbol: filters.relatedJsSymbol,
         renderStage: filters.renderStage,
         file: filters.file,

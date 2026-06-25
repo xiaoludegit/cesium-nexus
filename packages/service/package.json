@@ -20,7 +20,6 @@
     "@cesium-nexus/shared": "workspace:*",
     "@cesium-nexus/intelligence": "workspace:*",
     "@cesium-nexus/reasoner": "workspace:*",
-    "@cesium-nexus/diagnosis": "workspace:*",
     "better-sqlite3": "^11.9.0"
   }
 }

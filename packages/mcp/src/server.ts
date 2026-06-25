@@ -33,6 +33,7 @@ import {
   handleCompareVersion,
   handleDiagnoseRootCause,
 } from "./intelligence-handlers.js";
+import { createServices, type Services } from "@cesium-nexus/service";
 import type { Database } from "@cesium-nexus/storage";
 
 /**
@@ -50,6 +51,7 @@ export function registerTools(
     experienceRepo: ExperienceRepo;
     experienceEdgeRepo: ExperienceEdgeRepo;
   },
+  db?: Database,
 ): void {
   const {
     symbolRepo,
@@ -60,6 +62,12 @@ export function registerTools(
     experienceRepo,
     experienceEdgeRepo,
   } = repos;
+
+  // Create services once for intelligence tools (if db provided)
+  let services: Services | undefined;
+  if (db) {
+    services = createServices(db);
+  }
 
   // ── search_symbol ──────────────────────────────────────────
   server.tool(
@@ -327,16 +335,13 @@ export function registerTools(
       symbol: z.string().optional(),
     },
     async (input) => {
-      const db = symbolRepo.constructor.prototype.constructor.name === 'SymbolRepo'
-        ? (symbolRepo as any).db
-        : undefined;
-      if (!db) {
+      if (!services) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Intelligence services not available (no db provided)" }) }],
           isError: true,
         };
       }
-      const result = await handleSearchMigration(db, input);
+      const result = await handleSearchMigration(services, input);
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
         isError: !result.success,
@@ -356,14 +361,13 @@ export function registerTools(
       file: z.string().optional(),
     },
     async (input) => {
-      const db = (symbolRepo as any).db;
-      if (!db) {
+      if (!services) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Intelligence services not available (no db provided)" }) }],
           isError: true,
         };
       }
-      const result = await handleSearchShader(db, input);
+      const result = await handleSearchShader(services, input);
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
         isError: !result.success,
@@ -382,14 +386,13 @@ export function registerTools(
       breaking_only: z.boolean().default(false),
     },
     async (input) => {
-      const db = (symbolRepo as any).db;
-      if (!db) {
+      if (!services) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Intelligence services not available (no db provided)" }) }],
           isError: true,
         };
       }
-      const result = await handleCompareVersion(db, input);
+      const result = await handleCompareVersion(services, input);
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
         isError: !result.success,
@@ -407,14 +410,13 @@ export function registerTools(
       min_confidence: z.number().min(0).max(1).default(0.3),
     },
     async (input) => {
-      const db = (symbolRepo as any).db;
-      if (!db) {
+      if (!services) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Database not available" }) }],
+          content: [{ type: "text" as const, text: JSON.stringify({ success: false, error: "Intelligence services not available (no db provided)" }) }],
           isError: true,
         };
       }
-      const result = await handleDiagnoseRootCause(db, input);
+      const result = await handleDiagnoseRootCause(services, input);
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result) }],
         isError: !result.success,
@@ -445,7 +447,7 @@ export function createServer(dbPath: string): McpServer {
     forumRepo: new ForumRepo(db),
     experienceRepo: new ExperienceRepo(db),
     experienceEdgeRepo: new ExperienceEdgeRepo(db),
-  });
+  }, db);
 
   return server;
 }

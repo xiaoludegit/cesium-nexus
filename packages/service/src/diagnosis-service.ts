@@ -8,6 +8,7 @@ import type {
   DiagnosisReasoner,
   DiagnosisResult,
   DiagnosisOptions,
+  Evidence,
 } from "@cesium-nexus/reasoner";
 import type { DiagnosisService } from "./types.js";
 
@@ -18,7 +19,7 @@ export class DiagnosisServiceImpl implements DiagnosisService {
     return this.diagnosisReasoner.diagnose(query, options);
   }
 
-  async collectEvidence(query: string): Promise<any[]> {
+  async collectEvidence(query: string): Promise<Evidence[]> {
     return this.diagnosisReasoner.collectEvidence(query);
   }
 

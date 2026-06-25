@@ -4,22 +4,18 @@
  * MCP/CLI → Service → Intelligence/Reasoner
  */
 
-import type { Database } from "@cesium-nexus/storage";
 import type {
-  SnapshotBuilder,
-  SymbolDiffEngine,
-  BreakingChangeDetector,
-  ShaderIndexBuilder,
-  VersionDiff,
   BreakingChange,
   ShaderSymbol,
   ShaderIndexStats,
   SymbolSnapshot,
+  VersionDiff,
+  ShaderSymbolType,
 } from "@cesium-nexus/intelligence";
 import type {
-  DiagnosisReasoner,
   DiagnosisResult,
   DiagnosisOptions,
+  Evidence,
 } from "@cesium-nexus/reasoner";
 
 // Service interfaces following RC-005
@@ -47,22 +43,13 @@ export interface VersionService {
 
 export interface DiagnosisService {
   diagnose(query: string, options?: DiagnosisOptions): Promise<DiagnosisResult>;
-  collectEvidence(query: string): Promise<any[]>;
+  collectEvidence(query: string): Promise<Evidence[]>;
   explain(result: DiagnosisResult): Promise<string>;
 }
 
 export interface ShaderFilters {
-  type?: string;
+  type?: ShaderSymbolType;
   relatedJsSymbol?: string;
   renderStage?: string;
   file?: string;
-}
-
-export interface ServiceDependencies {
-  db: Database;
-  snapshotBuilder: SnapshotBuilder;
-  symbolDiffEngine: SymbolDiffEngine;
-  breakingChangeDetector: BreakingChangeDetector;
-  shaderIndexBuilder: ShaderIndexBuilder;
-  diagnosisReasoner: DiagnosisReasoner;
 }
