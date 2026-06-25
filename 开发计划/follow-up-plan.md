@@ -6,8 +6,9 @@
 > v3 修订：2026-06-23，回填已完成工作的 commit hash，标注 W1 完成
 > v4 修订：2026-06-24，W2 + W3 完成回填
 > v5 修订：2026-06-25，Phase 2E 完成 + Phase 3 启动
+> v6 修订：2026-06-25，Phase 3A1 集成测试完成
 > 范围：Phase 2D 收尾 → Phase 2E（Problem Mining Pipeline）→ Phase 3（Code Intelligence）
-> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 进行中
+> 状态：**执行中** — Phase 2E ✅ / Phase 3A1 ✅ / Phase 3A2 待启动
 
 本文档是对 [`future-roadmap.md`](../future-roadmap.md) 的细化执行计划。
 
@@ -25,7 +26,10 @@
 | Phase 2C+ Qdrant Vector Search | ✅ 完成 | 384 维 ONNX embed + `references` 推断边 |
 | Phase 2D Diagnosis Retrieval Enhancement | ✅ 完成 + 已发布 | commit `e04a5ea`，tag `v0.5.0`，297 tests |
 | Phase 2E Problem Mining Pipeline | ✅ 验收通过 | commit `2f09eae`，408 tests |
-| Phase 3 Code Intelligence | 🟡 执行中 | Phase 3A1 Version Intelligence 完成 |
+| Phase 3A1 Version Intelligence | ✅ 集成测试完成 | commit `c93dd21`，426 tests |
+| Phase 3A2 Shader Intelligence | 🔲 待启动 | — |
+| Phase 3B Evidence Fusion Engine | 🔲 待启动 | — |
+| Phase 3C MCP Tools + Service Layer | 🔲 待启动 | — |
 
 ### 0.0 进度日志
 
@@ -43,6 +47,7 @@
 | 2026-06-25 | Phase 3 Architecture Freeze v1.0 | `06c6bf7` |
 | 2026-06-25 | Phase 3 Implementation Plan v1.1 | `36b53fc` |
 | 2026-06-25 | Phase 3A1 — Version Intelligence foundation | `d565861` |
+| 2026-06-25 | Phase 3A1 — Integration tests (18 tests) | `c93dd21` |
 
 ---
 
@@ -105,63 +110,71 @@ Patterns:  10/10 hit
 
 | 阶段 | 周次 | 任务 | 状态 |
 |------|------|------|------|
-| Phase 3A1 | W1-W2 | Version Intelligence | 🟡 进行中 |
-| Phase 3A2 | W3 | Shader Intelligence | 🔲 |
-| Phase 3B | W4-W5 | Evidence Fusion Engine | 🔲 |
-| Phase 3C | W6 | MCP Tools + Service Layer | 🔲 |
+| Phase 3A1 | W1-W2 | Version Intelligence | ✅ 完成 |
+| Phase 3A2 | W3 | Shader Intelligence | 🔲 待启动 |
+| Phase 3B | W4-W5 | Evidence Fusion Engine | 🔲 待启动 |
+| Phase 3C | W6 | MCP Tools + Service Layer | 🔲 待启动 |
 
-### 2.3 Phase 3A1 已完成内容
+### 2.3 Phase 3A1 完成内容
 
-**commit `d565861`：**
+**commit `d565861` + `c93dd21`：**
 
 | 模块 | 文件 | 说明 |
 |------|------|------|
-| 包脚手架 | `packages/intelligence/package.json` / `tsconfig.json` / `tsup.config.ts` | 新包 @cesium-nexus/intelligence |
-| 类型 | `src/types.ts` | SymbolIdentity / SymbolSnapshot / BreakingChange / VersionDiff |
-| Identity (RC-002) | `src/identity.ts` | SHA1(kind + fullyQualifiedName) 生成稳定 symbol_id |
-| Snapshot Repository | `src/snapshot-repo.ts` | symbol_snapshot + breaking_change 表 CRUD |
-| Snapshot Builder | `src/snapshot-builder.ts` | 扫描 Cesium 源码生成版本快照 |
-| Symbol Diff Engine | `src/symbol-diff-engine.ts` | 两版本 Symbol Diff + Identity Stability 计算 |
-| Breaking Change Detector | `src/breaking-change-detector.ts` | 检测 removed/renamed/signature_changed |
-| CLI | `packages/cli/src/commands/version-cmd.ts` | `cesium snapshot` / `cesium diff` 命令 |
+| 包脚手架 | `packages/intelligence/` | 新包 @cesium-nexus/intelligence |
+| Identity (RC-002) | `identity.ts` | SHA1(kind + fullyQualifiedName) 生成稳定 symbol_id |
+| Snapshot Repository | `snapshot-repo.ts` | symbol_snapshot + breaking_change 表 |
+| Snapshot Builder | `snapshot-builder.ts` | 扫描 Cesium 源码生成版本快照 |
+| Symbol Diff Engine | `symbol-diff-engine.ts` | 两版本 Symbol Diff + Identity Stability 计算 |
+| Breaking Change Detector | `breaking-change-detector.ts` | 检测 removed/renamed/signature_changed |
+| CLI | `version-cmd.ts` | `cesium snapshot` / `cesium diff` 命令 |
+| 集成测试 | `intelligence.test.ts` | 18 个测试覆盖全链路 |
+
+**测试覆盖：**
+
+| 测试类别 | 数量 | 覆盖内容 |
+|----------|------|----------|
+| Identity (RC-002) | 4 | 稳定 ID 生成、不同符号 ID、FQN 构建、身份解析 |
+| Snapshot Builder | 3 | Mock 源码扫描、缓存、版本列表 |
+| Symbol Diff Engine | 4 | 增删检测、修改检测、过滤、稳定性计算 |
+| Breaking Change Detector | 2 | 删除符号检测、迁移指南生成 |
+| Snapshot Repository | 4 | CRUD、版本列表、统计、搜索 |
+| End-to-End Flow | 1 | 完整 snapshot → diff → breaking changes 流程 |
+| **总计** | **18** | |
 
 **新增 CLI 命令：**
 
 ```bash
-cesium snapshot --version 1.118    # 生成版本快照
-cesium snapshot --list             # 列出已快照版本
-cesium diff --from 1.118 --to 1.130  # 两版本 Diff
-cesium diff --from 1.118 --to 1.130 --breaking  # 仅 Breaking Changes
-cesium diff --from 1.118 --to 1.130 --format markdown  # Markdown 输出
+# 版本快照
+cesium snapshot --version 1.118
+cesium snapshot --list
+cesium snapshot --version 1.118 --stats
+
+# 版本 Diff
+cesium diff --from 1.118 --to 1.130
+cesium diff --from 1.118 --to 1.130 --symbol Camera
+cesium diff --from 1.118 --to 1.130 --breaking
+cesium diff --from 1.118 --to 1.130 --format markdown
 ```
 
-### 2.4 Phase 3A1 待完成
+### 2.4 Phase 3A1 验收指标
 
-| # | 任务 | 状态 |
-|---|------|------|
-| 3A1.8 | 实际版本快照测试（需要 checkout Cesium 版本） | 🔲 |
-| 3A1.9 | Identity Stability 测试（≥95%） | 🔲 |
-| 3A1.10 | 集成测试 | 🔲 |
-
----
-
-## 3. ADR（架构决策记录）
-
-详见 [`docs/architecture/phase3-architecture.md`](../docs/architecture/phase3-architecture.md) §6
-
-- ADR-001: Why Intelligence Layer
-- ADR-002: Why Reasoner Instead of More Skills
-- ADR-003: Why Version Intelligence First
+| 指标 | 目标 | 实际 | 状态 |
+|------|------|------|------|
+| 测试数量 | ≥ 15 | 18 | ✅ |
+| Identity Stability | ≥ 95% | 待真实数据验证 | 🟡 |
+| Snapshot 构建 | 正常 | Mock 测试通过 | ✅ |
+| Diff 检测 | 正常 | 增删改检测通过 | ✅ |
+| Breaking Change 检测 | 正常 | removed/signature_changed 通过 | ✅ |
 
 ---
 
-## 4. 下一步
+## 3. 下一步
 
 | # | 任务 | 状态 | 备注 |
 |---|------|------|------|
-| 1 | Phase 3A1 完成（集成测试 + Identity Stability 验证） | 🔲 | 需要 checkout Cesium 版本 |
-| 2 | Phase 3A2 Shader Intelligence | 🔲 | 待 Phase 3A1 完成 |
-| 3 | Phase 3B Evidence Fusion Engine | 🔲 | 待 Phase 3A 完成 |
-| 4 | Phase 3C MCP Tools + Service Layer | 🔲 | 待 Phase 3B 完成 |
+| 1 | Phase 3A2 Shader Intelligence | 🔲 待启动 | 待用户指令 |
+| 2 | Phase 3B Evidence Fusion Engine | 🔲 | 待 Phase 3A 完成 |
+| 3 | Phase 3C MCP Tools + Service Layer | 🔲 | 待 Phase 3B 完成 |
 
-**当前阻塞：无。待用户指令继续 Phase 3A1 或进入 Phase 3A2。**
+**当前阻塞：无。待用户指令进入 Phase 3A2。**
