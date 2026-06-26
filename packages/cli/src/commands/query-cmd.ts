@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { openDatabase, initSchema, SymbolRepo } from "@cesium-nexus/storage";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerQueryCommands(program: Command): void {
   // Shared helper: open DB and create repo
@@ -15,9 +16,9 @@ export function registerQueryCommands(program: Command): void {
   program
     .command("symbol <name>")
     .description("Look up a symbol by name")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action((name: string, opts: { db: string }) => {
-      const repo = getRepo(path.resolve(opts.db));
+      const repo = getRepo(resolveDbPath(opts.db));
       const symbols = repo.findByName(name);
 
       if (symbols.length === 0) {
@@ -60,11 +61,11 @@ export function registerQueryCommands(program: Command): void {
   program
     .command("source <symbolId>")
     .description("Read source code for a symbol by ID")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--cesium-root <path>", "Path to Cesium source directory", "./data/cesium")
     .option("--context <lines>", "Extra context lines before/after", "0")
     .action((symbolId: string, opts: { db: string; cesiumRoot: string; context: string }) => {
-      const repo = getRepo(path.resolve(opts.db));
+      const repo = getRepo(resolveDbPath(opts.db));
       const symbol = repo.findById(symbolId);
 
       if (!symbol) {
@@ -98,11 +99,11 @@ export function registerQueryCommands(program: Command): void {
   program
     .command("search <keyword>")
     .description("Search source code via FTS5 full-text search")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--limit <n>", "Max results", "20")
     .option("--name-only", "Search only symbol names and doc comments", false)
     .action((keyword: string, opts: { db: string; limit: string; nameOnly: boolean }) => {
-      const repo = getRepo(path.resolve(opts.db));
+      const repo = getRepo(resolveDbPath(opts.db));
       const limit = parseInt(opts.limit, 10);
 
       if (opts.nameOnly) {

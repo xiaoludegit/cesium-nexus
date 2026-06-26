@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { openDatabase, initSchema, ForumRepo } from "@cesium-nexus/storage";
 import { crawlForum } from "@cesium-nexus/indexer";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerForumCommands(program: Command): void {
   const forum = program
@@ -11,7 +11,7 @@ export function registerForumCommands(program: Command): void {
   forum
     .command("sync")
     .description("Crawl Cesium community forum and index posts")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--base-url <url>", "Forum base URL", "https://community.cesium.com")
     .option("--max-pages <n>", "Max pages to crawl", "10")
     .option("--min-replies <n>", "Minimum replies to include", "2")
@@ -24,7 +24,7 @@ export function registerForumCommands(program: Command): void {
         minReplies: string;
         minViews: string;
       }) => {
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const forumRepo = new ForumRepo(db);
 
@@ -49,7 +49,7 @@ export function registerForumCommands(program: Command): void {
   forum
     .command("search <keywords>")
     .description("Search forum posts via full-text search")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--limit <n>", "Max results", "10")
     .option("--min-quality <n>", "Minimum quality score (0-1)", "0")
     .action(
@@ -57,7 +57,7 @@ export function registerForumCommands(program: Command): void {
         keywords: string,
         opts: { db: string; limit: string; minQuality: string },
       ) => {
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const forumRepo = new ForumRepo(db);
 

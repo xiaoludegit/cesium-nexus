@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { openDatabase, initSchema, IssueRepo } from "@cesium-nexus/storage";
 import { syncIssues, GitHubRateLimitError, GitHubApiError } from "@cesium-nexus/indexer";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerIssueCommands(program: Command): void {
   // Shared helper
@@ -15,7 +15,7 @@ export function registerIssueCommands(program: Command): void {
   program
     .command("sync:issues")
     .description("Sync GitHub Issues to local database")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--owner <owner>", "GitHub repository owner", "CesiumGS")
     .option("--repo <repo>", "GitHub repository name", "cesium")
     .option("--token <token>", "GitHub personal access token (or set GITHUB_TOKEN env)")
@@ -31,7 +31,7 @@ export function registerIssueCommands(program: Command): void {
       maxPages?: number;
       full: boolean;
     }) => {
-      const resolvedDb = path.resolve(opts.db);
+      const resolvedDb = resolveDbPath(opts.db);
       const token = opts.token ?? process.env.GITHUB_TOKEN;
       const repoSlug = `${opts.owner}/${opts.repo}`;
 
@@ -117,7 +117,7 @@ export function registerIssueCommands(program: Command): void {
   program
     .command("issue <keyword...>")
     .description("Search issues by keyword (FTS5 full-text search)")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--limit <n>", "Max results", "20")
     .option("--state <state>", "Filter by state (open/closed)")
     .action((keyword: string[], opts: { db: string; limit: string; state?: string }) => {
@@ -135,7 +135,7 @@ export function registerIssueCommands(program: Command): void {
         process.exit(1);
       }
 
-      const { repo, db } = getIssueRepo(path.resolve(opts.db));
+      const { repo, db } = getIssueRepo(resolveDbPath(opts.db));
       const query = keyword.join(" ");
       const results = repo.searchFts(query, { limit, state });
 

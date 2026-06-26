@@ -7,13 +7,13 @@ import {
   CallGraphRepo,
 } from "@cesium-nexus/storage";
 import { buildContextPack } from "@cesium-nexus/context-pack";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerContextCommand(program: Command): void {
   program
     .command("context <symbol>")
     .description("Build a Context Pack for a symbol (JSON output)")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--depth <n>", "Call graph depth", "2")
     .option("--issue-limit <n>", "Max related issues", "5")
     .option("--budget <n>", "Token budget", "5000")
@@ -45,7 +45,7 @@ export function registerContextCommand(program: Command): void {
           process.exit(1);
         }
 
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
 
         const symbolRepo = new SymbolRepo(db);

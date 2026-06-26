@@ -13,12 +13,13 @@ import {
   queryRenderStages,
 } from "@cesium-nexus/diagnosis";
 import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerDiagnoseCommand(program: Command): void {
   program
     .command("diagnose <problem>")
     .description("Diagnose a Cesium problem and output a Diagnostic Context Pack")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--limit <n>", "Max matched patterns", "5")
     .option("--budget <n>", "Token budget", "6000")
     .option("--hybrid", "Enable hybrid search (keyword + vector semantic)", false)
@@ -43,7 +44,7 @@ export function registerDiagnoseCommand(program: Command): void {
         const patterns = await loadProblemPatterns();
         const stages = await loadRenderStages();
 
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
 
         const symbolRepo = new SymbolRepo(db);
@@ -247,7 +248,7 @@ export function registerDiagnoseCommand(program: Command): void {
   pkb
     .command("embed:issues")
     .description("Embed GitHub issues from SQLite to Qdrant (for mining)")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--repo <slug>", "Issue repo slug (owner/repo)", "CesiumGS/cesium")
     .option("--since <iso>", "Only embed issues updated since ISO date")
     .option("--limit <n>", "Cap on number of issues embedded", (v: string) => parseInt(v, 10))
@@ -264,7 +265,7 @@ export function registerDiagnoseCommand(program: Command): void {
           console.error(`Invalid --since value: ${opts.since}`);
           process.exit(1);
         }
-        const resolvedDb = path.resolve(opts.db);
+        const resolvedDb = resolveDbPath(opts.db);
         console.log(`Database: ${resolvedDb}`);
         console.log(`Repo:     ${opts.repo}`);
         if (opts.since) console.log(`Since:    ${opts.since}`);
@@ -317,7 +318,7 @@ export function registerDiagnoseCommand(program: Command): void {
     .description(
       "Measure Problem Coverage: run Hybrid Matcher over a set of issues and report hit rate",
     )
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--repo <slug>", "Issue repo slug (owner/repo)", "CesiumGS/cesium")
     .option("--since <iso>", "Only consider issues updated since ISO date")
     .option("--limit <n>", "Max issues to evaluate", "500", (v: string) => parseInt(v, 10))
@@ -340,7 +341,7 @@ export function registerDiagnoseCommand(program: Command): void {
           console.error(`Invalid --since value: ${opts.since}`);
           process.exit(1);
         }
-        const resolvedDb = path.resolve(opts.db);
+        const resolvedDb = resolveDbPath(opts.db);
         console.log(`Database: ${resolvedDb}`);
         console.log(`Repo:     ${opts.repo}`);
         if (opts.since) console.log(`Since:    ${opts.since}`);
@@ -516,7 +517,7 @@ export function registerDiagnoseCommand(program: Command): void {
     .option("--since <date>", "Only mine issues updated since date (ISO 8601)", undefined)
     .option("--threshold <n>", "Cosine clustering threshold (0.85|0.90|0.95)", "0.90")
     .option("--min-cluster <n>", "Minimum cluster size", "2")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .option("--llm-backend <type>", "LLM backend: ollama | openai", "ollama")
     .option("--ollama-url <url>", "Ollama server URL", "http://localhost:11434")
@@ -542,7 +543,7 @@ export function registerDiagnoseCommand(program: Command): void {
         const { getQdrantClient } = await import("@cesium-nexus/vector");
 
         const Database = (await import("better-sqlite3")).default;
-        const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+        const db = new Database(resolveDbPath(opts.db));
         const store = new MiningStore(db); // creates tables if missing
 
         // Validate --since
@@ -683,12 +684,12 @@ export function registerDiagnoseCommand(program: Command): void {
     .option("--limit <n>", "Max candidates to display", "20")
     .option("--offset <n>", "Offset for pagination", "0")
     .option("--detail <id>", "Show full detail for a specific candidate", undefined)
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (opts: Record<string, string>) => {
       try {
         const { MiningStore } = await import("@cesium-nexus/mining");
         const Database = (await import("better-sqlite3")).default;
-        const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+        const db = new Database(resolveDbPath(opts.db));
         const store = new MiningStore(db);
 
         if (opts.detail) {
@@ -759,12 +760,12 @@ export function registerDiagnoseCommand(program: Command): void {
       "Path to generated-patterns.json",
       "./data/problem-kb/generated-patterns.json",
     )
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (candidateId: string, opts: Record<string, string>) => {
       try {
         const { MiningStore, promoteCandidate } = await import("@cesium-nexus/mining");
         const Database = (await import("better-sqlite3")).default;
-        const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+        const db = new Database(resolveDbPath(opts.db));
         const store = new MiningStore(db);
 
         const candidate = store.getCandidate(candidateId);
@@ -830,7 +831,7 @@ export function registerDiagnoseCommand(program: Command): void {
   pkb
     .command("approve <candidateId>")
     .description("Mark a pending candidate as approved (does not write to generated-patterns)")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (candidateId: string, opts: Record<string, string>) => {
       await transitionStatus(candidateId, "approved", opts);
     });
@@ -838,7 +839,7 @@ export function registerDiagnoseCommand(program: Command): void {
   pkb
     .command("reject <candidateId>")
     .description("Mark a candidate as rejected")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (candidateId: string, opts: Record<string, string>) => {
       await transitionStatus(candidateId, "rejected", opts);
     });
@@ -851,7 +852,7 @@ export function registerDiagnoseCommand(program: Command): void {
     try {
       const { MiningStore } = await import("@cesium-nexus/mining");
       const Database = (await import("better-sqlite3")).default;
-      const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+      const db = new Database(resolveDbPath(opts.db));
       const store = new MiningStore(db);
 
       const candidate = store.getCandidate(candidateId);
@@ -959,12 +960,12 @@ export function registerDiagnoseCommand(program: Command): void {
   pkb
     .command("mining-stats")
     .description("Show counts for canonical problems and candidates by status")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (opts: Record<string, string>) => {
       try {
         const { MiningStore } = await import("@cesium-nexus/mining");
         const Database = (await import("better-sqlite3")).default;
-        const db = new Database(path.resolve(opts.db || "./database/cesium.db"));
+        const db = new Database(resolveDbPath(opts.db));
         const store = new MiningStore(db);
 
         const s = store.stats();

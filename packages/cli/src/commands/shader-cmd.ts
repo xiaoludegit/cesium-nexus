@@ -19,6 +19,7 @@ import {
 } from "@cesium-nexus/intelligence";
 import type { ShaderSymbolType } from "@cesium-nexus/intelligence";
 import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerShaderCommand(program: Command): void {
   program
@@ -32,7 +33,7 @@ export function registerShaderCommand(program: Command): void {
     .option("--rebuild", "Rebuild shader index from source")
     .option("--stats", "Show shader index statistics")
     .option("--cesium-root <path>", "Path to Cesium source", "./data/cesium")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(
       async (opts: {
         name?: string;
@@ -45,7 +46,7 @@ export function registerShaderCommand(program: Command): void {
         cesiumRoot: string;
         db: string;
       }) => {
-        const dbPath = path.resolve(opts.db);
+        const dbPath = resolveDbPath(opts.db);
         const db = openDatabase(dbPath);
         initSchema(db);
         initShaderSchema(db);

@@ -18,14 +18,14 @@ import {
   loadRenderStages,
 } from "@cesium-nexus/diagnosis";
 import { EvidenceCollector, DiagnosisReasoner } from "@cesium-nexus/reasoner";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerDiagnoseReasonCommand(program: Command): void {
   program
     .command("diagnose-reason")
     .description("Diagnose root cause using Evidence Fusion Engine")
     .argument("<query>", "Problem description")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--verbose", "Show detailed evidence", false)
     .option("--evidence-only", "Show only evidence chain", false)
     .option("--min-confidence <n>", "Minimum confidence threshold", "0.3")
@@ -41,7 +41,7 @@ export function registerDiagnoseReasonCommand(program: Command): void {
           cesiumRoot: string;
         }
       ) => {
-        const dbPath = path.resolve(opts.db);
+        const dbPath = resolveDbPath(opts.db);
         const db = openDatabase(dbPath);
         initSchema(db);
 

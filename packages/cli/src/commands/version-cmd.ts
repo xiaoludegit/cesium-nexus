@@ -17,6 +17,7 @@ import {
   BreakingChangeDetector,
 } from "@cesium-nexus/intelligence";
 import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerVersionCommands(program: Command): void {
   // ─── Snapshot Command ───
@@ -25,7 +26,7 @@ export function registerVersionCommands(program: Command): void {
     .description("Manage version snapshots for symbol tracking")
     .option("--version <ver>", "Cesium version to snapshot")
     .option("--cesium-root <path>", "Path to Cesium submodule", "./data/cesium")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--list", "List all available snapshot versions")
     .option("--stats", "Show snapshot statistics for a version")
     .action(
@@ -36,7 +37,7 @@ export function registerVersionCommands(program: Command): void {
         list?: boolean;
         stats?: boolean;
       }) => {
-        const dbPath = path.resolve(opts.db);
+        const dbPath = resolveDbPath(opts.db);
         const db = openDatabase(dbPath);
         initSchema(db);
         initVersionSchema(db);
@@ -114,7 +115,7 @@ export function registerVersionCommands(program: Command): void {
     .option("--symbol <name>", "Filter by symbol name")
     .option("--breaking", "Show only breaking changes", false)
     .option("--format <fmt>", "Output format: text, json, markdown", "text")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(
       async (opts: {
         from?: string;
@@ -129,7 +130,7 @@ export function registerVersionCommands(program: Command): void {
           process.exit(1);
         }
 
-        const dbPath = path.resolve(opts.db);
+        const dbPath = resolveDbPath(opts.db);
         const db = openDatabase(dbPath);
         initSchema(db);
         initVersionSchema(db);

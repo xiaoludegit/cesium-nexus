@@ -15,7 +15,7 @@ import {
   buildSkillContextPack,
 } from "@cesium-nexus/skills";
 import { loadProblemPatterns, loadRenderStages } from "@cesium-nexus/diagnosis";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerSkillCommands(program: Command): void {
   const skills = program
@@ -40,9 +40,9 @@ export function registerSkillCommands(program: Command): void {
   program
     .command("dispatch <query>")
     .description("Show which skill a query would be dispatched to")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (query: string, opts: { db: string }) => {
-      const db = openDatabase(path.resolve(opts.db));
+      const db = openDatabase(resolveDbPath(opts.db));
       initSchema(db);
       const symbolRepo = new SymbolRepo(db);
 
@@ -74,11 +74,11 @@ export function registerSkillCommands(program: Command): void {
   program
     .command("skill-pack <query>")
     .description("Build a skill-aware Context Pack v2")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--budget <n>", "Token budget", "6000")
     .action(async (query: string, opts: { db: string; budget: string }) => {
       const budget = parseInt(opts.budget, 10);
-      const db = openDatabase(path.resolve(opts.db));
+      const db = openDatabase(resolveDbPath(opts.db));
       initSchema(db);
 
       const symbolRepo = new SymbolRepo(db);

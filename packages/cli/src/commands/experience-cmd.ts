@@ -12,7 +12,7 @@ import {
   rebuildExperienceGraph,
   getExperienceChain,
 } from "@cesium-nexus/indexer";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerExperienceCommands(program: Command): void {
   const experience = program
@@ -22,7 +22,7 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("search <keywords>")
     .description("Search experience nodes via full-text search")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--limit <n>", "Max results", "10")
     .option(
       "--type <type>",
@@ -34,7 +34,7 @@ export function registerExperienceCommands(program: Command): void {
         keywords: string,
         opts: { db: string; limit: string; type?: string; symbol?: string },
       ) => {
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const experienceRepo = new ExperienceRepo(db);
 
@@ -65,9 +65,9 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("rebuild")
     .description("Rebuild experience nodes and edges from indexed data")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (opts: { db: string }) => {
-      const db = openDatabase(path.resolve(opts.db));
+      const db = openDatabase(resolveDbPath(opts.db));
       initSchema(db);
       const issueRepo = new IssueRepo(db);
       const prRepo = new PullRequestRepo(db);
@@ -93,11 +93,11 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("chain <node_id>")
     .description("Show the experience chain (connected nodes and edges) for a node")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--depth <n>", "Max traversal depth", "3")
     .action(
       async (nodeId: string, opts: { db: string; depth: string }) => {
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const experienceRepo = new ExperienceRepo(db);
         const edgeRepo = new ExperienceEdgeRepo(db);
@@ -134,9 +134,9 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("stats")
     .description("Show experience graph statistics")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .action(async (opts: { db: string }) => {
-      const db = openDatabase(path.resolve(opts.db));
+      const db = openDatabase(resolveDbPath(opts.db));
       initSchema(db);
       const experienceRepo = new ExperienceRepo(db);
       const edgeRepo = new ExperienceEdgeRepo(db);
@@ -160,13 +160,13 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("embed")
     .description("Embed all experience nodes to Qdrant for semantic search")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .action(async (opts: { db: string; qdrantUrl: string }) => {
       const { getQdrantClient, embedAllExperienceNodes } = await import(
         "@cesium-nexus/vector"
       );
-      const db = openDatabase(path.resolve(opts.db));
+      const db = openDatabase(resolveDbPath(opts.db));
       initSchema(db);
       const experienceRepo = new ExperienceRepo(db);
       const client = getQdrantClient(opts.qdrantUrl);
@@ -183,7 +183,7 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("semantic <query>")
     .description("Semantic search over experience nodes using vector similarity")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .option("--limit <n>", "Max results", "10")
     .option("--min-score <score>", "Minimum similarity score", "0.5")
@@ -228,7 +228,7 @@ export function registerExperienceCommands(program: Command): void {
   experience
     .command("references")
     .description("Build 'references' edges based on semantic similarity between experience nodes")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--qdrant-url <url>", "Qdrant server URL", "http://localhost:6333")
     .option("--threshold <score>", "Minimum cosine similarity for a reference edge", "0.85")
     .action(
@@ -240,7 +240,7 @@ export function registerExperienceCommands(program: Command): void {
         const { getQdrantClient, buildReferencesEdges } = await import(
           "@cesium-nexus/vector"
         );
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const experienceRepo = new ExperienceRepo(db);
         const edgeRepo = new ExperienceEdgeRepo(db);

@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { resolveDbPath } from "../config.js";
 import { CesiumIndexer } from "@cesium-nexus/indexer";
 import * as path from "node:path";
 
@@ -7,11 +8,11 @@ export function registerIndexCommand(program: Command): void {
     .command("index:symbols")
     .description("Scan Cesium source and build symbol database")
     .option("--cesium-root <path>", "Path to Cesium source directory", "./data/cesium")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--verbose", "Show per-file progress", false)
     .action(async (opts: { cesiumRoot: string; db: string; verbose: boolean }) => {
       const resolvedRoot = path.resolve(opts.cesiumRoot);
-      const resolvedDb = path.resolve(opts.db);
+      const resolvedDb = resolveDbPath(opts.db);
 
       console.log(`Cesium root: ${resolvedRoot}`);
       console.log(`Database:    ${resolvedDb}`);

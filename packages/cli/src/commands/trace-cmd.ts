@@ -1,13 +1,13 @@
 import type { Command } from "commander";
 import { openDatabase, initSchema, CallGraphRepo, SymbolRepo, resolveSymbolId } from "@cesium-nexus/storage";
 import type { CallEdge } from "@cesium-nexus/shared";
-import * as path from "node:path";
+import { resolveDbPath } from "../config.js";
 
 export function registerTraceCommand(program: Command): void {
   program
     .command("trace <symbol>")
     .description("Trace call graph for a symbol (upstream or downstream)")
-    .option("--db <path>", "SQLite database path", "./database/cesium.db")
+    .option("--db <path>", "SQLite database path")
     .option("--depth <n>", "Max traversal depth", "2")
     .option("--direction <dir>", "Traversal direction: down or up", "down")
     .action(
@@ -27,7 +27,7 @@ export function registerTraceCommand(program: Command): void {
           process.exit(1);
         }
 
-        const db = openDatabase(path.resolve(opts.db));
+        const db = openDatabase(resolveDbPath(opts.db));
         initSchema(db);
         const callGraphRepo = new CallGraphRepo(db);
         const symbolRepo = new SymbolRepo(db);

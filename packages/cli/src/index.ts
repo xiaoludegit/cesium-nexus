@@ -13,13 +13,14 @@ import { registerExperienceCommands } from "./commands/experience-cmd.js";
 import { registerVersionCommands } from "./commands/version-cmd.js";
 import { registerShaderCommand } from "./commands/shader-cmd.js";
 import { registerDiagnoseReasonCommand } from "./commands/diagnose-reason-cmd.js";
+import { registerInitCommand } from "./commands/init-cmd.js";
 
 const program = new Command();
 
 program
   .name("cesium")
   .description("Cesium AI Expert — knowledge-base CLI and MCP server")
-  .version("0.1.0");
+  .version("1.0.0");
 
 registerIndexCommand(program);
 registerQueryCommands(program);
@@ -35,5 +36,6 @@ registerExperienceCommands(program);
 registerVersionCommands(program);
 registerShaderCommand(program);
 registerDiagnoseReasonCommand(program);
+registerInitCommand(program);
 
 program.parse();
